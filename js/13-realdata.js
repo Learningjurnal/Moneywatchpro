@@ -249,12 +249,19 @@ function rdUniverseTickers(){
   // bila portofolio user sendiri sudah >20 saham (kasus nyata), saham miliknya yang
   // terpotong diam-diam jatuh ke fallback SIMULASI tanpa peringatan (harga acak,
   // itulah sumber "kesalahan penafsiran saham" — PGEO/CDIA/SMDR dsb menampilkan
-  // harga fiktif). Sekarang: TIDAK ADA pemotongan — portofolio milik user & saham
-  // yang ditambahkan lewat panel admin SELALU ikut dimuat.
+  // harga fiktif). Sekarang: portofolio, watchlist, dan saham tambahan admin milik
+  // user SELALU ikut dimuat tanpa batas. Bagian FS_UNIV (bisa 900+ saham setelah
+  // import Excel IDX) dibatasi ke top-N market cap agar tidak membanjiri proxy
+  // publik dengan ratusan request sekaligus — sisanya tetap bisa dimuat manual
+  // per-saham lewat tombol ↻ di Kelola Daftar Saham.
   var tks = [], seen = {};
   try{ getPortfolio().forEach(function(p){ if(!seen[p.ticker]){ seen[p.ticker]=1; tks.push(p.ticker); } }); }catch(e){}
-  FS_UNIV.forEach(function(u){ if(!seen[u.t]){ seen[u.t]=1; tks.push(u.t); } });
+  try{ FS_WL.forEach(function(w){ if(!seen[w.t]){ seen[w.t]=1; tks.push(w.t); } }); }catch(e){}
   try{ LQ45_STOCKS.forEach(function(s){ if(!seen[s.t]){ seen[s.t]=1; tks.push(s.t); } }); }catch(e){}
+  var univSource = FS_UNIV.length > 60
+    ? FS_UNIV.slice().sort(function(a,b){ return (b.cap||0)-(a.cap||0); }).slice(0, 30)
+    : FS_UNIV;
+  univSource.forEach(function(u){ if(!seen[u.t]){ seen[u.t]=1; tks.push(u.t); } });
   if(typeof ADMIN_EXTRA !== 'undefined'){ ADMIN_EXTRA.forEach(function(t){ if(!seen[t]){ seen[t]=1; tks.push(t); } }); }
   if(typeof ADMIN_META !== 'undefined'){ tks = tks.filter(function(t){ return !(ADMIN_META[t] && ADMIN_META[t].excluded); }); }
   return tks;

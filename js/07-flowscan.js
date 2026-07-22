@@ -804,7 +804,13 @@ document.addEventListener('click', function(e){
 function fsInit(){
   // Re-dedup FS_UNIV (may have received duplicates from dynamic portfolio push)
   (function(){ var seen={}; FS_UNIV=FS_UNIV.filter(function(u){ if(seen[u.t]) return false; seen[u.t]=true; return true; }); })();
-  FS_RD=FS_UNIV.map(function(u){
+  // FIX: setelah import Excel IDX, FS_UNIV bisa berisi 900+ saham — halaman
+  // "Ranking 30 Saham Terbesar" tetap dibatasi ke top-N market cap agar cepat
+  // & sesuai judulnya, bukan me-render ratusan baris sekaligus.
+  var rankSource = FS_UNIV.length > 60
+    ? FS_UNIV.slice().sort(function(a,b){ return (b.cap||0)-(a.cap||0); }).slice(0, 60)
+    : FS_UNIV;
+  FS_RD=rankSource.map(function(u){
     var data=fsGenData(u.t,60);
     var a=fsProcess(data);
     return Object.assign({},u,{data:data,a:a});

@@ -63,18 +63,144 @@ function adminStatusFor(code){
 function adminKey(code){ return code.replace(/[^A-Z0-9]/gi,''); }
 
 function adminSectorOptions(selected){
-  var keys = (typeof IDX_SECTORS!=='undefined') ? Object.keys(IDX_SECTORS) : [];
+  var keys = idxUniqueSectors() || ((typeof IDX_SECTORS!=='undefined') ? Object.keys(IDX_SECTORS) : []);
+  keys = keys.slice();
   ['IHSG','Lainnya'].forEach(function(k){ if(keys.indexOf(k)===-1) keys.push(k); });
   if(selected && keys.indexOf(selected)===-1) keys = [selected].concat(keys);
   return keys.map(function(k){ return '<option value="'+k+'"'+(k===selected?' selected':'')+'>'+k+'</option>'; }).join('');
 }
 
+// ══════════════════════════════════════════════
+// IMPORT UNIVERSE DARI FILE EXCEL IDX — reset total
+// (mis. hasil export "IDX Stock Screener") — menggantikan SELURUH
+// universe bawaan (FS_UNIV/DB/LQ45_STOCKS) dengan isi file.
+// Portofolio & watchlist milik user TIDAK ikut terhapus.
+// ══════════════════════════════════════════════
+var IDX_UNIVERSE = null;      // array mentah hasil import terakhir (null = pakai bawaan)
+var IDX_UNIVERSE_INFO = null; // {fileName, importedAt, count}
+
+function idxLoadUniverse(){
+  try{
+    var r = localStorage.getItem('mw_idx_universe_v1');
+    if(r) IDX_UNIVERSE = JSON.parse(r);
+    var i = localStorage.getItem('mw_idx_universe_info_v1');
+    if(i) IDX_UNIVERSE_INFO = JSON.parse(i);
+  }catch(e){}
+}
+function idxSaveUniverse(rows, info){
+  try{
+    localStorage.setItem('mw_idx_universe_v1', JSON.stringify(rows));
+    localStorage.setItem('mw_idx_universe_info_v1', JSON.stringify(info));
+  }catch(e){}
+}
+
+// RESET TOTAL: timpa FS_UNIV/DB/LQ45_STOCKS bawaan dengan data hasil import.
+// DB[].base sengaja 0 (bukan ditebak) — harga sesungguhnya menyusul dari fetch
+// Yahoo Finance riil (lihat 13-realdata.js), bukan angka fiktif.
+function idxApplyUniverse(){
+  if(!IDX_UNIVERSE || !IDX_UNIVERSE.length) return;
+  FS_UNIV = IDX_UNIVERSE.map(function(x){ return {t:x.t, n:x.n, s:x.s, cap:x.cap||0}; });
+  Object.keys(DB).forEach(function(k){ delete DB[k]; });
+  IDX_UNIVERSE.forEach(function(x){ DB[x.t] = {name:x.n, sector:x.s, base:0, beta:1.0}; });
+  LQ45_STOCKS = IDX_UNIVERSE.filter(function(x){ return x.idx && x.idx.indexOf('LQ45')>-1; })
+                            .map(function(x){ return {t:x.t, n:x.n, s:x.s}; });
+  // Buang cache harga untuk ticker yang sudah tidak ada di DB baru (delisted/
+  // berganti kode) — mencegah data basi ikut terbawa & dipakai lagi.
+  if(typeof prices!=='undefined'){
+    Object.keys(prices).forEach(function(t){ if(!DB[t]) delete prices[t]; });
+  }
+  if(typeof prevCloses!=='undefined'){
+    Object.keys(prevCloses).forEach(function(t){ if(!DB[t]) delete prevCloses[t]; });
+  }
+}
+
+function idxUniqueSectors(){
+  if(!IDX_UNIVERSE || !IDX_UNIVERSE.length) return null;
+  var set = {};
+  IDX_UNIVERSE.forEach(function(x){ if(x.s) set[x.s]=1; });
+  return Object.keys(set).sort();
+}
+
+function idxImportFile(){
+  var inp = el('adm-import-file');
+  var f = inp && inp.files && inp.files[0];
+  if(!f){ if(typeof showSaveStatus==='function') showSaveStatus('⚠ Pilih file Excel dulu','var(--red)'); return; }
+  if(typeof XLSX==='undefined'){ if(typeof showSaveStatus==='function') showSaveStatus('⚠ Pustaka pembaca Excel belum termuat, coba lagi sebentar','var(--red)'); return; }
+  if(!confirm('⚠️ RESET TOTAL daftar saham?\n\nSeluruh universe bawaan, Screener LQ45, dan semua saham/override yang pernah Anda tambahkan akan DIHAPUS dan diganti total dengan isi file:\n\n"'+f.name+'"\n\nPortofolio & watchlist Anda TIDAK ikut terhapus. Lanjutkan?')) return;
+
+  if(typeof showSaveStatus==='function') showSaveStatus('📥 Membaca '+f.name+'...');
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      var wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+      var sheet = wb.Sheets[wb.SheetNames[0]];
+      var rows = XLSX.utils.sheet_to_json(sheet, {defval:''});
+      var parsed = rows.map(function(r){
+        var code = String(r['Kode Saham']||'').trim().toUpperCase();
+        return {
+          t: code,
+          n: String(r['Nama Perusahaan']||code).trim(),
+          s: String(r['Sektor']||'Lainnya').trim(),
+          sub: String(r['Subsektor']||'').trim(),
+          ind: String(r['Industri']||'').trim(),
+          idx: String(r['Index']||'').trim(),
+          cap: (parseFloat(r['Mkt Cap'])||0) / 1e12
+        };
+      }).filter(function(x){ return x.t; });
+
+      if(!parsed.length){
+        if(typeof showSaveStatus==='function') showSaveStatus('⚠ Tidak ada baris valid — pastikan file punya kolom "Kode Saham"','var(--red)');
+        return;
+      }
+
+      IDX_UNIVERSE = parsed;
+      var info = {fileName:f.name, importedAt:new Date().toISOString(), count:parsed.length};
+      IDX_UNIVERSE_INFO = info;
+      idxSaveUniverse(parsed, info);
+      idxApplyUniverse();
+
+      // Reset total tambahan admin — nama/sektor override & ticker manual lama sudah tidak relevan
+      ADMIN_META = {}; ADMIN_EXTRA = [];
+      adminSaveMeta(); adminSaveExtra();
+
+      // Bangun ulang seluruh turunan: Screener/Heatmap, Ranking, banner status
+      _scBaseCache = null;
+      QT.scData = [];
+      RD_META.universeLoaded = false;
+      try{ rdRebuildFromReal(); }catch(err){}
+      try{ rdLoadUniverse(true); }catch(err){}
+
+      if(typeof showSaveStatus==='function') showSaveStatus('✓ '+parsed.length+' saham diimpor dari '+f.name+' — universe direset total');
+      adminRenderPage();
+    }catch(err){
+      if(typeof showSaveStatus==='function') showSaveStatus('⚠ Gagal membaca Excel: '+err.message,'var(--red)');
+    }
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+function idxResetToDefault(){
+  if(!confirm('Kembalikan ke daftar saham bawaan (hapus hasil import Excel)? Halaman akan dimuat ulang.')) return;
+  try{
+    localStorage.removeItem('mw_idx_universe_v1');
+    localStorage.removeItem('mw_idx_universe_info_v1');
+    localStorage.removeItem('mw_admin_meta_v1');
+    localStorage.removeItem('mw_admin_extra_v1');
+  }catch(e){}
+  location.reload();
+}
+
+var ADMIN_RENDER_LIMIT = 100;
+
 function adminRenderPage(){
   var pg = el('page-admin'); if(!pg) return;
   var q = (el('adm-search') && el('adm-search').value || '').toUpperCase().trim();
   var all = adminAllKnownTickers();
-  if(q) all = all.filter(function(x){ return x.t.indexOf(q) > -1; });
+  if(q) all = all.filter(function(x){ return x.t.indexOf(q) > -1 || (adminResolve(x.t).name||'').toUpperCase().indexOf(q) > -1; });
   all.sort(function(a,b){ return a.t.localeCompare(b.t); });
+  var totalMatch = all.length;
+  var capped = all.length > ADMIN_RENDER_LIMIT;
+  var display = capped ? all.slice(0, ADMIN_RENDER_LIMIT) : all;
 
   var totalAll = adminAllKnownTickers().length;
   var realN = adminAllKnownTickers().filter(function(x){ return typeof rdIsReal==='function' && rdIsReal(x.t); }).length;
@@ -92,6 +218,20 @@ function adminRenderPage(){
     '<div class="metric"><div class="mlabel">Status Muat</div><div class="mval" style="font-size:14px">'+(RD_META.loading?'⏳ Sedang memuat...':'✓ Selesai')+'</div></div>'+
   '</div>'+
   '<div class="card" style="margin-top:11px">'+
+    '<div class="cheader"><span class="ctitle">📄 SUMBER DAFTAR SAHAM</span></div>'+
+    (IDX_UNIVERSE && IDX_UNIVERSE.length
+      ? '<div style="font-size:11.5px;color:var(--text2);line-height:1.8;margin-bottom:10px">'+
+          '<span class="badge b-up" style="font-size:9px">✓ IMPOR EXCEL AKTIF</span> — <b>'+(IDX_UNIVERSE_INFO?IDX_UNIVERSE_INFO.fileName:'')+'</b> · '+(IDX_UNIVERSE_INFO?IDX_UNIVERSE_INFO.count:IDX_UNIVERSE.length)+' saham · diimpor '+(IDX_UNIVERSE_INFO?new Date(IDX_UNIVERSE_INFO.importedAt).toLocaleString('id-ID'):'')+'<br>'+
+          'Universe bawaan sudah DIHAPUS TOTAL dan digantikan file ini. Screener LQ45 otomatis mengikuti kolom Index di file.'+
+        '</div>'+
+        '<button class="btn btn-ghost btn-sm" onclick="idxResetToDefault()">↺ Kembalikan ke Daftar Bawaan</button>'
+      : '<div style="font-size:11.5px;color:var(--text2);line-height:1.7;margin-bottom:10px">Saat ini memakai <b>universe bawaan</b> ('+totalAll+' saham). Upload file Excel IDX Stock Screener di bawah untuk mengganti total daftar ini dengan data resmi IDX terbaru.</div>')+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;border-top:1px solid var(--border);padding-top:11px;margin-top:2px">'+
+      '<div class="fg" style="width:280px"><label class="flabel">File Excel (.xlsx) — kolom wajib: Kode Saham, Nama Perusahaan, Sektor</label><input class="finput" type="file" id="adm-import-file" accept=".xlsx,.xls"></div>'+
+      '<button class="btn btn-red btn-sm" onclick="idxImportFile()">📥 Import &amp; RESET TOTAL</button>'+
+    '</div>'+
+  '</div>'+
+  '<div class="card" style="margin-top:11px">'+
     '<div class="cheader"><span class="ctitle">⚠️ KENAPA HARGA BISA SALAH</span></div>'+
     '<div style="font-size:11.5px;color:var(--text2);line-height:1.7">Saham dengan status <span class="badge b-dn" style="font-size:9px">○ SIMULASI</span> menampilkan harga acak, BUKAN harga pasar — biasanya karena belum sempat dimuat, gagal terhubung ke Yahoo Finance, atau baru ditambahkan. Klik <b>↻</b> pada baris tersebut untuk memuat ulang, atau <b>📡 Muat Ulang SEMUA</b> di atas.</div>'+
   '</div>'+
@@ -105,10 +245,11 @@ function adminRenderPage(){
     '</div>'+
   '</div>'+
   '<div class="card" style="margin-top:11px">'+
-    '<div class="cheader"><span class="ctitle">DAFTAR SAHAM DIPANTAU ('+all.length+')</span>'+
-      '<input class="finput" id="adm-search" placeholder="Cari kode..." style="width:160px" oninput="adminRenderPage()" value="'+q.replace(/"/g,'&quot;')+'"></div>'+
+    '<div class="cheader"><span class="ctitle">DAFTAR SAHAM DIPANTAU ('+totalMatch+')</span>'+
+      '<input class="finput" id="adm-search" placeholder="Cari kode / nama..." style="width:200px" oninput="adminRenderPage()" value="'+q.replace(/"/g,'&quot;')+'"></div>'+
+    (capped ? '<div style="font-size:10.5px;color:var(--amber);margin-bottom:8px">⚠ Menampilkan '+ADMIN_RENDER_LIMIT+' dari '+totalMatch+' saham — ketik kode/nama di kolom pencarian untuk mempersempit.</div>' : '')+
     '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Kode</th><th>Nama</th><th>Sektor</th><th>Sumber</th><th>Status</th><th>Aksi</th></tr></thead><tbody>'+
-    (all.length ? all.map(function(x){
+    (display.length ? display.map(function(x){
       var code = x.t, key = adminKey(code);
       var r = adminResolve(code);
       var st = adminStatusFor(code);
@@ -194,6 +335,10 @@ window.goPage = function(page, btn){
 };
 
 // ── INIT ──
+// Urutan penting: terapkan universe hasil import (jika ada) SEBELUM override
+// admin per-ticker, supaya override selalu menimpa di atas dasar yang aktif.
+idxLoadUniverse();
+idxApplyUniverse();
 adminLoadMeta();
 adminLoadExtra();
 adminApplyOverrides();

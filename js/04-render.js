@@ -135,7 +135,14 @@ function renderDashboard(){
   el('d-aum-total-badge').textContent='Rp '+fmtK(AUM);
 
   // ── IHSG + Movers ──
-  var movers=Object.entries(prices).map(function(e){var t=e[0],p=e[1];return{t:t,p:p,c:((p-DB[t].base)/DB[t].base*100)}}).sort(function(a,b){return b.c-a.c});
+  // FIX: sebelumnya pakai DB[t].base — crash (t tidak lagi ada di DB setelah
+  // reset universe via import Excel) dan tidak akurat (base beku, bukan harga
+  // penutupan kemarin). Sekarang pakai previousClose riil dari Yahoo Finance;
+  // ticker yang belum sempat fetch (belum ada prevClose) otomatis dilewati
+  // alih-alih menampilkan angka fiktif atau membuat halaman error.
+  var movers=Object.keys(prices).filter(function(t){ return typeof prevCloses!=='undefined' && prevCloses[t]>0; })
+    .map(function(t){ var p=prices[t], pc=prevCloses[t]; return {t:t,p:p,c:((p-pc)/pc*100)}; })
+    .sort(function(a,b){return b.c-a.c});
   el('gainers').innerHTML=movers.slice(0,3).map(function(m){
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid var(--border)">'+
       '<span class="tp">'+m.t+'</span>'+
