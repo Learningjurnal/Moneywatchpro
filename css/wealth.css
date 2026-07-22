@@ -1,0 +1,50 @@
+/* ══════════════════════════════════════════════
+   WEALTH MODULE — gaya tambahan (diadaptasi dari Wealth OS)
+   Mengikuti token warna Money Watch (main.css)
+   ══════════════════════════════════════════════ */
+
+/* Hero net worth */
+.w-hero{text-align:center;padding:18px 0 14px}
+.w-hero-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px}
+.w-hero-value{font-size:38px;font-weight:700;letter-spacing:-.02em;color:var(--accent);font-family:'Share Tech Mono',monospace;text-shadow:0 0 30px rgba(129,140,248,.35);line-height:1.1}
+.w-hero-sub{font-size:12px;color:var(--text2);margin-top:8px}
+
+/* Progress bar */
+.w-track{height:8px;border-radius:99px;background:var(--bg4);overflow:hidden}
+.w-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--purple));transition:width .6s ease;box-shadow:0 0 8px rgba(129,140,248,.35)}
+.w-fill.green{background:linear-gradient(90deg,var(--green),#10b981)}
+.w-fill.amber{background:linear-gradient(90deg,var(--amber),#f59e0b)}
+.w-fill.red{background:linear-gradient(90deg,var(--red),#ef4444)}
+
+/* Kartu rekening bank (gradient ala Wealth OS) */
+.w-bank-card{border-radius:14px;padding:18px;margin-bottom:10px;color:#fff;position:relative;overflow:hidden;border:1px solid rgba(129,140,248,.2);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.w-bank-card::after{content:'';position:absolute;top:-30px;right:-30px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.06);pointer-events:none}
+
+/* Baris piutang */
+.w-piu-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.w-piu-row:last-child{border-bottom:none}
+.w-piu-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+
+/* Insight card */
+.w-insight{display:flex;gap:12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:8px;transition:all var(--spring)}
+.w-insight:hover{border-color:rgba(129,140,248,.3);transform:translateY(-1px)}
+.w-insight-ic{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:17px}
+
+/* Mini stat row */
+.w-mini{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}
+.w-mini:last-child{border-bottom:none}
+
+/* Form field di modal wealth */
+.w-field{margin-bottom:12px}
+.w-field label{display:block;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+.w-frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* Slider proyeksi */
+.w-slider{display:flex;align-items:center;gap:8px;font-size:12px}
+.w-slider label{width:80px;color:var(--text3)}
+.w-slider input[type=range]{width:120px;accent-color:var(--accent)}
+.w-slider b{min-width:44px;font-family:'Share Tech Mono',monospace;color:var(--text)}
+
+/* Score ring wrapper */
+.w-ring{position:relative;width:84px;height:84px;flex-shrink:0}
+.w-ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
