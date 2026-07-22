@@ -1,0 +1,76 @@
+# 💼 Money Watch Pro
+
+Gabungan **Money Watch** (file utama — jurnal & analisa investasi ala quant trader) dan bagian terbaik **Wealth OS** (personal family office). Satu aplikasi untuk membentuk portofolio pribadi, menganalisanya, dan menganalisa saham **sebelum membeli**.
+
+## Cara Menjalankan
+
+Buka `index.html` langsung di browser (double-click), atau lewat server lokal:
+
+```bash
+npx serve .
+```
+
+Login memakai akun Supabase yang sama dengan Money Watch lama — data jurnal, transaksi, dan dividen tersinkron otomatis.
+
+## Struktur File
+
+File asli Money Watch (10.700 baris) dipecah menjadi modul yang dimuat berurutan — **isi kode tidak diubah**, hanya dipisah pada batas seksi, sehingga seluruh struktur dan perilaku asli tetap utuh:
+
+| File | Isi |
+|---|---|
+| `index.html` | Shell aplikasi: auth, topbar, navigasi, semua kontainer halaman |
+| `css/main.css` | Seluruh style Money Watch (tema violet glassmorphism) |
+| `css/wealth.css` | Style tambahan modul Wealth |
+| `js/00-config.js` | Kredensial Supabase |
+| `js/01-data.js` | Database sekuritas, tarif pajak BEI/DJP, sektor IDX, database saham, data XLSX |
+| `js/02-storage.js` | Sinkronisasi Supabase, localStorage, export/import/backup |
+| `js/03-engine.js` | Mesin transaksi/dividen/RDN, kalkulasi portofolio, harga live Yahoo Finance, ticker tape, chart IHSG |
+| `js/04-render.js` | Render Dashboard, RDN, Transaksi, Portofolio, Dividen, Sektoral, Risiko, Pajak |
+| `js/05-assets.js` | Modal input, Crypto, ETF AS, Reksa Dana, import mutasi |
+| `js/06-analysis-router.js` | Candle Analysis, metrik risiko, saran AI, router halaman (`goPage`), init |
+| `js/07-flowscan.js` | FlowScan (CMF/RSI/MA/VWAP), Ranking, Heatmap, Scanner, Alerts, Watchlist |
+| `js/08-auth.js` | Sistem login (Supabase, sesi 30 menit) |
+| `js/09-divinvest.js` | Dividend Investing dashboard |
+| `js/10-hargawajar.js` | Harga Wajar — valuasi Margin of Safety |
+| `js/11-quant.js` | QuantTrader: Backtester, Screener LQ45, Pairs Trading, Correlation, Monthly Returns |
+| `js/12-clean.js` | **BARU** — Fresh start: purge data injeksi lama (sekali jalan) + nol-kan data pribadi lampiran XLSX + kontrol zoom A−/A/A+ |
+| `js/13-realdata.js` | **BARU** — Real Data Engine: OHLCV harian 1 thn dari Yahoo (cache per hari di localStorage) untuk FlowScan, Candle, Correlation, Ranking, Heatmap, Scanner, Alerts, Watchlist, Screener + **Verdict Gabungan** di FlowScan (skor 0–100 dari Big Money 30% · Trend MA 25% · RSI 15% · CMF 15% · VWAP 5% · Momentum 3 bln 10%). Setiap halaman menampilkan badge sumber data (RIIL/SIMULASI); bila fetch gagal, fallback simulasi selalu ditandai jelas |
+| `js/20-wealth.js` | **BARU** — Modul Wealth (adaptasi Wealth OS) |
+
+Setiap modul JS adalah script global klasik yang dimuat berurutan lewat `<script src>` di `index.html` — persis seperti saat masih satu file.
+
+## Perubahan v6 — Mode Data Real
+
+- **Navigasi pindah ke sidebar kiri** (menggantikan dropdown di topbar), dikelompokkan: Overview, Portofolio, Analitik Pra-Beli, Market, Keuangan, Wealth, Pengaturan.
+- **Semua fitur Saran AI dihapus** (kartu 🧠 Saran AI di Dashboard, tab 🤖 AI Analisa di FlowScan, API key Claude).
+- **Mulai benar-benar kosong**: injeksi portofolio contoh (23 emiten), transaksi historis, dividen lampiran, crypto contoh, dan riwayat reksa dana lampiran semuanya dinonaktifkan. `js/12-clean.js` juga membersihkan localStorage lama satu kali (flag `mw_fresh_v6`).
+- ⚠️ **Data cloud**: jika akun Supabase Anda pernah menyinkron data injeksi versi lama, setelah login buka **💾 Backup → Hapus Semua Data** sekali untuk mengosongkan cloud, lalu isi data real Anda.
+- **Harga live Yahoo Finance diperkuat**: semua ticker portofolio diambil tiap siklus (bukan 2 per 2 menit), `previousClose` Yahoo disimpan sehingga % perubahan harian di ticker tape akurat, dan ticker tape hanya menampilkan harga yang sudah terkonfirmasi live (plus USD/IDR & crypto live). Terverifikasi identik dengan endpoint `query1.finance.yahoo.com` untuk saham `.JK` dan IHSG (`^JKSE`).
+
+## Modul Wealth (menu 💼 Wealth ▾)
+
+Bagian terbaik Wealth OS, ditulis ulang mengikuti tema & pola kode Money Watch:
+
+- **🌐 Net Worth** — kekayaan bersih total: nilai portofolio Money Watch (saham + crypto + ETF + reksa dana + kas RDN/wallet, otomatis) + bank + deposito/obligasi/emas + piutang − hutang. Termasuk **Wealth Score** 0–100, donut alokasi aset, passive income engine (memakai dividen riil 12 bulan terakhir dari jurnal), critical insights, dan checklist **Analisa Pra-Beli** yang menautkan toolkit quant.
+- **🏦 Bank & Dana Darurat** — rekening di luar RDN + meter dana darurat 3/6 bulan.
+- **💳 Hutang** — debt ratio, debt-to-income, strategi pelunasan Avalanche vs Snowball.
+- **🧾 Piutang** — progres pembayaran per debitur, collection rate.
+- **🔥 FIRE & Proyeksi** — FIRE number 25×, 4% rule, skenario Lean/Regular/Fat, proyeksi 20 tahun (slider CAGR/inflasi/investasi, nominal vs riil), estimasi tahun FIRE.
+
+Data Wealth disimpan di `localStorage` (`mw_wealth_v1`) dengan tombol Export/Import JSON tersendiri di halaman Net Worth. Isi asumsi awal lewat **⚙ Asumsi & Aset Lain** (pemasukan, pengeluaran, deposito, obligasi, emas).
+
+## Alur Analisa Pra-Beli (ala quant trader)
+
+1. **💎 Harga Wajar** — valuasi & margin of safety
+2. **🔬 FlowScan** — aliran dana besar (CMF, RSI, MA, VWAP)
+3. **🕯 Candle Analysis** — pola & timing entry
+4. **⚡ Backtester** — uji strategi pada data historis
+5. **🔍 Screener LQ45** — bandingkan dengan alternatif
+6. **⚠️ Manajemen Risiko** — position sizing sebelum eksekusi
+
+## Keamanan & Publikasi ke GitHub
+
+- **Data pribadi sudah dihapus dari kode sumber** (v6.1): nilai portofolio, daftar kepemilikan, riwayat dividen, dan riwayat reksa dana yang dulu tertanam di `js/02-storage.js` dan `js/06-analysis-router.js` sudah diganti metadata pasar netral. Data riil Anda hanya hidup di localStorage browser dan Supabase — tidak pernah masuk repo.
+- **Kunci Supabase di `js/00-config.js`** adalah *publishable/anon key* yang memang dirancang untuk sisi klien. Namun keamanannya bergantung pada **Row Level Security (RLS)** — pastikan RLS aktif di SEMUA tabel (`transactions`, `dividends`, `rdn_mutations`, `crypto_tx`, `etf_tx`, `rd_tx`, `user_settings`, `div_invest`) dengan policy `user_id = auth.uid()`. Tanpa RLS, siapa pun yang membaca repo bisa membaca data Anda.
+- Jika ragu dengan status RLS, jadikan repo **Private** dulu.
+- Aplikasi 100% statis — kompatibel langsung dengan **GitHub Pages** (Settings → Pages → deploy from branch).
