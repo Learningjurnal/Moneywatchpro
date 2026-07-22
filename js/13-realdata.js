@@ -245,12 +245,28 @@ function rdRenderVerdict(tk, fetching){
 // UNIVERSE LOADER — data riil untuk Ranking/Heatmap/Scanner/Alerts/Watchlist
 // ══════════════════════════════════════════════
 function rdUniverseTickers(){
+  // FIX AUDIT: versi lama memotong ke FS_UNIV.slice(0,12) lalu .slice(0,20) total —
+  // bila portofolio user sendiri sudah >20 saham (kasus nyata), saham miliknya yang
+  // terpotong diam-diam jatuh ke fallback SIMULASI tanpa peringatan (harga acak,
+  // itulah sumber "kesalahan penafsiran saham" — PGEO/CDIA/SMDR dsb menampilkan
+  // harga fiktif). Sekarang: TIDAK ADA pemotongan — portofolio milik user & saham
+  // yang ditambahkan lewat panel admin SELALU ikut dimuat.
   var tks = [], seen = {};
   try{ getPortfolio().forEach(function(p){ if(!seen[p.ticker]){ seen[p.ticker]=1; tks.push(p.ticker); } }); }catch(e){}
-  FS_UNIV.slice(0, 12).forEach(function(u){ if(!seen[u.t]){ seen[u.t]=1; tks.push(u.t); } });
-  // Sertakan universe Screener LQ45 agar tabel screener 100% riil
+  FS_UNIV.forEach(function(u){ if(!seen[u.t]){ seen[u.t]=1; tks.push(u.t); } });
   try{ LQ45_STOCKS.forEach(function(s){ if(!seen[s.t]){ seen[s.t]=1; tks.push(s.t); } }); }catch(e){}
-  return tks.slice(0, 20);
+  if(typeof ADMIN_EXTRA !== 'undefined'){ ADMIN_EXTRA.forEach(function(t){ if(!seen[t]){ seen[t]=1; tks.push(t); } }); }
+  if(typeof ADMIN_META !== 'undefined'){ tks = tks.filter(function(t){ return !(ADMIN_META[t] && ADMIN_META[t].excluded); }); }
+  return tks;
+}
+
+// Retry manual untuk satu ticker — membuka blokir RD_FAILED (dipakai Admin Panel)
+function rdRetryTicker(code, cb){
+  delete RD_FAILED[code];
+  rdFetchYahoo(code, function(err){
+    rdRebuildFromReal();
+    if(cb) cb(err);
+  });
 }
 
 function rdLoadUniverse(force){
@@ -280,6 +296,11 @@ function rdRebuildFromReal(){
   var wlTks = FS_WL.map(function(w){ return w.t; });
   FS_WL.length = 0; FS_RD.length = 0;
   try{ fsInit(); }catch(e){}
+  // Buang saham yang dikecualikan lewat Admin Panel dari seluruh hasil analisa
+  if(typeof ADMIN_META !== 'undefined'){
+    var kept = FS_RD.filter(function(r){ return !(ADMIN_META[r.t] && ADMIN_META[r.t].excluded); });
+    FS_RD.length = 0; kept.forEach(function(r){ FS_RD.push(r); });
+  }
   // Bila data riil sudah ada: Ranking/Heatmap/Scanner/Alerts HANYA menampilkan
   // saham dengan data riil — jangan campur dengan entri simulasi (menyesatkan).
   if(RD_META.universeLoaded || rdUniverseTickers().some(function(t){ return rdIsReal(t); })){
@@ -300,9 +321,16 @@ function rdRebuildFromReal(){
   setTimeout(rdUpdateBanners, 300);
 }
 
+// Sumber kanonik Screener/Heatmap — TIDAK PERNAH difilter, agar exclude di Admin
+// Panel bisa di-toggle bolak-balik tanpa kehilangan data (bug lama: memfilter
+// QT.scData langsung membuatnya permanen hilang sampai reload halaman).
+var _scBaseCache = null;
 function rdBuildScData(){
-  if(!QT.scData.length){ try{ scBuildSim(); }catch(e){} }
-  QT.scData = QT.scData.map(function(st){
+  if(!_scBaseCache){
+    if(!QT.scData.length){ try{ scBuildSim(); }catch(e){} }
+    _scBaseCache = QT.scData.slice();
+  }
+  QT.scData = _scBaseCache.map(function(st){
     var rows = rdGetAny(st.t);
     if(!rows || rows.length < 70) return st;
     var close = rows.map(function(r){ return r.close; });
@@ -316,6 +344,8 @@ function rdBuildScData(){
     var vol = Math.sqrt(w30.slice(1).map(function(c,i){ return Math.pow((c-w30[i])/w30[i]*100,2); }).reduce(function(a,b){ return a+b; },0)/29);
     var score = Math.round((50-Math.abs(rsiLast-50))/50*40+(mom1m>0?Math.min(mom1m*2,30):0)+(lc>lm?20:0));
     return Object.assign({}, st, {rsi:rsiLast, mom1m:mom1m, mom3m:mom3m, vol:vol, price:lc, aboveMa:lc>lm, score:score, live:true});
+  }).filter(function(st){
+    return !(typeof ADMIN_META !== 'undefined' && ADMIN_META[st.t] && ADMIN_META[st.t].excluded);
   });
 }
 

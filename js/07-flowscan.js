@@ -488,11 +488,18 @@ function fsRenderRanking(){
   if(rkBody) rkBody.innerHTML=list.map(function(r,i){
     var last=r.data[r.data.length-1];
     var inWl=FS_WL.some(function(w){return w.t===r.t;});
-    return '<tr style="'+(r.a.sig==='AKUMULASI'?'background:rgba(0,229,160,.03)':r.a.sig==='DISTRIBUSI'?'background:rgba(255,61,90,.03)':'')+'">'
+    // FIX: tandai per-baris apakah harga ini RIIL (Yahoo) atau SIMULASI —
+    // sebelumnya tidak ada indikator sama sekali sehingga harga fiktif
+    // tampil identik dengan harga riil (sumber "kesalahan penafsiran saham").
+    var isReal = typeof rdIsReal === 'function' ? rdIsReal(r.t) : false;
+    var srcDot = isReal
+      ? '<span title="Data riil Yahoo Finance" style="color:#00e5a0;font-size:9px;margin-left:4px">●</span>'
+      : '<span title="⚠ SIMULASI — data acak, bukan harga pasar. Klik Refresh di Kelola Daftar Saham." style="color:#ff3d5a;font-size:9px;margin-left:4px;cursor:help">○ SIM</span>';
+    return '<tr style="'+(r.a.sig==='AKUMULASI'?'background:rgba(0,229,160,.03)':r.a.sig==='DISTRIBUSI'?'background:rgba(255,61,90,.03)':'')+(isReal?'':';outline:1px solid rgba(255,61,90,.15)')+'">'
       +'<td class="mono" style="color:var(--text3)">'+(i+1)+'</td>'
       +'<td class="mono" style="font-weight:600;cursor:pointer;color:var(--accent)" onclick="fsQuickLoad(\''+r.t+'\')">'+r.t+'</td>'
       +'<td><div style="font-size:12px">'+r.n+'</div><span class="badge b-neu" style="font-size:9px">'+r.s+'</span></td>'
-      +'<td class="mono">'+fsP(last.c)+'</td>'
+      +'<td class="mono">'+fsP(last.c)+srcDot+'</td>'
       +'<td class="mono '+(r.a.chgPct>=0?'up':'dn')+'">'+fsPct(r.a.chgPct)+'</td>'
       +'<td class="mono" style="color:var(--text2)">'+r.cap+'T</td>'
       +'<td><div style="display:flex;align-items:center;gap:5px"><span class="mono" style="color:'+fsScColor(r.a.sc)+';min-width:22px;font-weight:600">'+r.a.sc+'</span><div class="prog" style="width:50px"><div class="progf" style="width:'+r.a.sc+'%;background:'+fsScColor(r.a.sc)+'"></div></div></div></td>'
