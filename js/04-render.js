@@ -981,6 +981,7 @@ function applyTaxPreset(ppn, pphJual, levy){
   if(tji){tji.value=(TAX_SETTINGS.pphJual*100).toFixed(2);}
   taxPreviewLive();
   saveTaxSettings();
+  saveData(); // FIX SINKRONISASI: kirim juga ke cloud — tanpa ini, login berikutnya menimpa balik dengan tarif lama
   showSaveStatus('✓ Preset pajak: PPN '+(TAX_SETTINGS.ppn*100).toFixed(0)+'% · Levy '+(TAX_SETTINGS.levy*100).toFixed(3)+'% · PPh Final Jual '+(TAX_SETTINGS.pphJual*100).toFixed(2)+'%');
 }
 
@@ -990,6 +991,7 @@ function saveTaxFromUI(){
   var j    = parseFloat(el('tax-jual-input').value||0)/100;
   TAX_SETTINGS.ppn=ppn; TAX_SETTINGS.levy=levy; TAX_SETTINGS.pphJual=j;
   saveTaxSettings();
+  saveData(); // FIX SINKRONISASI: kirim juga ke cloud — tanpa ini, login berikutnya menimpa balik dengan tarif lama
   showSaveStatus('✓ Pajak disimpan: PPN '+(ppn*100).toFixed(0)+'% · Levy '+(levy*100).toFixed(3)+'% · PPh Jual '+(j*100).toFixed(2)+'%');
   renderPajak();
 }

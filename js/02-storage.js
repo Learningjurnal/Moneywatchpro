@@ -48,7 +48,7 @@ async function supaLoadAllData(){
   var uid=_currentUser.id;
   try {
     var sRes=await _supabase.from('user_settings').select('*').eq('user_id',uid).maybeSingle();
-    if(sRes.data){var s=sRes.data;activeSekuritas=s.active_sekuritas||'Mirae Asset';rdnBalance=s.rdn_balance||0;if(s.cash_accounts)Object.assign(CASH_ACCOUNTS,s.cash_accounts);if(s.tax_cfg)Object.assign(TAX_SETTINGS,s.tax_cfg);if(s.sek_tax_override)sekTaxOverride=s.sek_tax_override;if(s.trade_strategy)tradeStrategy=s.trade_strategy;nextTxId=s.next_tx_id||1;nextDivId=s.next_div_id||1;nextRdnId=s.next_rdn_id||1;nextCryptoId=s.next_crypto_id||1;nextEtfId=s.next_etf_id||1;nextRdId=s.next_rd_id||1;}
+    if(sRes.data){var s=sRes.data;activeSekuritas=s.active_sekuritas||'Mirae Asset';rdnBalance=s.rdn_balance||0;if(s.cash_accounts)Object.assign(CASH_ACCOUNTS,s.cash_accounts);if(s.tax_cfg){Object.assign(TAX_SETTINGS,s.tax_cfg);if(typeof saveTaxSettings==='function')saveTaxSettings();}if(s.sek_tax_override)sekTaxOverride=s.sek_tax_override;if(s.trade_strategy)tradeStrategy=s.trade_strategy;nextTxId=s.next_tx_id||1;nextDivId=s.next_div_id||1;nextRdnId=s.next_rdn_id||1;nextCryptoId=s.next_crypto_id||1;nextEtfId=s.next_etf_id||1;nextRdId=s.next_rd_id||1;}
     var txRes=await _supabase.from('transactions').select('*').eq('user_id',uid).order('date',{ascending:true});
     if(txRes.data&&txRes.data.length>0) transactions=txRes.data.map(function(t){return {id:t.tx_id,date:t.date,action:t.action,ticker:t.ticker,sekuritas:t.sekuritas,lot:t.lot,shares:t.shares,price:t.price,gross:t.gross,commission:t.commission,tax:t.tax,net:t.net,pl:t.pl};});
     var divRes=await _supabase.from('dividends').select('*').eq('user_id',uid).order('date',{ascending:true});

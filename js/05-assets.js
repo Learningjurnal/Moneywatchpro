@@ -58,7 +58,7 @@ function openModal(type){
       +'<div class="taxbox">'
         +'<div style="font-size:9px;color:var(--text3);font-family:\'IBM Plex Mono\',monospace;margin-bottom:7px">RINCIAN '+(isBuy?'PEMBELIAN':'PENJUALAN')+' — sesuai regulasi BEI & DJP</div>'
         +'<div class="taxrow"><span>Nilai Kotor (lot × 100 × harga)</span><span class="mono" id="mc-g">Rp 0</span></div>'
-        +'<div class="taxrow"><span id="mc-k-lbl">Komisi '+(isBuy?'Beli':'Jual')+' ('+(isBuy?sf.buyFee:sf.sellFee)*100+'.toFixed(2)%)</span><span class="mono amb" id="mc-k">Rp 0</span></div>'
+        +'<div class="taxrow"><span id="mc-k-lbl">Komisi '+(isBuy?'Beli':'Jual')+' ('+((isBuy?sf.buyFee:sf.sellFee)*100).toFixed(2)+'%)</span><span class="mono amb" id="mc-k">Rp 0</span></div>'
         +'<div class="taxrow"><span id="mc-ppn-lbl">PPN '+(TAX_SETTINGS.ppn*100).toFixed(0)+'% × Komisi</span><span class="mono dn" id="mc-ppn">Rp 0</span></div>'
         +'<div class="taxrow"><span>Levy BEI+KPEI+KSEI ('+(TAX_SETTINGS.levy*100).toFixed(3)+'%)</span><span class="mono dn" id="mc-levy">Rp 0</span></div>'
         +(isBuy?'':'<div class="taxrow"><span>PPh Final Jual ('+(TAX_SETTINGS.pphJual*100).toFixed(1)+'% — hanya jual)</span><span class="mono dn" id="mc-pph">Rp 0</span></div>')
@@ -928,7 +928,8 @@ function txCalcLive(){
   var price   = parsePrice(el('mf-price')&&el('mf-price').value||'0');
   var gross   = lot*100*price;
   var c       = calcTxComponents(gross, isBuy, secName);
-  var feeRate = isBuy ? sec.buyFee : sec.sellFee;
+  // FIX: label komisi harus memakai tarif EFEKTIF (termasuk override per sekuritas), bukan tarif default
+  var feeRate = c.komisiRate;
   if(el('mc-g'))       el('mc-g').textContent = 'Rp '+fmt(gross);
   if(el('mc-k-lbl'))   el('mc-k-lbl').textContent = 'Komisi '+(isBuy?'Beli':'Jual')+' ('+(feeRate*100).toFixed(2)+'%)';
   if(el('mc-k'))       el('mc-k').textContent = 'Rp '+fmt(c.komisi);
@@ -1129,7 +1130,7 @@ function efCalcLive(){
   var isBuy = type==='BUY';
   var gross = lot*100*price;
   var c     = calcTxComponents(gross, isBuy, secNm);
-  var feeRate = isBuy ? sec.buyFee : sec.sellFee;
+  var feeRate = c.komisiRate; // FIX: tarif efektif (termasuk override per sekuritas)
   if(el('ef-gross'))   el('ef-gross').textContent   = 'Rp '+fmt(gross);
   if(el('ef-k-lbl'))   el('ef-k-lbl').textContent   = 'Komisi '+(isBuy?'Beli':'Jual')+' ('+(feeRate*100).toFixed(2)+'%)';
   if(el('ef-komisi'))  el('ef-komisi').textContent  = 'Rp '+fmt(c.komisi);
