@@ -35,7 +35,9 @@ File asli Money Watch (10.700 baris) dipecah menjadi modul yang dimuat berurutan
 | `js/11-quant.js` | QuantTrader: Backtester, Screener LQ45, Pairs Trading, Correlation, Monthly Returns |
 | `js/12-clean.js` | **BARU** — Fresh start: purge data injeksi lama (sekali jalan) + nol-kan data pribadi lampiran XLSX + kontrol zoom A−/A/A+ |
 | `js/13-realdata.js` | **BARU** — Real Data Engine: OHLCV harian 1 thn dari Yahoo (cache per hari di localStorage) untuk FlowScan, Candle, Correlation, Ranking, Heatmap, Scanner, Alerts, Watchlist, Screener + **Verdict Gabungan** di FlowScan (skor 0–100 dari Big Money 30% · Trend MA 25% · RSI 15% · CMF 15% · VWAP 5% · Momentum 3 bln 10%). Setiap halaman menampilkan badge sumber data (RIIL/SIMULASI); bila fetch gagal, fallback simulasi selalu ditandai jelas |
+| `js/14-admin.js` | **BARU** — Admin Panel Kelola Daftar Saham: edit nama/sektor, tambah/kecualikan ticker, **import Excel IDX Stock Screener** (reset total universe bawaan), sinkron lintas perangkat via Supabase |
 | `js/20-wealth.js` | **BARU** — Modul Wealth (adaptasi Wealth OS) |
+| `sql/idx_universe_migration.sql` | **BARU** — Migrasi Supabase untuk sinkronisasi Daftar Saham (lihat bagian di bawah) |
 
 Setiap modul JS adalah script global klasik yang dimuat berurutan lewat `<script src>` di `index.html` — persis seperti saat masih satu file.
 
@@ -67,6 +69,18 @@ Data Wealth disimpan di `localStorage` (`mw_wealth_v1`) dengan tombol Export/Imp
 4. **⚡ Backtester** — uji strategi pada data historis
 5. **🔍 Screener LQ45** — bandingkan dengan alternatif
 6. **⚠️ Manajemen Risiko** — position sizing sebelum eksekusi
+
+## Kelola Daftar Saham & Sinkronisasi Lintas Perangkat
+
+Menu **🛠 Kelola Daftar Saham** (sidebar → Pengaturan) punya fitur **Import & RESET TOTAL** dari file Excel resmi IDX Stock Screener (kolom wajib: `Kode Saham`, `Nama Perusahaan`, `Sektor`; opsional: `Subsektor`, `Industri`, `Index`, `Mkt Cap`). Meng-import akan menghapus total universe bawaan dan Screener LQ45 statis, digantikan sepenuhnya oleh isi file — LQ45 otomatis dibangun ulang dari kolom `Index`. Portofolio & watchlist Anda tidak ikut terhapus.
+
+**Agar daftar saham ini otomatis ikut ke perangkat/browser lain saat Anda login**, jalankan migrasi berikut **sekali** di Supabase SQL Editor project Anda:
+
+```
+sql/idx_universe_migration.sql
+```
+
+Ini menambah 4 kolom (`idx_universe`, `idx_universe_info`, `admin_meta`, `admin_extra`) ke tabel `user_settings` yang sudah ada. Tanpa migrasi ini, fitur import tetap berfungsi penuh tapi **hanya tersimpan lokal di browser tersebut** (aplikasi mendeteksi kolom belum ada dan otomatis melewati sinkronisasi bagian ini tanpa mengganggu sinkronisasi data lain seperti transaksi/dividen). Setelah migrasi dijalankan, import/edit/hapus/kecualikan saham di satu perangkat akan otomatis muncul di perangkat lain saat login berikutnya. Tombol **↺ Kembalikan ke Daftar Bawaan** juga menghapus salinan di cloud, bukan hanya lokal.
 
 ## Keamanan & Publikasi ke GitHub
 

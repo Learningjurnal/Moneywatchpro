@@ -16,7 +16,23 @@ async function supaSaveAllData(){
   if(!_currentUser) return;
   var uid = _currentUser.id;
   try {
-    var settingsRes = await _supabase.from('user_settings').upsert({user_id:uid,active_sekuritas:activeSekuritas,rdn_balance:rdnBalance,cash_accounts:CASH_ACCOUNTS,tax_cfg:TAX_SETTINGS,sek_tax_override:sekTaxOverride||{},trade_strategy:tradeStrategy||{},next_tx_id:nextTxId,next_div_id:nextDivId,next_rdn_id:nextRdnId,next_crypto_id:nextCryptoId||1,next_etf_id:nextEtfId||1,next_rd_id:nextRdId||1,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+    var basePayload = {user_id:uid,active_sekuritas:activeSekuritas,rdn_balance:rdnBalance,cash_accounts:CASH_ACCOUNTS,tax_cfg:TAX_SETTINGS,sek_tax_override:sekTaxOverride||{},trade_strategy:tradeStrategy||{},next_tx_id:nextTxId,next_div_id:nextDivId,next_rdn_id:nextRdnId,next_crypto_id:nextCryptoId||1,next_etf_id:nextEtfId||1,next_rd_id:nextRdId||1,updated_at:new Date().toISOString()};
+    // Sinkronisasi Daftar Saham (hasil import Excel IDX + override Admin Panel)
+    // lintas perangkat — lihat sql/idx_universe_migration.sql.
+    var idxPayload = {
+      idx_universe: (typeof IDX_UNIVERSE!=='undefined') ? IDX_UNIVERSE : null,
+      idx_universe_info: (typeof IDX_UNIVERSE_INFO!=='undefined') ? IDX_UNIVERSE_INFO : null,
+      admin_meta: (typeof ADMIN_META!=='undefined') ? ADMIN_META : {},
+      admin_extra: (typeof ADMIN_EXTRA!=='undefined') ? ADMIN_EXTRA : []
+    };
+    var settingsRes = await _supabase.from('user_settings').upsert(Object.assign({}, basePayload, idxPayload), {onConflict:'user_id'});
+    if(settingsRes.error && /column .* does not exist/i.test(settingsRes.error.message||'')){
+      // Migrasi kolom Daftar Saham belum dijalankan di Supabase — simpan tanpa
+      // field baru dulu, supaya sinkronisasi data lain (transaksi, dividen, dst)
+      // tidak ikut gagal hanya karena fitur ini belum di-setup.
+      console.warn('Kolom sinkronisasi Daftar Saham belum ada di Supabase. Jalankan sql/idx_universe_migration.sql sekali di SQL Editor Supabase agar daftar saham ikut tersinkron.');
+      settingsRes = await _supabase.from('user_settings').upsert(basePayload, {onConflict:'user_id'});
+    }
     if(settingsRes.error) throw new Error('Upsert user_settings failed: '+settingsRes.error.message);
 
     await _supaReplaceTable('transactions', uid,
@@ -48,7 +64,21 @@ async function supaLoadAllData(){
   var uid=_currentUser.id;
   try {
     var sRes=await _supabase.from('user_settings').select('*').eq('user_id',uid).maybeSingle();
-    if(sRes.data){var s=sRes.data;activeSekuritas=s.active_sekuritas||'Mirae Asset';rdnBalance=s.rdn_balance||0;if(s.cash_accounts)Object.assign(CASH_ACCOUNTS,s.cash_accounts);if(s.tax_cfg){Object.assign(TAX_SETTINGS,s.tax_cfg);if(typeof saveTaxSettings==='function')saveTaxSettings();}if(s.sek_tax_override)sekTaxOverride=s.sek_tax_override;if(s.trade_strategy)tradeStrategy=s.trade_strategy;nextTxId=s.next_tx_id||1;nextDivId=s.next_div_id||1;nextRdnId=s.next_rdn_id||1;nextCryptoId=s.next_crypto_id||1;nextEtfId=s.next_etf_id||1;nextRdId=s.next_rd_id||1;}
+    if(sRes.data){
+      var s=sRes.data;activeSekuritas=s.active_sekuritas||'Mirae Asset';rdnBalance=s.rdn_balance||0;if(s.cash_accounts)Object.assign(CASH_ACCOUNTS,s.cash_accounts);if(s.tax_cfg){Object.assign(TAX_SETTINGS,s.tax_cfg);if(typeof saveTaxSettings==='function')saveTaxSettings();}if(s.sek_tax_override)sekTaxOverride=s.sek_tax_override;if(s.trade_strategy)tradeStrategy=s.trade_strategy;nextTxId=s.next_tx_id||1;nextDivId=s.next_div_id||1;nextRdnId=s.next_rdn_id||1;nextCryptoId=s.next_crypto_id||1;nextEtfId=s.next_etf_id||1;nextRdId=s.next_rd_id||1;
+      // Daftar Saham (import Excel IDX + override Admin Panel) — samakan dengan perangkat lain
+      try{
+        var univChanged = (s.idx_universe && typeof idxApplyFromCloud==='function') ? idxApplyFromCloud(s.idx_universe, s.idx_universe_info) : false;
+        var adminChanged = (typeof adminApplyFromCloud==='function') ? adminApplyFromCloud(s.admin_meta, s.admin_extra) : false;
+        if((univChanged || adminChanged) && typeof rdRebuildFromReal==='function'){
+          if(typeof _scBaseCache!=='undefined') _scBaseCache=null;
+          if(typeof QT!=='undefined') QT.scData=[];
+          if(typeof RD_META!=='undefined') RD_META.universeLoaded=false;
+          rdRebuildFromReal();
+          if(typeof rdLoadUniverse==='function') rdLoadUniverse(true);
+        }
+      }catch(e){ console.warn('Sinkronisasi Daftar Saham dari cloud gagal:', e); }
+    }
     var txRes=await _supabase.from('transactions').select('*').eq('user_id',uid).order('date',{ascending:true});
     if(txRes.data&&txRes.data.length>0) transactions=txRes.data.map(function(t){return {id:t.tx_id,date:t.date,action:t.action,ticker:t.ticker,sekuritas:t.sekuritas,lot:t.lot,shares:t.shares,price:t.price,gross:t.gross,commission:t.commission,tax:t.tax,net:t.net,pl:t.pl};});
     var divRes=await _supabase.from('dividends').select('*').eq('user_id',uid).order('date',{ascending:true});

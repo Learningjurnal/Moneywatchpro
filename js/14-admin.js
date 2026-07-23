@@ -121,6 +121,36 @@ function idxUniqueSectors(){
   return Object.keys(set).sort();
 }
 
+// ══════════════════════════════════════════════
+// SINKRONISASI LINTAS PERANGKAT — dipanggil dari supaLoadAllData() (02-storage.js)
+// setelah login, supaya universe & override yang diimpor di satu device
+// otomatis muncul di device lain. Mengembalikan true bila ada perubahan
+// (supaya caller tahu perlu rebuild FS_RD/Screener/dsb).
+// ══════════════════════════════════════════════
+function idxApplyFromCloud(rows, info){
+  if(!rows || !rows.length) return false;
+  var same = IDX_UNIVERSE && IDX_UNIVERSE_INFO && info &&
+             IDX_UNIVERSE_INFO.importedAt===info.importedAt && IDX_UNIVERSE.length===rows.length;
+  if(same) return false;
+  IDX_UNIVERSE = rows;
+  IDX_UNIVERSE_INFO = info || {fileName:'(disinkronkan dari cloud)', importedAt:new Date().toISOString(), count:rows.length};
+  idxSaveUniverse(IDX_UNIVERSE, IDX_UNIVERSE_INFO);
+  idxApplyUniverse();
+  return true;
+}
+
+function adminApplyFromCloud(meta, extra){
+  var changed = false;
+  if(meta && typeof meta==='object' && JSON.stringify(meta)!==JSON.stringify(ADMIN_META)){
+    ADMIN_META = meta; adminSaveMeta(); changed = true;
+  }
+  if(extra && Array.isArray(extra) && JSON.stringify(extra)!==JSON.stringify(ADMIN_EXTRA)){
+    ADMIN_EXTRA = extra; adminSaveExtra(); changed = true;
+  }
+  if(changed) adminApplyOverrides();
+  return changed;
+}
+
 function idxImportFile(){
   var inp = el('adm-import-file');
   var f = inp && inp.files && inp.files[0];
@@ -170,7 +200,8 @@ function idxImportFile(){
       try{ rdRebuildFromReal(); }catch(err){}
       try{ rdLoadUniverse(true); }catch(err){}
 
-      if(typeof showSaveStatus==='function') showSaveStatus('✓ '+parsed.length+' saham diimpor dari '+f.name+' — universe direset total');
+      if(typeof saveData==='function') saveData(); // sinkron ke cloud — ikut ke perangkat lain
+      if(typeof showSaveStatus==='function') showSaveStatus('✓ '+parsed.length+' saham diimpor dari '+f.name+' — universe direset total & disinkronkan');
       adminRenderPage();
     }catch(err){
       if(typeof showSaveStatus==='function') showSaveStatus('⚠ Gagal membaca Excel: '+err.message,'var(--red)');
@@ -179,14 +210,20 @@ function idxImportFile(){
   reader.readAsArrayBuffer(f);
 }
 
-function idxResetToDefault(){
-  if(!confirm('Kembalikan ke daftar saham bawaan (hapus hasil import Excel)? Halaman akan dimuat ulang.')) return;
+async function idxResetToDefault(){
+  if(!confirm('Kembalikan ke daftar saham bawaan (hapus hasil import Excel)? Ini juga menghapus data yang tersinkron di cloud, jadi perangkat lain ikut kembali ke bawaan. Halaman akan dimuat ulang.')) return;
+  IDX_UNIVERSE = null; IDX_UNIVERSE_INFO = null; ADMIN_META = {}; ADMIN_EXTRA = [];
   try{
     localStorage.removeItem('mw_idx_universe_v1');
     localStorage.removeItem('mw_idx_universe_info_v1');
     localStorage.removeItem('mw_admin_meta_v1');
     localStorage.removeItem('mw_admin_extra_v1');
   }catch(e){}
+  // FIX: tanpa ini, cloud masih menyimpan universe lama — login berikutnya
+  // (di perangkat manapun) akan menariknya balik dan menimpa reset ini.
+  if(typeof _currentUser!=='undefined' && _currentUser && typeof supaSaveAllData==='function'){
+    try{ await supaSaveAllData(); }catch(e){}
+  }
   location.reload();
 }
 
@@ -281,6 +318,7 @@ function adminAddTicker(){
   ADMIN_META[code] = Object.assign({}, ADMIN_META[code]||{}, {name:name||code, sector:sector, excluded:false});
   adminSaveExtra(); adminSaveMeta();
   adminApplyOverrides();
+  if(typeof saveData==='function') saveData();
   el('adm-new-code').value=''; el('adm-new-name').value='';
   if(typeof showSaveStatus==='function') showSaveStatus('✓ '+code+' ditambahkan — memuat data riil...');
   adminRenderPage();
@@ -296,6 +334,7 @@ function adminSaveRow(code){
   });
   adminSaveMeta();
   adminApplyOverrides();
+  if(typeof saveData==='function') saveData();
   try{ rdRebuildFromReal(); }catch(e){}
   if(typeof showSaveStatus==='function') showSaveStatus('✓ '+code+' disimpan');
   adminRenderPage();
@@ -314,6 +353,7 @@ function adminToggleExclude(code){
   cur.excluded = !cur.excluded;
   ADMIN_META[code] = cur;
   adminSaveMeta();
+  if(typeof saveData==='function') saveData();
   try{ rdRebuildFromReal(); }catch(e){}
   adminRenderPage();
 }
@@ -322,6 +362,7 @@ function adminDeleteCustom(code){
   ADMIN_EXTRA = ADMIN_EXTRA.filter(function(t){ return t!==code; });
   delete ADMIN_META[code];
   adminSaveExtra(); adminSaveMeta();
+  if(typeof saveData==='function') saveData();
   FS_UNIV = FS_UNIV.filter(function(u){ return u.t!==code; });
   try{ rdRebuildFromReal(); }catch(e){}
   adminRenderPage();
