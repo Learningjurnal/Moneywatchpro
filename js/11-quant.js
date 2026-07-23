@@ -634,20 +634,20 @@ function mrRender(){
   if(hmEl){
     var years2=[]; var now2=new Date();
     for(var y=startY;y<=now2.getFullYear();y++) years2.push(y);
-    var h='<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:10px;font-family:IBM Plex Mono,monospace">';
-    h+='<tr><th style="padding:3px 8px;color:var(--text3);text-align:left">Tahun</th>'+QT_MONTHS.map(function(m){return '<th style="padding:3px 7px;color:var(--text3)">'+m+'</th>';}).join('')+'<th style="padding:3px 7px;color:var(--text3)">YTD</th></tr>';
+    var h='<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:13px;font-family:IBM Plex Mono,monospace">';
+    h+='<tr><th style="padding:6px 10px;color:var(--text3);text-align:left;font-size:11px">Tahun</th>'+QT_MONTHS.map(function(m){return '<th style="padding:6px 8px;color:var(--text3);font-size:11px">'+m+'</th>';}).join('')+'<th style="padding:6px 8px;color:var(--text3);font-size:11px">YTD</th></tr>';
     years2.forEach(function(y){
-      h+='<tr><td style="padding:4px 8px;font-weight:700;color:var(--text2)">'+y+'</td>';
+      h+='<tr><td style="padding:6px 10px;font-weight:700;color:var(--text2)">'+y+'</td>';
       var ytd=0;
       for(var mi=0;mi<12;mi++){
         var ym2=y+'-'+('0'+(mi+1)).slice(-2);
         var v=monthRets[ym2];
-        var bg=v===undefined?'transparent':v>=0?'rgba(0,212,170,'+(0.12+Math.min(Math.abs(v)/8,.7))+')':'rgba(255,34,68,'+(0.12+Math.min(Math.abs(v)/8,.7))+')';
+        var bg=v===undefined?'transparent':v>=0?'rgba(0,212,170,'+(0.16+Math.min(Math.abs(v)/8,.65))+')':'rgba(255,34,68,'+(0.16+Math.min(Math.abs(v)/8,.65))+')';
         var col=v===undefined?'var(--text3)':v>=0?'var(--green)':'var(--red)';
-        h+='<td style="background:'+bg+';color:'+col+';padding:4px 5px;text-align:center;border-radius:2px;min-width:40px;border:1px solid var(--border)">'+(v===undefined?'—':v.toFixed(1)+'%')+'</td>';
+        h+='<td style="background:'+bg+';color:'+col+';font-weight:700;padding:8px 6px;text-align:center;border-radius:3px;min-width:58px;border:1px solid var(--border)">'+(v===undefined?'—':v.toFixed(1)+'%')+'</td>';
         if(v!==undefined) ytd+=v;
       }
-      h+='<td style="color:'+(ytd>=0?'var(--green)':'var(--red)')+';font-weight:700;padding:4px 8px;text-align:center">'+(ytd===0?'—':(ytd>=0?'+':'')+ytd.toFixed(1)+'%')+'</td>';
+      h+='<td style="color:'+(ytd>=0?'var(--green)':'var(--red)')+';font-weight:700;padding:8px 10px;text-align:center">'+(ytd===0?'—':(ytd>=0?'+':'')+ytd.toFixed(1)+'%')+'</td>';
       h+='</tr>';
     });
     h+='</table></div>';

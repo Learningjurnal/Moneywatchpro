@@ -541,9 +541,9 @@ function fsRenderHeatmap(){
     var vc=r.a.sig==='AKUMULASI'?'#00e5a0':r.a.sig==='DISTRIBUSI'?'#ff3d5a':'#8fa3c8';
     var inWl=FS_WL.some(function(w){return w.t===r.t;});
     return '<div class="fs-hm-cell '+cls+'" onclick="fsQuickLoad(\''+r.t+'\')" title="'+(inWl?'★ ':'')+r.n+' — '+r.a.sig+'">'
-      +'<div class="mono" style="font-size:11px;font-weight:500;color:var(--text)">'+(inWl?'★ ':'')+r.t+'</div>'
-      +'<div class="mono" style="font-size:13px;font-weight:700;color:'+vc+'">'+disp+'</div>'
-      +'<div class="mono" style="font-size:10px;margin-top:1px;color:'+(r.a.chgPct>=0?'#00e5a0':'#ff3d5a')+'">'+fsPct(r.a.chgPct)+'</div>'
+      +'<div class="mono" style="font-size:13px;font-weight:600;color:var(--text)">'+(inWl?'★ ':'')+r.t+'</div>'
+      +'<div class="mono" style="font-size:17px;font-weight:700;margin-top:3px;color:'+vc+'">'+disp+'</div>'
+      +'<div class="mono" style="font-size:12px;margin-top:3px;color:'+(r.a.chgPct>=0?'#00e5a0':'#ff3d5a')+'">'+fsPct(r.a.chgPct)+'</div>'
       +'</div>';
   }).join('');
 }

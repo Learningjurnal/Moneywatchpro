@@ -1081,6 +1081,17 @@ Object.assign(DB, {
 });
 var COLORS = ['#ff6600','#00d4aa','#0088ff','#ffbb00','#9b7fe8','#ff4466','#00b4c8','#ff8833','#44cc88','#dd8800','#6688ff','#22dd66'];
 
+// Warna sektor yang stabil per nama — IDX_SECTORS (nama Indonesia) dipakai jika cocok,
+// selain itu di-hash ke palet COLORS supaya setiap label sektor (termasuk nama Inggris
+// mentah dari data XLSX seperti 'Technology'/'Basic Materials') tetap dapat warna berbeda,
+// bukan jatuh ke satu warna abu-abu yang sama untuk semuanya.
+function sectorColor(name){
+  if(IDX_SECTORS[name] && IDX_SECTORS[name].color) return IDX_SECTORS[name].color;
+  var h=0;
+  for(var i=0;i<(name||'').length;i++){ h=(h*31+name.charCodeAt(i))|0; }
+  return COLORS[Math.abs(h)%COLORS.length];
+}
+
 // ============================================================
 // STATE
 // ============================================================

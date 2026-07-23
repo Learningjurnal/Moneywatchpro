@@ -257,13 +257,6 @@ function renderDashboard(){
   buildModalPosisiChart(porto);
 
   // ── Sektoral — dari getPortfolio() (transaksi user) ──
-  var sectColors = {
-    'Keuangan':'#3b82f6','Energi':'#f97316','Infrastruktur':'#f43f5e',
-    'Konsumer Primer':'#10b981','Barang Baku':'#eab308','Konsumer Non-Primer':'#22c55e',
-    'Kesehatan':'#14b8a6','Transportasi':'#2dd4bf','Properti':'#8b5cf6',
-    'Teknologi':'#a78bfa','Perbankan':'#60a5fa','Tambang':'#fb923c',
-    'Lainnya':'#4a5e82'
-  };
   var sectByMV = {};
   porto.forEach(function(p){
     var sec = (p.info && p.info.sector) || (DB[p.ticker] && DB[p.ticker].sector) || 'Lainnya';
@@ -275,7 +268,7 @@ function renderDashboard(){
   el('d-sectoral-detail').innerHTML = sectItems.length > 0
     ? sectItems.map(function(e){
         var pct = e[1]/sectTotalMV*100;
-        var col = sectColors[e[0]]||'#4a5e82';
+        var col = sectorColor(e[0]);
         return '<div style="margin-bottom:7px">'+
           '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">'+
             '<span style="font-size:11px;display:flex;align-items:center;gap:5px">'+
@@ -317,6 +310,13 @@ function renderDashboard(){
 
   renderStrategyPanel();
   renderDashRisk();
+
+  // ── Bagian yang dipindahkan ke Dashboard: Watchlist, Riwayat Ekuitas, Manajemen Risiko, AI Guide ──
+  if(typeof fsRenderWlPage==='function') fsRenderWlPage();
+  renderEquityHistory();
+  renderRisiko();
+  if(typeof aiRenderPerHoldingReco==='function') aiRenderPerHoldingReco();
+  if(typeof aiUpdateKeyBtn==='function') aiUpdateKeyBtn();
   if(el('ai-box') && !el('ai-box').dataset.live) aiRunHeuristic();
 
   // Re-apply hide masks after every render
@@ -515,7 +515,7 @@ function renderPortofolio(){
     var alloc=totalMV>0?(p.mv/totalMV*100):0;
     var sig=p.ret>5?'BUY':p.ret<-5?'SELL':'HOLD';
     var sigCls=sig==='BUY'?'sig-buy':sig==='SELL'?'sig-sell':'sig-hold';
-    var secColor=IDX_SECTORS[p.info.sector]?IDX_SECTORS[p.info.sector].color:'#4a5e82';
+    var secColor=sectorColor(p.info.sector);
     return '<tr><td><span class="tp" style="border-color:'+COLORS[i%12]+'">'+p.ticker+'</span></td><td style="font-size:11px;color:var(--text2)">'+p.info.name+'</td><td><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:\'IBM Plex Mono\',monospace;color:var(--text2)"><span class="sec-dot" style="background:'+secColor+'"></span>'+p.info.sector+'</span></td><td class="mono">'+p.lot+'</td><td class="mono">'+p.shares+'</td><td class="mono">Rp '+fmt(p.avg)+'</td><td class="mono" style="color:var(--accent)">Rp '+fmt(p.mp)+'</td><td class="mono">Rp '+fmtK(p.mv)+'</td><td class="mono" style="color:var(--text2)">Rp '+fmtK(p.cost)+'</td><td class="mono '+(p.unreal>=0?'up':'dn')+'">'+(p.unreal>=0?'+':'')+'Rp '+fmtK(p.unreal)+'</td><td class="mono '+(p.ret>=0?'up':'dn')+'">'+(p.ret>=0?'+':'')+p.ret.toFixed(2)+'%</td><td><div class="prog" style="width:70px"><div class="progf" style="width:'+alloc.toFixed(1)+'%;background:'+COLORS[i%12]+'"></div></div><div style="font-size:9px;color:var(--text3);font-family:\'IBM Plex Mono\',monospace;margin-top:2px">'+alloc.toFixed(1)+'%</div></td><td><span class="sig '+sigCls+'">'+sig+'</span></td></tr>';
   }).join('')||'<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:16px;font-family:\'IBM Plex Mono\',monospace">Belum ada posisi aktif</td></tr>';
 }
@@ -756,16 +756,45 @@ function renderSektoral(){
 
   el('sector-detail').innerHTML=sectors.map(function(s){
     var sv=byS[s];var alloc=(sv.mv/totalMV*100);
-    var sInfo=IDX_SECTORS[s]||{color:'#4a5e82',desc:''};
+    var sInfo=IDX_SECTORS[s]||{color:sectorColor(s),desc:''};
     return '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><div style="display:flex;align-items:center;gap:6px"><span class="sec-dot" style="background:'+sInfo.color+'"></span><span style="font-size:12px;font-weight:600">'+s+'</span></div><div style="text-align:right"><span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px">'+alloc.toFixed(1)+'%</span></div></div><div class="prog"><div class="progf" style="width:'+alloc+'%;background:'+sInfo.color+'"></div></div><div style="font-size:10px;color:var(--text3);margin-top:2px">'+sv.stocks.length+' saham · Rp '+fmtK(sv.mv)+'</div></div>';
   }).join('')||'<div style="color:var(--text3);text-align:center;padding:20px">Belum ada portofolio</div>';
 
   el('sector-stocks').innerHTML=sectors.map(function(s){
-    var sv=byS[s];var sInfo=IDX_SECTORS[s]||{color:'#4a5e82',desc:''};
+    var sv=byS[s];var sInfo=IDX_SECTORS[s]||{color:sectorColor(s),desc:''};
     return '<div style="margin-bottom:14px"><div style="display:flex;align-items:center;gap:7px;margin-bottom:7px"><span class="sec-dot" style="background:'+sInfo.color+'"></span><span style="font-size:12px;font-weight:600">'+s+'</span><span class="badge b-gray" style="margin-left:auto">'+sInfo.desc+'</span></div><div style="display:flex;flex-wrap:wrap;gap:6px">'+sv.stocks.map(function(p){return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:7px 10px;min-width:120px"><div style="display:flex;justify-content:space-between;align-items:center"><span class="tp" style="border-color:'+sInfo.color+'">'+p.ticker+'</span><span class="badge '+(p.ret>=0?'b-up':'b-dn')+'">'+(p.ret>=0?'+':'')+p.ret.toFixed(1)+'%</span></div><div style="font-size:10px;color:var(--text2);margin-top:3px">'+p.lot+' lot · Rp '+fmtK(p.mv)+'</div></div>'}).join('')+'</div></div>';
   }).join('')||'<div style="color:var(--text3);text-align:center;padding:20px">Belum ada portofolio</div>';
 
   buildSectorChart(porto);
+}
+
+function renderEquityHistory(){
+  var hist=(typeof equitySnapshotToday==='function')?equitySnapshotToday():[];
+  var sum=el('eq-hist-summary');
+  var cv=el('equityHistoryChart');
+  if(hist.length<2){
+    if(sum) sum.innerHTML='<div style="color:var(--text3);font-size:11px;text-align:center;padding:20px">Riwayat ekuitas terkumpul otomatis setiap hari Anda membuka aplikasi. Kembali besok untuk mulai melihat grafik performa modal.</div>';
+    kc('eqhist');
+    return;
+  }
+  var first=hist[0].equity, latest=hist[hist.length-1].equity;
+  var chg=latest-first, chgPct=first>0?(chg/first*100):0;
+  if(sum){
+    sum.innerHTML='<div style="display:flex;gap:22px;flex-wrap:wrap;align-items:baseline">'
+      +'<div><div class="mlabel">Ekuitas Terkini</div><div class="mval" style="font-size:20px">Rp '+fmtK(latest)+'</div></div>'
+      +'<div><div class="mlabel">Perubahan Sejak Tercatat</div><div class="mval '+(chg>=0?'up':'dn')+'" style="font-size:16px">'+(chg>=0?'+':'')+'Rp '+fmtK(chg)+' ('+(chgPct>=0?'+':'')+chgPct.toFixed(1)+'%)</div></div>'
+      +'<div><div class="mlabel">Periode Tercatat</div><div class="mval" style="font-size:13px">'+hist[0].date+' → '+hist[hist.length-1].date+' · '+hist.length+' hari</div></div>'
+      +'</div>';
+  }
+  if(!cv) return;
+  kc('eqhist');
+  var grad=cv.getContext('2d').createLinearGradient(0,0,0,220);
+  grad.addColorStop(0,'rgba(0,200,255,.35)'); grad.addColorStop(1,'rgba(0,200,255,0)');
+  charts['eqhist']=new Chart(cv,{type:'line',data:{labels:hist.map(function(h){return h.date;}),
+    datasets:[{data:hist.map(function(h){return h.equity;}),borderColor:'#00c8ff',backgroundColor:grad,fill:true,tension:.3,pointRadius:0,borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:Object.assign({},TT,{callbacks:{label:function(c){return 'Rp '+fmtK(c.parsed.y);}}})},
+      scales:{x:{ticks:{color:'#8a90ad',font:{size:9},maxTicksLimit:8},grid:{display:false}},
+               y:{ticks:{color:'#555d6e',font:{size:9},callback:function(v){return fmtK(v);}},grid:{color:'rgba(255,255,255,.04)'}}}}});
 }
 
 function renderRisiko(){

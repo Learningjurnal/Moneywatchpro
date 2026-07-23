@@ -446,6 +446,34 @@ function aiRunClaude(){
   });
 }
 
+// ── Saran aksi per saham (Buy/Hold/Trim/Cut-Loss) — heuristik aturan sederhana ──
+function aiPerHoldingAction(p,totalMV){
+  var weight = totalMV>0 ? (p.mv/totalMV*100) : 0;
+  var ret = p.ret;
+  if(ret<=-20) return {action:'TINJAU / CUT LOSS',cls:'b-dn',note:'Rugi '+ret.toFixed(0)+'% — evaluasi ulang tesis awal; cut-loss hanya jika fundamental memburuk, bukan sekadar harga turun.'};
+  if(weight>=25) return {action:'KURANGI BOBOT',cls:'b-amb',note:'Bobot '+weight.toFixed(0)+'% dari portofolio — konsentrasi tinggi di satu saham, pertimbangkan trim untuk diversifikasi.'};
+  if(ret>=40 && weight>=10) return {action:'TRIM / AMBIL UNTUNG',cls:'b-amb',note:'Untung '+ret.toFixed(0)+'% dengan bobot besar — pertimbangkan ambil untung sebagian, biarkan sisanya berjalan.'};
+  if(ret<=-10) return {action:'PANTAU KETAT',cls:'b-amb',note:'Rugi '+ret.toFixed(0)+'% — pantau ketat & siapkan rencana keluar bila tesis tidak berubah.'};
+  if(ret>=15) return {action:'HOLD',cls:'b-up',note:'Kinerja baik ('+(ret>=0?'+':'')+ret.toFixed(0)+'%) — pertahankan selama tesis awal masih valid.'};
+  return {action:'HOLD',cls:'b-gray',note:'Performa wajar ('+(ret>=0?'+':'')+ret.toFixed(0)+'%) — tidak ada aksi mendesak.'};
+}
+function aiRenderPerHoldingReco(){
+  var box=el('ai-holding-reco'); if(!box) return;
+  var porto=getPortfolio();
+  var totalMV=porto.reduce(function(a,p){return a+p.mv},0);
+  if(!porto.length){ box.innerHTML='<div style="color:var(--text3);font-size:11px;text-align:center;padding:16px">Belum ada posisi saham untuk dianalisis.</div>'; return; }
+  var rows=porto.slice().sort(function(a,b){return b.mv-a.mv}).map(function(p){
+    var r=aiPerHoldingAction(p,totalMV);
+    return '<tr><td><span class="tp">'+p.ticker+'</span></td>'
+      +'<td class="mono">'+(totalMV>0?(p.mv/totalMV*100).toFixed(1):'0.0')+'%</td>'
+      +'<td class="mono '+(p.ret>=0?'up':'dn')+'">'+(p.ret>=0?'+':'')+p.ret.toFixed(1)+'%</td>'
+      +'<td><span class="badge '+r.cls+'">'+r.action+'</span></td>'
+      +'<td style="font-size:11px;color:var(--text2)">'+r.note+'</td></tr>';
+  }).join('');
+  box.innerHTML='<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Saham</th><th>Bobot</th><th>Return</th><th>Aksi</th><th>Catatan</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +'<div style="font-size:10px;color:var(--text3);padding:8px 2px 0;line-height:1.6">Aksi di atas adalah heuristik aturan otomatis berbasis return &amp; bobot posisi — bukan rekomendasi investasi, selalu riset mandiri.</div>';
+}
+
 // ── Probabilitas kesimpulan FlowScan ──
 function fsProbability(a){
   var sc=a.sc, dist=Math.abs(sc-50);
@@ -676,6 +704,16 @@ function resetSekTax(){
   if(typeof showSaveStatus==='function') showSaveStatus('✓ Komisi per sekuritas direset ke default');
 }
 
+// Watchlist & Manajemen Risiko dipindahkan menjadi bagian dari Dashboard —
+// helper ini membawa user ke Dashboard lalu scroll ke section terkait.
+function goDashSection(sectionId,btn){
+  goPage('dashboard',btn);
+  setTimeout(function(){
+    var t=document.getElementById(sectionId);
+    if(t) t.scrollIntoView({behavior:'smooth',block:'start'});
+  },60);
+}
+
 var currentPage='dashboard';
 function goPage(name,btn){
   // Auth guard — redirect to login if session expired
@@ -716,13 +754,11 @@ function renderPage(name){
     case 'dividen':renderDividen();break;
     case 'divinvest':renderDivInvest();break;
     case 'sektoral':renderSektoral();break;
-    case 'risiko':renderRisiko();break;
     case 'pajak':renderPajak();break;
     case 'flowscan':fsRunAnalysis();break;
     case 'ranking':fsRenderRanking();break;
     case 'heatmap':fsRenderHeatmap();break;    case 'scanner':break;
     case 'alerts':fsGenAlerts();break;
-    case 'watchlist':fsRenderWlPage();break;
     case 'candle':renderCandle();break;
     // ── QuantTrader pages ──
     case 'backtester':break; // wait for user action

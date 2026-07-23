@@ -156,6 +156,33 @@ function getPortfolio(){
   return result;
 }
 
+// ── Riwayat Ekuitas Harian (AUM) — satu snapshot per hari, disimpan lokal ──
+function computeCurrentAUM(){
+  var porto=getPortfolio(), cryptoPorto=getCryptoPortfolio(), etfPorto=getEtfPortfolio(), rdPorto=getRdPortfolio();
+  var sahamMV=porto.reduce(function(a,p){return a+p.mv},0);
+  var crMV=cryptoPorto.reduce(function(a,p){return a+p.mv},0);
+  var etfMV=etfPorto.reduce(function(a,p){return a+p.mvIdr},0);
+  var rdMV=rdPorto.reduce(function(a,p){return a+p.mv},0);
+  var rdn=(typeof calcRdnBalance==='function')?calcRdnBalance():0;
+  return (sahamMV||0)+(crMV||0)+(etfMV||0)+(rdMV||0)+(rdn||0);
+}
+function equityHistoryLoad(){
+  try{ return JSON.parse(localStorage.getItem('equityHistory')||'[]'); }catch(e){ return []; }
+}
+function equityHistorySave(arr){ try{ localStorage.setItem('equityHistory', JSON.stringify(arr)); }catch(e){} }
+function equitySnapshotToday(){
+  if(!transactions.length && !(rdnMutations&&rdnMutations.length)) return [];
+  var today=new Date().toISOString().slice(0,10);
+  var aum=computeCurrentAUM();
+  var hist=equityHistoryLoad();
+  var last=hist[hist.length-1];
+  if(last && last.date===today) last.equity=aum;
+  else hist.push({date:today,equity:aum});
+  if(hist.length>730) hist=hist.slice(-730);
+  equityHistorySave(hist);
+  return hist;
+}
+
 function getRealizedPnl(){
   var pos={};var real=0;
   transactions.slice().sort(function(a,b){return a.date.localeCompare(b.date)}).forEach(function(tx){
@@ -783,7 +810,7 @@ function buildSectorChart(porto){
   var byS={};var totalMV=porto.reduce(function(a,p){return a+p.mv},0)||1;
   porto.forEach(function(p){byS[p.info.sector]=(byS[p.info.sector]||0)+p.mv});
   var labels=Object.keys(byS);var vals=labels.map(function(s){return byS[s]});
-  var cols=labels.map(function(s){return IDX_SECTORS[s]?IDX_SECTORS[s].color:'#4a5e82'});
+  var cols=labels.map(function(s){return sectorColor(s);});
   charts['sector']=new Chart(cv,{type:'doughnut',data:{labels:labels,datasets:[{data:vals,backgroundColor:cols,borderWidth:0,hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{display:false},tooltip:Object.assign({},TT,{callbacks:{label:function(c){return c.label+': '+(c.parsed/totalMV*100).toFixed(1)+'%'}}})}}});
 }
 

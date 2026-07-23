@@ -209,7 +209,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;back
 .tab:hover:not(.on){color:var(--text2)}
 .tab.on{color:var(--accent);border-bottom-color:var(--accent)}
 /* FlowScan heatmap cell */
-.fs-hm-cell{border-radius:4px;padding:7px 6px;cursor:pointer;transition:transform .12s;border:1px solid transparent}
+.fs-hm-cell{border-radius:6px;padding:11px 9px;cursor:pointer;transition:transform .12s;border:1px solid transparent}
 .fs-hm-cell:hover{transform:translateY(-2px)}
 .fs-hm-acc{background:rgba(8,153,129,.1);border-color:rgba(8,153,129,.25)}
 .fs-hm-dist{background:rgba(242,54,69,.1);border-color:rgba(242,54,69,.25)}
