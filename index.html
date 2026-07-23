@@ -6,13 +6,13 @@
 <title>Money Watch Pro — Portofolio, Wealth & Analisa Quant</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23131324'/><path d='M7 21 L13 13 L18 17 L25 8' stroke='%2334d399' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/><circle cx='25' cy='8' r='2' fill='%2334d399'/></svg>">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/00-config.js?v=20260722f"></script>
+<script src="js/00-config.js?v=20260722g"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="css/main.css?v=20260722f">
-<link rel="stylesheet" href="css/wealth.css?v=20260722f">
+<link rel="stylesheet" href="css/main.css?v=20260722g">
+<link rel="stylesheet" href="css/wealth.css?v=20260722g">
 </head>
 <body>
 <body>
@@ -556,10 +556,11 @@
       <div class="ptitle">Transaksi Saham</div>
       <div class="psub">Catat beli/jual saham dengan kalkulasi komisi &amp; pajak otomatis sesuai sekuritas</div>
     </div>
-    <div style="display:flex;gap:8px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-green" id="btn-beli">+ Beli Saham</button>
       <button class="btn btn-red" id="btn-jual">− Jual Saham</button>
-      <button class="btn btn-ghost" onclick="importMutasiUI()" style="border-color:rgba(0,200,255,.3);color:var(--accent)" title="Impor transaksi historis dari Mutasi_Final.xlsx">⬇ Impor Mutasi</button>
+      <button class="btn btn-ghost" onclick="txDownloadTemplate()" style="border-color:rgba(129,140,248,.3);color:var(--accent)" title="Unduh template Excel siap isi">⬇ Download Template</button>
+      <button class="btn btn-ghost" onclick="txImportExcel()" style="border-color:rgba(52,211,153,.3);color:var(--green)" title="Upload banyak transaksi sekaligus dari file Excel">📤 Upload Excel</button>
     </div>
   </div>
   <div class="row4">
@@ -2204,20 +2205,21 @@
   </div>
 </div>
 
-<script src="js/01-data.js?v=20260722f"></script>
-<script src="js/02-storage.js?v=20260722f"></script>
-<script src="js/03-engine.js?v=20260722f"></script>
-<script src="js/04-render.js?v=20260722f"></script>
-<script src="js/05-assets.js?v=20260722f"></script>
-<script src="js/06-analysis-router.js?v=20260722f"></script>
-<script src="js/07-flowscan.js?v=20260722f"></script>
-<script src="js/08-auth.js?v=20260722f"></script>
-<script src="js/09-divinvest.js?v=20260722f"></script>
-<script src="js/10-hargawajar.js?v=20260722f"></script>
-<script src="js/11-quant.js?v=20260722f"></script>
-<script src="js/12-clean.js?v=20260722f"></script>
-<script src="js/13-realdata.js?v=20260722f"></script>
-<script src="js/14-admin.js?v=20260722f"></script>
-<script src="js/20-wealth.js?v=20260722f"></script>
+<script src="js/01-data.js?v=20260722g"></script>
+<script src="js/02-storage.js?v=20260722g"></script>
+<script src="js/03-engine.js?v=20260722g"></script>
+<script src="js/04-render.js?v=20260722g"></script>
+<script src="js/05-assets.js?v=20260722g"></script>
+<script src="js/06-analysis-router.js?v=20260722g"></script>
+<script src="js/07-flowscan.js?v=20260722g"></script>
+<script src="js/08-auth.js?v=20260722g"></script>
+<script src="js/09-divinvest.js?v=20260722g"></script>
+<script src="js/10-hargawajar.js?v=20260722g"></script>
+<script src="js/11-quant.js?v=20260722g"></script>
+<script src="js/12-clean.js?v=20260722g"></script>
+<script src="js/13-realdata.js?v=20260722g"></script>
+<script src="js/14-admin.js?v=20260722g"></script>
+<script src="js/15-txbulk.js?v=20260722g"></script>
+<script src="js/20-wealth.js?v=20260722g"></script>
 </body>
 </html>

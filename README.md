@@ -36,6 +36,7 @@ File asli Money Watch (10.700 baris) dipecah menjadi modul yang dimuat berurutan
 | `js/12-clean.js` | **BARU** — Fresh start: purge data injeksi lama (sekali jalan) + nol-kan data pribadi lampiran XLSX + kontrol zoom A−/A/A+ |
 | `js/13-realdata.js` | **BARU** — Real Data Engine: OHLCV harian 1 thn dari Yahoo (cache per hari di localStorage) untuk FlowScan, Candle, Correlation, Ranking, Heatmap, Scanner, Alerts, Watchlist, Screener + **Verdict Gabungan** di FlowScan (skor 0–100 dari Big Money 30% · Trend MA 25% · RSI 15% · CMF 15% · VWAP 5% · Momentum 3 bln 10%). Setiap halaman menampilkan badge sumber data (RIIL/SIMULASI); bila fetch gagal, fallback simulasi selalu ditandai jelas |
 | `js/14-admin.js` | **BARU** — Admin Panel Kelola Daftar Saham: edit nama/sektor, tambah/kecualikan ticker, **import Excel IDX Stock Screener** (reset total universe bawaan), sinkron lintas perangkat via Supabase |
+| `js/15-txbulk.js` | **BARU** — Bulk Import Transaksi: download template Excel siap isi + upload banyak transaksi beli/jual sekaligus, dengan pratinjau & validasi per baris sebelum masuk ke jurnal |
 | `js/20-wealth.js` | **BARU** — Modul Wealth (adaptasi Wealth OS) |
 | `sql/idx_universe_migration.sql` | **BARU** — Migrasi Supabase untuk sinkronisasi Daftar Saham (lihat bagian di bawah) |
 
@@ -69,6 +70,13 @@ Data Wealth disimpan di `localStorage` (`mw_wealth_v1`) dengan tombol Export/Imp
 4. **⚡ Backtester** — uji strategi pada data historis
 5. **🔍 Screener LQ45** — bandingkan dengan alternatif
 6. **⚠️ Manajemen Risiko** — position sizing sebelum eksekusi
+
+## Bulk Import Transaksi (tab Transaksi)
+
+Dua tombol baru di tab **Transaksi**:
+
+- **⬇ Download Template** — mengunduh `Template_Transaksi_MoneyWatchPro.xlsx` berisi sheet "Transaksi" siap isi (kolom: Tanggal, Aksi, Kode Saham, Sekuritas, Lot, Harga per Lembar) plus sheet "Daftar Sekuritas" (nama sekuritas yang valid) dan sheet "Petunjuk".
+- **📤 Upload Excel** — pilih file yang sudah diisi. Setiap baris divalidasi (format tanggal, Aksi harus BUY/SELL, Sekuritas harus dikenal, Lot & Harga harus angka positif); hasilnya ditampilkan sebagai pratinjau — baris valid dalam tabel, baris bermasalah dengan alasan spesifik per baris — sebelum Anda klik konfirmasi. Komisi, PPN, Levy, dan PPh dihitung otomatis sama seperti input manual (mengikuti sekuritas & tarif pajak yang aktif), bukan diisi dari file.
 
 ## Kelola Daftar Saham & Sinkronisasi Lintas Perangkat
 
