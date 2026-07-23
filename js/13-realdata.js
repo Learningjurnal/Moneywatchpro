@@ -65,6 +65,37 @@ function rdEnsure(tk, cb){
   rdFetchYahoo(tk, function(err){ cb(err); });
 }
 
+// FIX: `prices{}` (dipakai getPortfolio() untuk Nilai Pasar) dan RD_STORE (cache
+// engine ini) adalah DUA cache terpisah yang tidak saling sinkron. Sebelumnya,
+// ticker BARU (baru dibeli manual atau lewat bulk import Excel) menunggu siklus
+// fhFetchStocks() berkala (rotasi 2 ticker/~2 menit) sebelum harganya terisi —
+// selama itu Nilai Pasar tampil 0 (base placeholder untuk universe hasil import
+// Excel IDX memang sengaja 0, lihat 14-admin.js). Fungsi ini mengambil harga
+// riil satu ticker LANGSUNG dan menuliskannya ke `prices[]`, dipanggil segera
+// setelah transaksi baru dicatat (manual maupun bulk) supaya nilainya akurat
+// seketika, bukan menunggu rotasi.
+function rdFetchLivePrice(tk, cb){
+  rdFetchYahoo(tk, function(err, rows){
+    if(!err && rows && rows.length){
+      prices[tk] = rows[rows.length-1].close;
+      if(cb) cb(null, prices[tk]);
+    } else if(cb) cb(err||new Error('NO_DATA'));
+  });
+}
+
+// Ambil harga riil untuk beberapa ticker sekaligus tanpa membanjiri proxy —
+// berurutan dengan jeda singkat, lalu satu kali render ulang di akhir.
+function rdFetchLivePrices(tickers, onEachOrDone){
+  var uniq = [], seen = {};
+  tickers.forEach(function(t){ if(t && !seen[t]){ seen[t]=1; uniq.push(t); } });
+  var i = 0;
+  (function next(){
+    if(i >= uniq.length){ if(onEachOrDone) onEachOrDone(); return; }
+    var t = uniq[i++];
+    rdFetchLivePrice(t, function(){ setTimeout(next, 500); });
+  })();
+}
+
 // ── Adapter: rows Yahoo → format FlowScan {dt,o,h,l,c,v,obv,ad,mfv,big,up,mfm} ──
 function rdToFs(rows, days){
   var slice = rows.slice(-Math.max(5, days));
@@ -323,6 +354,17 @@ function rdRebuildFromReal(){
   });
   // Screener & Factor Heatmap (QT.scData) dari data riil
   rdBuildScData();
+  // FIX: `prices{}` (dipakai getPortfolio() untuk Nilai Pasar di Portofolio/
+  // Dashboard) dan cache data riil di sini (RD_STORE) sebelumnya tidak pernah
+  // saling sinkron — saham yang harga riilnya HANYA berasal dari sini (bukan
+  // dari fhFetchStocks() 03-engine.js) tetap tampil 0 walau datanya sudah ada.
+  // Sinkronkan sekarang untuk seluruh saham yang benar-benar dimiliki user.
+  try{
+    getPortfolio().forEach(function(p){
+      var rows = rdGetAny(p.ticker);
+      if(rows && rows.length) prices[p.ticker] = rows[rows.length-1].close;
+    });
+  }catch(e){}
   rdUpdateBanners();
   try{ renderPage(currentPage); }catch(e){}
   setTimeout(rdUpdateBanners, 300);

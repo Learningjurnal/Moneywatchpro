@@ -1004,6 +1004,11 @@ function submitTxModal(){
   addTx(date,modalType==='buy'?'BUY':'SELL',ticker,lot,price,sec);
   showSaveStatus('✓ Transaksi '+(modalType==='buy'?'Beli':'Jual')+' '+ticker+' tersimpan');
   closeModal();renderPage(currentPage);
+  // FIX: ticker baru belum tentu punya harga live — ambil sekarang juga,
+  // bukan menunggu rotasi fetch berkala (lihat catatan di rdFetchLivePrice).
+  if(!prices[ticker] && typeof rdFetchLivePrice==='function'){
+    rdFetchLivePrice(ticker, function(){ renderPage(currentPage); });
+  }
 }
 
 function submitDivModal(){

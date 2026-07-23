@@ -163,6 +163,20 @@ function txConfirmImport(){
   renderTransaksi();
   if(typeof renderDashboard==='function') renderDashboard();
   if(typeof showSaveStatus==='function') showSaveStatus('✓ '+rows.length+' transaksi berhasil diimpor');
+
+  // FIX: ticker BARU (belum ada di `prices[]`) sebelumnya menampilkan Nilai
+  // Pasar 0 sampai rotasi fetch berkala menjangkaunya (bisa beberapa menit).
+  // Ambil harga riil sekarang juga untuk semua ticker yang baru diimpor.
+  if(typeof rdFetchLivePrices==='function'){
+    var tickersNeedingPrice = rows.filter(function(r){ return !prices[r.ticker]; }).map(function(r){ return r.ticker; });
+    if(tickersNeedingPrice.length){
+      rdFetchLivePrices(tickersNeedingPrice, function(){
+        renderTransaksi();
+        if(typeof renderDashboard==='function') renderDashboard();
+        if(typeof showSaveStatus==='function') showSaveStatus('✓ Harga live '+tickersNeedingPrice.length+' saham baru dimuat');
+      });
+    }
+  }
 }
 
 // ╔══════════════════════════════════════════════════════════╗
