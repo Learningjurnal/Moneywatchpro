@@ -111,7 +111,16 @@ function addDiv(date,ticker,shares,dps){
 var _portoCache=null, _portoCacheKey='';
 function _invalidatePortoCache(){ _portoCache=null; _portoCacheKey=''; }
 function getPortfolio(){
-  var cacheKey=transactions.length+'|'+(prices&&Object.keys(prices).length||0);
+  // FIX: cache key lama cuma menghitung JUMLAH key di prices{} — begitu key
+  // sebuah ticker sudah ada (mis. dari updatePrices() simulasi), UPDATE NILAI
+  // ke harga riil (dari fhFetchStocks/rdFetchLivePrice/dst) tidak mengubah
+  // jumlah key, jadi cache lama tetap dipakai dan Nilai Pasar macet di angka
+  // lama (termasuk macet di 0). Sekarang sertakan nilai harga tiap ticker yang
+  // benar-benar dipegang (bukan seluruh 900+ isi DB) sebagai sidik jari cache.
+  var heldTickers={};
+  transactions.forEach(function(tx){ heldTickers[tx.ticker]=1; });
+  var priceSig=Object.keys(heldTickers).sort().map(function(t){ return t+':'+(prices[t]||0); }).join(',');
+  var cacheKey=transactions.length+'|'+priceSig;
   if(_portoCache && _portoCacheKey===cacheKey) return _portoCache;
   var pos={};
   transactions.slice().sort(function(a,b){return a.date.localeCompare(b.date)}).forEach(function(tx){
