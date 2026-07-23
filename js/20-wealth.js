@@ -330,7 +330,7 @@ function wRenderDebt(){
       '<td class="dn"><b>'+(x.bunga||0)+'%</b></td>'+
       '<td>'+wRp(x.cicilan)+'</td>'+
       '<td><span class="badge '+(i===0?'b-dn':i===1?'b-gray':'b-up')+'">'+(i===0?'Lunasi dulu':'P'+(i+1))+'</span></td>'+
-      '<td style="white-space:nowrap"><button class="btn btn-ghost btn-xs" onclick="wModalDebt('+x.id+')">✎</button> <button class="btn btn-red btn-xs" onclick="wConfirmDelete(\'debt\','+x.id+',\''+(x.nama||'')+'\')">🗑</button></td></tr>';
+      '<td style="white-space:nowrap"><button class="btn btn-blue btn-xs" onclick="wModalDebtPay('+x.id+')" title="Catat pembayaran">💰 Bayar</button> <button class="btn btn-ghost btn-xs" onclick="wModalDebt('+x.id+')">✎</button> <button class="btn btn-red btn-xs" onclick="wConfirmDelete(\'debt\','+x.id+',\''+(x.nama||'')+'\')">🗑</button></td></tr>';
     }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">Belum ada hutang tercatat 🎉</td></tr>')+
     '</tbody></table></div>'+
   '</div>'+
@@ -391,6 +391,7 @@ function wRenderPiutang(){
           '<div style="font-size:9px;color:var(--text3)">sisa</div>'+
           '<span class="badge '+badgeCls+'" style="margin-top:4px;display:inline-block">'+x.status+'</span>'+
           '<div style="display:flex;gap:4px;margin-top:6px;justify-content:flex-end">'+
+            (x.status!=='Lunas' ? '<button class="btn btn-blue btn-xs" onclick="wModalPiutangPay('+x.id+')" title="Catat pembayaran diterima">💰 Terima</button>' : '')+
             '<button class="btn btn-ghost btn-xs" onclick="wModalPiutang('+x.id+')">✎</button>'+
             '<button class="btn btn-red btn-xs" onclick="wConfirmDelete(\'piutang\','+x.id+',\''+(x.nama||'')+'\')">🗑</button>'+
           '</div>'+
@@ -565,10 +566,45 @@ function wModalDebt(id){
     wFooter('wSaveDebt('+(it?it.id:'null')+')'));
 }
 function wSaveDebt(id){
-  var obj = {id:id||wUid(), nama:wVal('wf-nama'), tipe:wVal('wf-tipe'), bunga:wNum('wf-bunga'), outstanding:wNum('wf-outstanding'), cicilan:wNum('wf-cicilan')};
+  var old = id ? wFind('debt',id) : null;
+  var obj = {id:id||wUid(), nama:wVal('wf-nama'), tipe:wVal('wf-tipe'), bunga:wNum('wf-bunga'), outstanding:wNum('wf-outstanding'), cicilan:wNum('wf-cicilan'), payments:old?old.payments:[]};
   if(!obj.nama){ alert('Nama hutang wajib diisi'); return; }
   if(id) WEALTH.debt = WEALTH.debt.map(function(x){return x.id==id?obj:x});
   else WEALTH.debt.push(obj);
+  wCloseModal(); wRerender();
+}
+
+// — Bayar Hutang —
+function wPaymentHistoryHtml(payments){
+  if(!payments || !payments.length) return '<div style="font-size:10px;color:var(--text3);margin-top:12px">Belum ada riwayat pembayaran.</div>';
+  var sorted = payments.slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+  return '<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">'+
+    '<div style="font-size:10px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Riwayat Pembayaran</div>'+
+    '<div style="max-height:140px;overflow-y:auto">'+
+    sorted.map(function(p){
+      return '<div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)">'+
+        '<span style="color:var(--text3)">'+(p.date?new Date(p.date).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):'—')+'</span>'+
+        '<b>'+wRp(p.amount)+'</b></div>';
+    }).join('')+
+    '</div></div>';
+}
+function wModalDebtPay(id){
+  var it = wFind('debt', id); if(!it) return;
+  wOpenModal('💰 Bayar Hutang — '+it.nama,
+    '<div style="font-size:11px;color:var(--text3);margin-bottom:10px">Outstanding saat ini: <b style="color:var(--text)">'+wRp(it.outstanding)+'</b></div>'+
+    '<div class="w-frow">'+wField('Jumlah Pembayaran (Rp)','wf-pay-amt','',it.cicilan||'','number')+wField('Tanggal','wf-pay-date',new Date().toISOString().slice(0,10),'','date')+'</div>'+
+    wFooter('wSaveDebtPay('+id+')')+
+    wPaymentHistoryHtml(it.payments));
+}
+function wSaveDebtPay(id){
+  var it = wFind('debt', id); if(!it) return;
+  var amt = wNum('wf-pay-amt');
+  if(!amt || amt<=0){ alert('Jumlah pembayaran harus lebih dari 0'); return; }
+  var date = wVal('wf-pay-date') || new Date().toISOString().slice(0,10);
+  if(!Array.isArray(it.payments)) it.payments = [];
+  it.payments.push({id:wUid(), date:date, amount:amt});
+  it.outstanding = Math.max(0, (it.outstanding||0) - amt);
+  WEALTH.debt = WEALTH.debt.map(function(x){return x.id==id?it:x});
   wCloseModal(); wRerender();
 }
 
@@ -582,10 +618,34 @@ function wModalPiutang(id){
     wFooter('wSavePiutang('+(it?it.id:'null')+')'));
 }
 function wSavePiutang(id){
-  var obj = {id:id||wUid(), nama:wVal('wf-nama'), keperluan:wVal('wf-keperluan'), pokok:wNum('wf-pokok'), terbayar:wNum('wf-terbayar'), jatuhTempo:wVal('wf-tempo'), status:wVal('wf-status')};
+  var old = id ? wFind('piutang',id) : null;
+  var obj = {id:id||wUid(), nama:wVal('wf-nama'), keperluan:wVal('wf-keperluan'), pokok:wNum('wf-pokok'), terbayar:wNum('wf-terbayar'), jatuhTempo:wVal('wf-tempo'), status:wVal('wf-status'), payments:old?old.payments:[]};
   if(!obj.nama){ alert('Nama debitur wajib diisi'); return; }
   if(id) WEALTH.piutang = WEALTH.piutang.map(function(x){return x.id==id?obj:x});
   else WEALTH.piutang.push(obj);
+  wCloseModal(); wRerender();
+}
+
+// — Terima Pembayaran Piutang —
+function wModalPiutangPay(id){
+  var it = wFind('piutang', id); if(!it) return;
+  var sisa = Math.max(0, (it.pokok||0)-(it.terbayar||0));
+  wOpenModal('💰 Terima Pembayaran — '+it.nama,
+    '<div style="font-size:11px;color:var(--text3);margin-bottom:10px">Sisa piutang: <b style="color:var(--text)">'+wRp(sisa)+'</b></div>'+
+    '<div class="w-frow">'+wField('Jumlah Diterima (Rp)','wf-pay-amt','',sisa||'','number')+wField('Tanggal','wf-pay-date',new Date().toISOString().slice(0,10),'','date')+'</div>'+
+    wFooter('wSavePiutangPay('+id+')')+
+    wPaymentHistoryHtml(it.payments));
+}
+function wSavePiutangPay(id){
+  var it = wFind('piutang', id); if(!it) return;
+  var amt = wNum('wf-pay-amt');
+  if(!amt || amt<=0){ alert('Jumlah pembayaran harus lebih dari 0'); return; }
+  var date = wVal('wf-pay-date') || new Date().toISOString().slice(0,10);
+  if(!Array.isArray(it.payments)) it.payments = [];
+  it.payments.push({id:wUid(), date:date, amount:amt});
+  it.terbayar = Math.min(it.pokok||0, (it.terbayar||0) + amt);
+  if(it.terbayar >= (it.pokok||0)) it.status = 'Lunas';
+  WEALTH.piutang = WEALTH.piutang.map(function(x){return x.id==id?it:x});
   wCloseModal(); wRerender();
 }
 
