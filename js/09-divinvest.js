@@ -90,7 +90,8 @@ function saveDivInvestEntry(){
   // Cek duplikat di dividends global
   var isDup=dividends.some(function(d){return d.ticker===ticker&&d.date===date&&d.dps===dps;});
   if(isDup){alert('Data ini sudah ada di riwayat dividen global. Tidak perlu diinput ulang.');return;}
-  var gross=dps*shares;var tax=gross*0.10;var net=gross-tax;
+  // FIX AUDIT F1: pakai TAX_SETTINGS.pphDividen, bukan literal 0.10
+  var gross=dps*shares;var tax=gross*TAX_SETTINGS.pphDividen;var net=gross-tax;
   divInvestData.push({id:_divInvestId++,ticker:ticker,date:date,dps:dps,shares:shares,avgPrice:avgPrice,gross:gross,tax:tax,net:net});
   diSaveData();
   ['di-inp-ticker','di-inp-date','di-inp-dps','di-inp-shares','di-inp-avgprice'].forEach(function(id){var e=el(id);if(e)e.value='';});
@@ -109,7 +110,8 @@ function saveDivBatch(){
     var dps=parseFloat(parts[2]),shares=parseFloat(parts[3]);
     var avgPrice=parseFloat(parts[4])||0;
     if(!ticker||!date||isNaN(dps)||isNaN(shares)||dps<=0||shares<=0)return;
-    var gross=dps*shares,tax=gross*0.10,net=gross-tax;
+    // FIX AUDIT F1: pakai TAX_SETTINGS.pphDividen, bukan literal 0.10
+    var gross=dps*shares,tax=gross*TAX_SETTINGS.pphDividen,net=gross-tax;
     divInvestData.push({id:_divInvestId++,ticker:ticker,date:date,dps:dps,shares:shares,avgPrice:avgPrice,gross:gross,tax:tax,net:net});
     count++;
   });

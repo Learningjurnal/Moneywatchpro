@@ -70,12 +70,20 @@ var FEE_TYPES = [
 ];
 
 function addRdn(date, type, ket, amount, sekuritas, linkedTxId){
-  rdnBalance += amount;
+  // FIX AUDIT F2: sebelumnya rdnBalance+=amount lalu balance:rdnBalance ditulis
+  // TANPA mengurutkan ulang rdnMutations dulu — mutasi bertanggal MUNDUR yang
+  // ditambahkan setelah mutasi lain akan dapat snapshot "balance" yang salah
+  // secara kronologis (lihat AUDIT_FINANCIAL_ENGINE.md Temuan #2, terverifikasi
+  // reproduksi langsung). rebuildRdnBalance() selalu re-sort by date dulu lalu
+  // menghitung ulang penuh, jadi kolom balance per-baris selalu benar berapa
+  // pun urutan penambahannya.
   rdnMutations.push({
     id:nextRdnId++, date:date, type:type, ket:ket,
-    amount:amount, balance:rdnBalance, sekuritas:sekuritas,
+    amount:amount, balance:0, sekuritas:sekuritas,
     linkedTxId: linkedTxId||null
   });
+  if(typeof rebuildRdnBalance==='function') rebuildRdnBalance();
+  else rdnBalance += amount; // fallback (seharusnya tidak pernah terjadi di app ini)
   // Note: saveData() harus dipanggil dari caller utama (addTx/addDiv/submitRdn)
 }
 
@@ -98,7 +106,9 @@ function addTx(date,type,ticker,lot,price,sekuritas){
 }
 
 function addDiv(date,ticker,shares,dps){
-  var gross=shares*dps;var tax=gross*0.1;var net=gross-tax;
+  // FIX AUDIT F1: pakai TAX_SETTINGS.pphDividen (single source of truth),
+  // bukan literal 0.1 — lihat AUDIT_FINANCIAL_ENGINE.md Temuan #1.
+  var gross=shares*dps;var tax=gross*TAX_SETTINGS.pphDividen;var net=gross-tax;
   var divId = nextDivId++;
   dividends.push({id:divId,date:date,ticker:ticker,shares:shares,dps:dps,gross:gross,tax:tax,net:net});
   addRdn(date,'DIVIDEN','Dividen '+ticker+' Rp '+fmt(dps)+'/lbr',net,'—', 'div-'+divId);

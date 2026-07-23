@@ -959,7 +959,8 @@ function txCalcLive(){
 function divCalcLive(){
   var shares=parseFloat(el('mf-shares')&&el('mf-shares').value||0);
   var dps=parseFloat(el('mf-dps')&&el('mf-dps').value||0);
-  var gross=shares*dps;var tax=gross*0.1;var net=gross-tax;
+  // FIX AUDIT F1: pakai TAX_SETTINGS.pphDividen, bukan literal 0.1
+  var gross=shares*dps;var tax=gross*TAX_SETTINGS.pphDividen;var net=gross-tax;
   if(el('dc-g'))el('dc-g').textContent='Rp '+fmt(gross);
   if(el('dc-t'))el('dc-t').textContent='-Rp '+fmt(tax);
   if(el('dc-n'))el('dc-n').textContent='Rp '+fmt(net);
