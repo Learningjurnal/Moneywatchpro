@@ -101,26 +101,53 @@ function txValidateRow(r, idx){
   if(type!=='BUY' && type!=='SELL') errs.push('Aksi harus BUY atau SELL');
   if(!ticker) errs.push('Kode Saham kosong');
   if(!sekuritas || !SEKURITAS[sekuritas]) errs.push('Sekuritas "'+sekuritas+'" tidak dikenali — lihat sheet Daftar Sekuritas');
-  if(!(lot>0)) errs.push('Lot harus angka > 0');
-  if(!(price>0)) errs.push('Harga harus angka > 0');
+  // FIX AUDIT F7: tolak juga Infinity, bukan cuma NaN/negatif/nol
+  if(!(lot>0) || !isFinite(lot)) errs.push('Lot harus angka > 0');
+  if(!(price>0) || !isFinite(price)) errs.push('Harga harus angka > 0');
 
   return {row:idx+2, date:date, type:type, ticker:ticker, sekuritas:sekuritas, lot:lot, price:price, ok:errs.length===0, errs:errs};
 }
 
+// FIX AUDIT F6: kunci pencocokan duplikat — persis sama di semua kolom berarti
+// hampir pasti baris yang sama diupload dua kali (skenario umum: user ragu
+// apakah upload pertama berhasil, lalu upload ulang file yang sama).
+function txDupKey(r){ return [r.date,r.type,r.ticker,r.lot,r.price,r.sekuritas].join('|'); }
+
 var TX_IMPORT_ROWS = [];
+var TX_IMPORT_DUPES = [];
 
 function txProcessImportRows(rows, fileName){
   if(!rows.length){ if(typeof showSaveStatus==='function') showSaveStatus('⚠ File kosong atau tidak ada baris data','var(--red)'); return; }
   var parsed = rows.map(function(r,i){ return txValidateRow(r,i); });
-  var valid = parsed.filter(function(p){ return p.ok; });
+  var okRows = parsed.filter(function(p){ return p.ok; });
   var invalid = parsed.filter(function(p){ return !p.ok; });
+
+  // Pisahkan baris valid yang identik dengan transaksi yang SUDAH ADA di jurnal
+  // atau dengan baris LAIN di batch yang sama — jangan auto-impor, minta konfirmasi.
+  var existingKeys = {};
+  transactions.forEach(function(t){ existingKeys[txDupKey({date:t.date,type:t.type,ticker:t.ticker,lot:t.lot,price:t.price,sekuritas:t.sekuritas})] = true; });
+  var seenInBatch = {};
+  var valid = [], dupes = [];
+  okRows.forEach(function(p){
+    var key = txDupKey(p);
+    if(existingKeys[key] || seenInBatch[key]) dupes.push(p);
+    else { valid.push(p); seenInBatch[key] = true; }
+  });
   TX_IMPORT_ROWS = valid;
+  TX_IMPORT_DUPES = dupes;
 
   var body =
     '<div style="font-size:12px;color:var(--text2);margin-bottom:12px">File <b>'+fileName+'</b>: '+
-      '<b class="up">'+valid.length+' baris valid</b>'+(invalid.length ? ' &nbsp;·&nbsp; <b class="dn">'+invalid.length+' baris bermasalah (akan dilewati)</b>' : '')+'.</div>'+
+      '<b class="up">'+valid.length+' baris valid</b>'+
+      (dupes.length ? ' &nbsp;·&nbsp; <b class="amb">'+dupes.length+' kemungkinan duplikat (dilewati kecuali dicentang)</b>' : '')+
+      (invalid.length ? ' &nbsp;·&nbsp; <b class="dn">'+invalid.length+' baris bermasalah (akan dilewati)</b>' : '')+'.</div>'+
     (invalid.length ? '<div style="max-height:150px;overflow-y:auto;background:var(--bg3);border-radius:8px;padding:8px 10px;margin-bottom:12px;font-size:11px;color:var(--text2)">'+
       invalid.map(function(p){ return '<div style="padding:3px 0;border-bottom:1px solid var(--border)">Baris '+p.row+': '+p.errs.join('; ')+'</div>'; }).join('')+
+    '</div>' : '')+
+    (dupes.length ? '<div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:8px;padding:8px 10px;margin-bottom:12px;font-size:11px;color:var(--text2)">'+
+      '<div style="margin-bottom:5px"><b class="amb">⚠ Baris berikut identik dengan transaksi yang sudah ada</b> (tanggal, aksi, kode, lot, harga, sekuritas sama persis) — kemungkinan file diupload dua kali:</div>'+
+      dupes.map(function(p){ return '<div style="padding:2px 0">Baris '+p.row+': '+p.date+' '+p.type+' '+p.ticker+' '+p.lot+' lot @ Rp '+fmt(p.price)+'</div>'; }).join('')+
+      '<label style="display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer"><input type="checkbox" id="tx-import-dupes-chk"> <span>Impor juga baris duplikat ini (saya yakin ini transaksi baru, bukan duplikat)</span></label>'+
     '</div>' : '')+
     (valid.length ? '<div style="overflow-x:auto;max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">'+
       '<table class="tbl"><thead><tr><th>Tanggal</th><th>Aksi</th><th>Kode</th><th>Sekuritas</th><th>Lot</th><th>Harga</th></tr></thead><tbody>'+
@@ -129,21 +156,22 @@ function txProcessImportRows(rows, fileName){
           '<td class="tp">'+p.ticker+'</td><td style="font-size:11px">'+p.sekuritas+'</td>'+
           '<td class="mono">'+p.lot+'</td><td class="mono">Rp '+fmt(p.price)+'</td></tr>';
       }).join('')+
-      '</tbody></table></div>' : '<div style="font-size:12px;color:var(--red)">Tidak ada baris valid untuk diimpor — perbaiki file lalu upload ulang.</div>');
+      '</tbody></table></div>' : (dupes.length ? '' : '<div style="font-size:12px;color:var(--red)">Tidak ada baris valid untuk diimpor — perbaiki file lalu upload ulang.</div>'));
 
   el('m-title').textContent = '📤 Konfirmasi Impor Transaksi';
   el('m-title').style.color = 'var(--accent)';
   el('m-body').innerHTML = body +
     '<div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">'+
       '<button class="btn btn-ghost" onclick="closeModal()">Batal</button>'+
-      (valid.length ? '<button class="btn btn-green" onclick="txConfirmImport()">✓ Impor '+valid.length+' Transaksi</button>' : '')+
+      (valid.length||dupes.length ? '<button class="btn btn-green" onclick="txConfirmImport()">✓ Impor Transaksi</button>' : '')+
     '</div>';
   el('modal').classList.add('on');
 }
 
 function txConfirmImport(){
-  var rows = TX_IMPORT_ROWS.slice();
-  TX_IMPORT_ROWS = [];
+  var includeDupes = !!(el('tx-import-dupes-chk') && el('tx-import-dupes-chk').checked);
+  var rows = TX_IMPORT_ROWS.concat(includeDupes ? TX_IMPORT_DUPES : []);
+  TX_IMPORT_ROWS = []; TX_IMPORT_DUPES = [];
   closeModal();
   if(!rows.length) return;
 
@@ -251,26 +279,49 @@ function divValidateRow(r, idx){
   var errs = [];
   if(!date) errs.push('Tanggal tidak valid (pakai format YYYY-MM-DD)');
   if(!ticker) errs.push('Kode Saham kosong');
-  if(!(shares>0)) errs.push('Jumlah Lembar harus angka > 0');
-  if(!(dps>0)) errs.push('Dividen per Lembar harus angka > 0');
+  // FIX AUDIT F7: tolak juga Infinity, bukan cuma NaN/negatif/nol
+  if(!(shares>0) || !isFinite(shares)) errs.push('Jumlah Lembar harus angka > 0');
+  if(!(dps>0) || !isFinite(dps)) errs.push('Dividen per Lembar harus angka > 0');
 
   return {row:idx+2, date:date, ticker:ticker, shares:shares, dps:dps, ok:errs.length===0, errs:errs};
 }
 
+// FIX AUDIT F6: kunci pencocokan duplikat untuk dividen
+function divDupKey(r){ return [r.date,r.ticker,r.shares,r.dps].join('|'); }
+
 var DIV_IMPORT_ROWS = [];
+var DIV_IMPORT_DUPES = [];
 
 function divProcessImportRows(rows, fileName){
   if(!rows.length){ if(typeof showSaveStatus==='function') showSaveStatus('⚠ File kosong atau tidak ada baris data','var(--red)'); return; }
   var parsed = rows.map(function(r,i){ return divValidateRow(r,i); });
-  var valid = parsed.filter(function(p){ return p.ok; });
+  var okRows = parsed.filter(function(p){ return p.ok; });
   var invalid = parsed.filter(function(p){ return !p.ok; });
+
+  var existingKeys = {};
+  dividends.forEach(function(d){ existingKeys[divDupKey({date:d.date,ticker:d.ticker,shares:d.shares,dps:d.dps})] = true; });
+  var seenInBatch = {};
+  var valid = [], dupes = [];
+  okRows.forEach(function(p){
+    var key = divDupKey(p);
+    if(existingKeys[key] || seenInBatch[key]) dupes.push(p);
+    else { valid.push(p); seenInBatch[key] = true; }
+  });
   DIV_IMPORT_ROWS = valid;
+  DIV_IMPORT_DUPES = dupes;
 
   var body =
     '<div style="font-size:12px;color:var(--text2);margin-bottom:12px">File <b>'+fileName+'</b>: '+
-      '<b class="up">'+valid.length+' baris valid</b>'+(invalid.length ? ' &nbsp;·&nbsp; <b class="dn">'+invalid.length+' baris bermasalah (akan dilewati)</b>' : '')+'.</div>'+
+      '<b class="up">'+valid.length+' baris valid</b>'+
+      (dupes.length ? ' &nbsp;·&nbsp; <b class="amb">'+dupes.length+' kemungkinan duplikat (dilewati kecuali dicentang)</b>' : '')+
+      (invalid.length ? ' &nbsp;·&nbsp; <b class="dn">'+invalid.length+' baris bermasalah (akan dilewati)</b>' : '')+'.</div>'+
     (invalid.length ? '<div style="max-height:150px;overflow-y:auto;background:var(--bg3);border-radius:8px;padding:8px 10px;margin-bottom:12px;font-size:11px;color:var(--text2)">'+
       invalid.map(function(p){ return '<div style="padding:3px 0;border-bottom:1px solid var(--border)">Baris '+p.row+': '+p.errs.join('; ')+'</div>'; }).join('')+
+    '</div>' : '')+
+    (dupes.length ? '<div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:8px;padding:8px 10px;margin-bottom:12px;font-size:11px;color:var(--text2)">'+
+      '<div style="margin-bottom:5px"><b class="amb">⚠ Baris berikut identik dengan dividen yang sudah tercatat</b> (tanggal, kode, lembar, dividen/lembar sama persis) — kemungkinan file diupload dua kali:</div>'+
+      dupes.map(function(p){ return '<div style="padding:2px 0">Baris '+p.row+': '+p.date+' '+p.ticker+' '+fmt(p.shares)+' lbr @ Rp '+fmt(p.dps)+'</div>'; }).join('')+
+      '<label style="display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer"><input type="checkbox" id="div-import-dupes-chk"> <span>Impor juga baris duplikat ini (saya yakin ini dividen baru, bukan duplikat)</span></label>'+
     '</div>' : '')+
     (valid.length ? '<div style="overflow-x:auto;max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">'+
       '<table class="tbl"><thead><tr><th>Tanggal</th><th>Kode</th><th>Lembar</th><th>Div/Lembar</th><th>Dividen Kotor</th></tr></thead><tbody>'+
@@ -279,21 +330,22 @@ function divProcessImportRows(rows, fileName){
           '<td class="mono">'+fmt(p.shares)+'</td><td class="mono">Rp '+fmt(p.dps)+'</td>'+
           '<td class="mono">Rp '+fmt(p.shares*p.dps)+'</td></tr>';
       }).join('')+
-      '</tbody></table></div>' : '<div style="font-size:12px;color:var(--red)">Tidak ada baris valid untuk diimpor — perbaiki file lalu upload ulang.</div>');
+      '</tbody></table></div>' : (dupes.length ? '' : '<div style="font-size:12px;color:var(--red)">Tidak ada baris valid untuk diimpor — perbaiki file lalu upload ulang.</div>'));
 
   el('m-title').textContent = '📤 Konfirmasi Impor Dividen';
   el('m-title').style.color = 'var(--purple)';
   el('m-body').innerHTML = body +
     '<div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">'+
       '<button class="btn btn-ghost" onclick="closeModal()">Batal</button>'+
-      (valid.length ? '<button class="btn btn-green" onclick="divConfirmImport()">✓ Impor '+valid.length+' Dividen</button>' : '')+
+      (valid.length||dupes.length ? '<button class="btn btn-green" onclick="divConfirmImport()">✓ Impor Dividen</button>' : '')+
     '</div>';
   el('modal').classList.add('on');
 }
 
 function divConfirmImport(){
-  var rows = DIV_IMPORT_ROWS.slice();
-  DIV_IMPORT_ROWS = [];
+  var includeDupes = !!(el('div-import-dupes-chk') && el('div-import-dupes-chk').checked);
+  var rows = DIV_IMPORT_ROWS.concat(includeDupes ? DIV_IMPORT_DUPES : []);
+  DIV_IMPORT_ROWS = []; DIV_IMPORT_DUPES = [];
   closeModal();
   if(!rows.length) return;
 

@@ -171,14 +171,19 @@ function getRealizedPnl(){
 }
 
 function calcRdnBalance(){
-  // FIX AUDIT: rdnBalance negatif juga valid (habis beli besar) — jangan dibuang.
-  if(typeof rdnBalance === 'number' && rdnBalance !== 0 && !isNaN(rdnBalance)) return rdnBalance;
-  // Hitung dari mutasi jika ada
-  if(!rdnMutations || rdnMutations.length === 0) return 0;
+  // FIX AUDIT F3: sebelumnya fungsi ini "percaya" variabel cache rdnBalance
+  // apa adanya (hanya menghitung ulang jika kebetulan 0) — model kepercayaan
+  // BEDA dari rebuildRdnBalance() yang SELALU menghitung ulang penuh. Dua
+  // fungsi berbeda untuk satu nilai yang sama = pelanggaran Single Source of
+  // Truth (lihat AUDIT_FINANCIAL_ENGINE.md Temuan #3). Sekarang calcRdnBalance
+  // HANYA memanggil rebuildRdnBalance() dan mengembalikan hasilnya — satu
+  // jalur kebenaran untuk keduanya. Aman secara performa: rdnMutations biasa
+  // berjumlah puluhan-ratusan baris, bukan jutaan.
+  if(!Array.isArray(rdnMutations)) rdnMutations = [];
+  if(typeof rebuildRdnBalance === 'function'){ rebuildRdnBalance(); return rdnBalance; }
+  // Fallback jika rebuildRdnBalance entah kenapa belum termuat (seharusnya tidak pernah terjadi)
   var bal = 0;
   rdnMutations.forEach(function(r){
-    // FIX AUDIT: mutasi lokal memakai field {amount}; skema Supabase memakai amountIn/amountOut.
-    // Versi lama hanya menjumlahkan amountIn/Out sehingga mutasi lokal dihitung 0.
     if(typeof r.amount === 'number' && r.amount !== 0) bal += r.amount;
     else bal += (r.amountIn||r.amount_in||0) - (r.amountOut||r.amount_out||0);
   });
@@ -372,6 +377,27 @@ function fhFetchKurs(){
   });
 }
 
+// FIX AUDIT F4: harga ETF sebelumnya cuma simulasi Math.random() satu kali saat
+// load, tidak pernah diperbarui — padahal ticker ETF AS (VOO, QQQ, dst) adalah
+// simbol Yahoo Finance yang valid TANPA akhiran .JK, jadi bisa pakai yfFetch()
+// yang sama persis dengan saham IDX. updateEtfPrices() (Math.random) tetap ada
+// sebagai fallback simulasi kalau fetch riil gagal — pola sama dengan updatePrices().
+function fhFetchEtf(){
+  var held = (typeof getEtfPortfolio==='function') ? getEtfPortfolio().map(function(p){return p.ticker;}) : [];
+  var codes = held.length ? held : Object.keys(ETF_DB).slice(0,5);
+  codes.forEach(function(code, i){
+    setTimeout(function(){
+      yfFetch(code, function(err, meta){
+        if(!err && meta && meta.regularMarketPrice > 0){
+          etfPrices[code] = meta.regularMarketPrice;
+          if(typeof ETF_DB!=='undefined' && ETF_DB[code]) ETF_DB[code].baseUSD = meta.regularMarketPrice;
+          if(typeof currentPage!=='undefined' && currentPage==='etf'){ try{ renderEtf(); }catch(e){} }
+        }
+      });
+    }, i*1500);
+  });
+}
+
 // ── Fetch harga crypto LANGSUNG dalam IDR via Yahoo Finance (pair -IDR) ──
 function fhFetchCrypto(){
   var codes = Object.keys(CRYPTO_DB);
@@ -394,6 +420,7 @@ function fhStart(){
   setTimeout(fhFetchKurs,   2000);
   setTimeout(fhFetchStocks, 4000);
   setTimeout(fhFetchCrypto, 6000);
+  setTimeout(fhFetchEtf,    8000);
   if(FH.timer) clearInterval(FH.timer);
   var tick = 0;
   FH.timer = setInterval(function(){
@@ -401,6 +428,7 @@ function fhStart(){
     fhFetchIHSG();                       // IHSG tiap 15 detik
     if(tick%8===0)  fhFetchStocks();     // saham tiap 2 menit
     if(tick%8===0)  fhFetchCrypto();     // crypto tiap 2 menit
+    if(tick%8===0)  fhFetchEtf();        // ETF tiap 2 menit
     if(tick%40===0) fhFetchKurs();       // kurs tiap 10 menit
     if(tick%4===0)  renderPage(currentPage);
   }, 15000);

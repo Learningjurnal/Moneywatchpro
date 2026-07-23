@@ -49,7 +49,12 @@ function wCalc(){
     if(typeof getCryptoPortfolio==='function') inv.crypto = getCryptoPortfolio().reduce(function(a,p){return a+p.mv},0);
     if(typeof getEtfPortfolio==='function')    inv.etf    = getEtfPortfolio().reduce(function(a,p){return a+(p.mvIdr||0)},0);
     if(typeof getRdPortfolio==='function')     inv.rd     = getRdPortfolio().reduce(function(a,p){return a+p.mv},0);
-    var rdn = (typeof calcRdnBalance==='function') ? Math.max(0, calcRdnBalance()) : 0;
+    // FIX AUDIT F5: sebelumnya RDN negatif dibulatkan ke 0 (Math.max(0,...)) —
+    // liabilitas kas riil hilang dari Net Worth. Sekarang nilai mentah (boleh
+    // negatif) ikut menekan Net Worth, bukan disembunyikan. Donut alokasi di
+    // bawah sudah aman karena baris .filter(v>0) otomatis menyisihkan nilai
+    // negatif dari chart tanpa perlu variabel terpisah.
+    var rdn = (typeof calcRdnBalance==='function') ? calcRdnBalance() : 0;
     var kasLain = 0;
     if(typeof CASH_ACCOUNTS!=='undefined'){
       var kurs = (typeof usdIdr!=='undefined' && usdIdr>0) ? usdIdr : 16200;
@@ -228,6 +233,8 @@ function wInsights(a){
     ins.push({ic:'⏰', bg:'rgba(251,191,36,.12)', title:'Piutang '+x.status.toLowerCase()+': '+x.nama, desc:'Sisa '+wRp((x.pokok||0)-(x.terbayar||0))+(x.jatuhTempo?' · jatuh tempo '+new Date(x.jatuhTempo).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):''), badge:'Tindak lanjut', cls:'b-dn'});
   });
   if(WEALTH.expense>0 && a.emMonths<3) ins.push({ic:'🛡', bg:'rgba(251,191,36,.12)', title:'Dana darurat kritis', desc:'Hanya '+a.emMonths.toFixed(1)+' bulan pengeluaran. Target minimal 3 bulan ('+wRp(WEALTH.expense*3)+').', badge:'Urgent', cls:'b-dn'});
+  // FIX AUDIT F5: tampilkan RDN minus sebagai liabilitas, jangan disembunyikan
+  if(a.inv && a.inv.kas<0) ins.push({ic:'💳', bg:'rgba(248,113,113,.12)', title:'Saldo RDN minus '+wRp(Math.abs(a.inv.kas)), desc:'Anda membeli saham melebihi kas yang tercatat. Nilai ini sudah dikurangkan dari Net Worth sebagai liabilitas — segera setor dana untuk menutupinya.', badge:'Liabilitas', cls:'b-dn'});
   try{
     if(typeof getPortfolio==='function'){
       var losers = getPortfolio().filter(function(p){return p.ret<=-25}).sort(function(x,y){return x.ret-y.ret}).slice(0,2);

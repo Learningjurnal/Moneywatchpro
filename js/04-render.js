@@ -21,10 +21,16 @@ function renderDashboard(){
   var rdDisplayVal   = rdMV > 0 ? rdMV : 0; // nilai aktif = 0 karena semua dicairkan
   var rdn       = calcRdnBalance();
 
-  // ── AUM = semua aset investasi + kas RDN ──
-  var AUM = (sahamMV||0) + (crMV||0) + (etfMV||0) + (rdMV||0) + Math.max(0,rdn||0);
+  // FIX AUDIT F5: sebelumnya RDN negatif dibulatkan ke 0 (Math.max(0,rdn)) saat
+  // dijumlah ke AUM — artinya kalau user membeli saham melebihi kas tercatat
+  // (RDN minus, kondisi yang sengaja DIPERTAHANKAN sebagai valid oleh app ini),
+  // liabilitas itu hilang dari total, membuat AUM tampak lebih besar dari
+  // kondisi sebenarnya. Sekarang RDN mentah (boleh negatif) ikut dijumlah —
+  // liabilitas kas ikut mengurangi AUM, bukan disembunyikan.
+  var investMV  = (sahamMV||0) + (crMV||0) + (etfMV||0) + (rdMV||0);
+  var AUM = investMV + (rdn||0);
   var totalCost = (sahamCost||0) + (crCost||0) + (etfCost||0) + (rdCost||0);
-  var totalUnreal = AUM - totalCost - Math.max(0,rdn||0);
+  var totalUnreal = investMV - totalCost; // P&L investasi murni, tidak tercampur kas RDN
   var real = getRealizedPnl();
   var yr = new Date().getFullYear();
   var divYTD = dividends.filter(function(d){return new Date(d.date).getFullYear()===yr}).reduce(function(a,d){return a+d.net},0);
@@ -56,7 +62,10 @@ function renderDashboard(){
   el('d-unreal-sub').innerHTML='<span class="'+(totalUnreal>=0?'up':'dn')+'">'+aumPct+'% return</span>';
   el('d-real').className='mval '+(real>=0?'up':'dn');
   el('d-real').textContent=(real>=0?'+':'')+'Rp '+fmtK(real);
-  el('d-rdn').textContent='Rp '+fmtK(rdn);
+  el('d-rdn').textContent=(rdn<0?'-':'')+'Rp '+fmtK(Math.abs(rdn));
+  el('d-rdn').className='mval '+(rdn<0?'dn':'');
+  if(el('d-rdn-sub')) el('d-rdn-sub').innerHTML = rdn<0
+    ? '<span class="dn">⚠ RDN minus — liabilitas, sudah dikurangkan dari AUM</span>' : 'dana kas tersedia';
 
   // ── 4 Asset Cards ──
   // Saham
