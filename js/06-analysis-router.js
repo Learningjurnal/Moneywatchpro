@@ -300,9 +300,16 @@ function renderStrategyPanel(){
     var opts=TRADE_TYPES.map(function(t){return '<option value="'+t+'"'+(t===cur?' selected':'')+'>'+t+'</option>'}).join('');
     return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border)"><div style="display:flex;align-items:center;gap:7px;min-width:0"><span style="font-weight:700;color:var(--accent);font-size:11px">'+p.ticker+'</span><span style="font-size:9px;color:var(--text3);font-family:\'IBM Plex Mono\',monospace">'+(p.mv/totalMV*100).toFixed(1)+'%</span></div><select class="finput fsel" style="width:118px;padding:3px 7px;font-size:10px;border-color:'+TRADE_COLOR[cur]+'" onchange="setStockStrategy(\''+p.ticker+'\',this.value)">'+opts+'</select></div>';
   }).join('');
-  box.innerHTML='<div style="display:flex;gap:12px;align-items:center"><div style="position:relative;width:118px;height:118px;flex-shrink:0"><canvas id="stratPie"></canvas></div><div style="flex:1;min-width:0"><div style="font-size:9px;color:var(--text3);letter-spacing:.6px;font-family:\'IBM Plex Mono\',monospace;margin-bottom:6px">ALOKASI STRATEGI (saham)</div>'+legend+'</div></div>'
-    +ringkasan
-    +'<div style="margin-top:9px;padding-top:8px;border-top:1px solid var(--border2)"><div style="font-size:9px;color:var(--text3);font-family:\'IBM Plex Mono\',monospace;letter-spacing:.6px;margin-bottom:5px">STRATEGI PER EMITEN — atur manual</div><div style="max-height:170px;overflow-y:auto">'+rows+'</div></div>';
+  box.innerHTML='<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">'
+    +'<div style="flex:1;min-width:220px">'
+      +'<div style="display:flex;gap:12px;align-items:center"><div style="position:relative;width:100px;height:100px;flex-shrink:0"><canvas id="stratPie"></canvas></div><div style="flex:1;min-width:0"><div style="font-size:9px;color:var(--text3);letter-spacing:.6px;font-family:\'IBM Plex Mono\',monospace;margin-bottom:6px">ALOKASI STRATEGI (saham)</div>'+legend+'</div></div>'
+      +ringkasan
+    +'</div>'
+    +'<div style="flex:1.3;min-width:240px;border-left:1px solid var(--border2);padding-left:16px">'
+      +'<div style="font-size:9px;color:var(--text3);font-family:\'IBM Plex Mono\',monospace;letter-spacing:.6px;margin-bottom:6px">STRATEGI PER EMITEN — atur manual</div>'
+      +'<div style="max-height:260px;overflow-y:auto">'+rows+'</div>'
+    +'</div>'
+  +'</div>';
   kc('stratPie');
   var cv=el('stratPie');
   if(cv && typeof Chart!=='undefined'){

@@ -6,13 +6,13 @@
 <title>Money Watch Pro — Portofolio, Wealth & Analisa Quant</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23131324'/><path d='M7 21 L13 13 L18 17 L25 8' stroke='%2334d399' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/><circle cx='25' cy='8' r='2' fill='%2334d399'/></svg>">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/00-config.js?v=20260723i"></script>
+<script src="js/00-config.js?v=20260723j"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="css/main.css?v=20260723i">
-<link rel="stylesheet" href="css/wealth.css?v=20260723i">
+<link rel="stylesheet" href="css/main.css?v=20260723j">
+<link rel="stylesheet" href="css/wealth.css?v=20260723j">
 </head>
 <body>
 <body>
@@ -698,27 +698,29 @@
 </div>
 
 <!-- ===== TRANSAKSI ===== -->
-<div id="page-transaksi" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-    <div>
-      <div class="ptitle">Transaksi Saham</div>
-      <div class="psub">Catat beli/jual saham dengan kalkulasi komisi &amp; pajak otomatis sesuai sekuritas</div>
+<div id="page-transaksi" class="page" style="display:flex;flex-direction:column;overflow:hidden;padding:0">
+  <div style="flex-shrink:0;padding:14px 16px 0">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+      <div>
+        <div class="ptitle">Transaksi Saham</div>
+        <div class="psub">Catat beli/jual saham dengan kalkulasi komisi &amp; pajak otomatis sesuai sekuritas</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-green" id="btn-beli">+ Beli Saham</button>
+        <button class="btn btn-red" id="btn-jual">− Jual Saham</button>
+        <button class="btn btn-ghost" onclick="txDownloadTemplate()" style="border-color:rgba(129,140,248,.3);color:var(--accent)" title="Unduh template Excel siap isi">⬇ Download Template</button>
+        <button class="btn btn-ghost" onclick="txImportExcel()" style="border-color:rgba(52,211,153,.3);color:var(--green)" title="Upload banyak transaksi sekaligus dari file Excel">📤 Upload Excel</button>
+      </div>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-green" id="btn-beli">+ Beli Saham</button>
-      <button class="btn btn-red" id="btn-jual">− Jual Saham</button>
-      <button class="btn btn-ghost" onclick="txDownloadTemplate()" style="border-color:rgba(129,140,248,.3);color:var(--accent)" title="Unduh template Excel siap isi">⬇ Download Template</button>
-      <button class="btn btn-ghost" onclick="txImportExcel()" style="border-color:rgba(52,211,153,.3);color:var(--green)" title="Upload banyak transaksi sekaligus dari file Excel">📤 Upload Excel</button>
+    <div class="row4">
+      <div class="metric"><div class="mlabel">Total Transaksi</div><div class="mval" id="tx-cnt">0</div><div class="msub neu">semua waktu</div></div>
+      <div class="metric"><div class="mlabel">Total Beli</div><div class="mval" id="tx-buy">Rp 0</div><div class="msub neu" id="tx-buy-cnt">0 transaksi</div></div>
+      <div class="metric"><div class="mlabel">Total Jual</div><div class="mval" id="tx-sell">Rp 0</div><div class="msub neu" id="tx-sell-cnt">0 transaksi</div></div>
+      <div class="metric"><div class="mlabel">Total Komisi+Pajak</div><div class="mval" id="tx-tax">Rp 0</div><div class="msub neu">biaya keseluruhan</div></div>
     </div>
   </div>
-  <div class="row4">
-    <div class="metric"><div class="mlabel">Total Transaksi</div><div class="mval" id="tx-cnt">0</div><div class="msub neu">semua waktu</div></div>
-    <div class="metric"><div class="mlabel">Total Beli</div><div class="mval" id="tx-buy">Rp 0</div><div class="msub neu" id="tx-buy-cnt">0 transaksi</div></div>
-    <div class="metric"><div class="mlabel">Total Jual</div><div class="mval" id="tx-sell">Rp 0</div><div class="msub neu" id="tx-sell-cnt">0 transaksi</div></div>
-    <div class="metric"><div class="mlabel">Total Komisi+Pajak</div><div class="mval" id="tx-tax">Rp 0</div><div class="msub neu">biaya keseluruhan</div></div>
-  </div>
-  <div class="card">
-    <div class="cheader">
+  <div class="card" style="flex:1;min-height:0;display:flex;flex-direction:column;margin:10px 16px 14px;overflow:hidden">
+    <div class="cheader" style="flex-shrink:0">
       <span class="ctitle">Riwayat Transaksi Saham</span>
       <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
         <input class="finput" id="tx-search" style="width:120px;padding:4px 9px;font-size:11px" placeholder="Cari ticker...">
@@ -730,9 +732,9 @@
         <button class="btn btn-red btn-xs" onclick="txClearAll()">🗑 Hapus Semua</button>
       </div>
     </div>
-    <div style="overflow-x:auto">
+    <div style="overflow:auto;flex:1;min-height:0">
       <table class="tbl">
-        <thead><tr>
+        <thead style="position:sticky;top:0;z-index:2;background:var(--bg3)"><tr>
           <th><input type="checkbox" id="tx-check-all" onchange="txToggleAll(this.checked)" style="cursor:pointer"></th>
           <th>Tanggal</th><th>Aksi</th><th>Ticker</th><th>Sekuritas</th><th>Lot</th><th>Lembar</th>
           <th>Harga/Lbr</th><th>Nilai Kotor</th><th>Komisi</th><th>Pajak PPh</th>
@@ -2281,21 +2283,21 @@
   </div>
 </div>
 
-<script src="js/01-data.js?v=20260723i"></script>
-<script src="js/02-storage.js?v=20260723i"></script>
-<script src="js/03-engine.js?v=20260723i"></script>
-<script src="js/04-render.js?v=20260723i"></script>
-<script src="js/05-assets.js?v=20260723i"></script>
-<script src="js/06-analysis-router.js?v=20260723i"></script>
-<script src="js/07-flowscan.js?v=20260723i"></script>
-<script src="js/08-auth.js?v=20260723i"></script>
-<script src="js/09-divinvest.js?v=20260723i"></script>
-<script src="js/10-hargawajar.js?v=20260723i"></script>
-<script src="js/11-quant.js?v=20260723i"></script>
-<script src="js/12-clean.js?v=20260723i"></script>
-<script src="js/13-realdata.js?v=20260723i"></script>
-<script src="js/14-admin.js?v=20260723i"></script>
-<script src="js/15-txbulk.js?v=20260723i"></script>
-<script src="js/20-wealth.js?v=20260723i"></script>
+<script src="js/01-data.js?v=20260723j"></script>
+<script src="js/02-storage.js?v=20260723j"></script>
+<script src="js/03-engine.js?v=20260723j"></script>
+<script src="js/04-render.js?v=20260723j"></script>
+<script src="js/05-assets.js?v=20260723j"></script>
+<script src="js/06-analysis-router.js?v=20260723j"></script>
+<script src="js/07-flowscan.js?v=20260723j"></script>
+<script src="js/08-auth.js?v=20260723j"></script>
+<script src="js/09-divinvest.js?v=20260723j"></script>
+<script src="js/10-hargawajar.js?v=20260723j"></script>
+<script src="js/11-quant.js?v=20260723j"></script>
+<script src="js/12-clean.js?v=20260723j"></script>
+<script src="js/13-realdata.js?v=20260723j"></script>
+<script src="js/14-admin.js?v=20260723j"></script>
+<script src="js/15-txbulk.js?v=20260723j"></script>
+<script src="js/20-wealth.js?v=20260723j"></script>
 </body>
 </html>

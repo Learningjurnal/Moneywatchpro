@@ -33,6 +33,17 @@ async function supaSaveAllData(){
       console.warn('Kolom sinkronisasi Daftar Saham belum ada di Supabase. Jalankan sql/idx_universe_migration.sql sekali di SQL Editor Supabase agar daftar saham ikut tersinkron.');
       settingsRes = await _supabase.from('user_settings').upsert(basePayload, {onConflict:'user_id'});
     }
+    if(settingsRes.error && /column .* does not exist/i.test(settingsRes.error.message||'')){
+      // Kolom trade_strategy/sek_tax_override juga belum ada — strip keduanya
+      // supaya sisa data (transaksi, dividen, RDN, dst) tetap tersinkron.
+      // Strategi per-emiten & override komisi TIDAK akan ikut tersimpan ke
+      // cloud sampai sql/trade_strategy_migration.sql dijalankan.
+      console.warn('Kolom trade_strategy/sek_tax_override belum ada di Supabase. Jalankan sql/trade_strategy_migration.sql sekali di SQL Editor Supabase agar Strategi per Emiten ikut tersinkron & tidak hilang saat reload.');
+      var strippedPayload = Object.assign({}, basePayload);
+      delete strippedPayload.trade_strategy;
+      delete strippedPayload.sek_tax_override;
+      settingsRes = await _supabase.from('user_settings').upsert(strippedPayload, {onConflict:'user_id'});
+    }
     if(settingsRes.error) throw new Error('Upsert user_settings failed: '+settingsRes.error.message);
 
     await _supaReplaceTable('transactions', uid,
