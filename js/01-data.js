@@ -24,6 +24,20 @@ function sortAssets(key){
   renderDashboard();
 }
 
+// ── SORT & FILTER STATE untuk tabel Portofolio Saham ──
+var _portoSort = {key:'mv', asc:false};
+function sortPorto(key){
+  if(_portoSort.key===key) _portoSort.asc=!_portoSort.asc;
+  else { _portoSort.key=key; _portoSort.asc=(key==='name'||key==='sector'); }
+  renderPortofolio();
+}
+function resetPortoFilter(){
+  ['porto-filter-search','porto-filter-sector','porto-filter-signal','porto-filter-pnl'].forEach(function(id){
+    var e=document.getElementById(id); if(e) e.value='';
+  });
+  renderPortofolio();
+}
+
 // ── TARIF PAJAK GLOBAL — sesuai regulasi BEI & DJP ──
 // Ref: PMK 131/2024 (PPN 12%), PP 14/1997 (PPh Final 0.1%), IDX Regulation
 var TAX_SETTINGS = {

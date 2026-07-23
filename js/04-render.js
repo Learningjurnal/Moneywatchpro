@@ -511,13 +511,54 @@ function renderPortofolio(){
   el('p-best').textContent=best.ret!==-Infinity?(best.ret>=0?'+':'')+best.ret.toFixed(2)+'%':'-';
   el('p-best-sub').textContent=best.ticker!=='-'?best.ticker:'';
 
-  el('porto-tbody').innerHTML=porto.map(function(p,i){
+  // ── Isi dropdown filter sektor (pertahankan pilihan aktif) ──
+  var secSel=el('porto-filter-sector');
+  if(secSel){
+    var curSecVal=secSel.value;
+    var secList=Array.from(new Set(porto.map(function(p){return p.info.sector;}))).sort();
+    secSel.innerHTML='<option value="">Semua Sektor</option>'+secList.map(function(s){return '<option value="'+s+'">'+s+'</option>';}).join('');
+    if(secList.indexOf(curSecVal)>-1) secSel.value=curSecVal;
+  }
+
+  // ── Terapkan filter ──
+  var qSearch=(el('porto-filter-search')&&el('porto-filter-search').value||'').trim().toUpperCase();
+  var qSector=(el('porto-filter-sector')&&el('porto-filter-sector').value)||'';
+  var qSignal=(el('porto-filter-signal')&&el('porto-filter-signal').value)||'';
+  var qPnl=(el('porto-filter-pnl')&&el('porto-filter-pnl').value)||'';
+  var rows=porto.map(function(p){
     var alloc=totalMV>0?(p.mv/totalMV*100):0;
     var sig=p.ret>5?'BUY':p.ret<-5?'SELL':'HOLD';
+    return Object.assign({},p,{alloc:alloc,sig:sig});
+  });
+  if(qSearch) rows=rows.filter(function(p){return p.ticker.toUpperCase().indexOf(qSearch)>-1||(p.info.name||'').toUpperCase().indexOf(qSearch)>-1;});
+  if(qSector) rows=rows.filter(function(p){return p.info.sector===qSector;});
+  if(qSignal) rows=rows.filter(function(p){return p.sig===qSignal;});
+  if(qPnl==='profit') rows=rows.filter(function(p){return p.unreal>=0;});
+  else if(qPnl==='loss') rows=rows.filter(function(p){return p.unreal<0;});
+
+  // ── Terapkan sort ──
+  var sk=_portoSort.key, asc=_portoSort.asc;
+  rows.sort(function(a,b){
+    var va,vb;
+    if(sk==='name'){ va=a.ticker; vb=b.ticker; return asc?va.localeCompare(vb):vb.localeCompare(va); }
+    if(sk==='sector'){ va=a.info.sector; vb=b.info.sector; return asc?va.localeCompare(vb):vb.localeCompare(va); }
+    va=a[sk]; vb=b[sk];
+    return asc?va-vb:vb-va;
+  });
+  ['name','sector','lot','mv','cost','unreal','ret','alloc'].forEach(function(k){
+    var ico=el('porto-sort-ico-'+k);
+    if(ico) ico.textContent=k===sk?(asc?'↑':'↓'):'↕';
+  });
+
+  var cntEl=el('porto-filter-count');
+  if(cntEl) cntEl.textContent=(qSearch||qSector||qSignal||qPnl)?rows.length+' dari '+porto.length+' saham':porto.length+' saham';
+
+  el('porto-tbody').innerHTML=rows.map(function(p,i){
+    var alloc=p.alloc, sig=p.sig;
     var sigCls=sig==='BUY'?'sig-buy':sig==='SELL'?'sig-sell':'sig-hold';
     var secColor=sectorColor(p.info.sector);
     return '<tr><td><span class="tp" style="border-color:'+COLORS[i%12]+'">'+p.ticker+'</span></td><td style="font-size:11px;color:var(--text2)">'+p.info.name+'</td><td><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:\'IBM Plex Mono\',monospace;color:var(--text2)"><span class="sec-dot" style="background:'+secColor+'"></span>'+p.info.sector+'</span></td><td class="mono">'+p.lot+'</td><td class="mono">'+p.shares+'</td><td class="mono">Rp '+fmt(p.avg)+'</td><td class="mono" style="color:var(--accent)">Rp '+fmt(p.mp)+'</td><td class="mono">Rp '+fmtK(p.mv)+'</td><td class="mono" style="color:var(--text2)">Rp '+fmtK(p.cost)+'</td><td class="mono '+(p.unreal>=0?'up':'dn')+'">'+(p.unreal>=0?'+':'')+'Rp '+fmtK(p.unreal)+'</td><td class="mono '+(p.ret>=0?'up':'dn')+'">'+(p.ret>=0?'+':'')+p.ret.toFixed(2)+'%</td><td><div class="prog" style="width:70px"><div class="progf" style="width:'+alloc.toFixed(1)+'%;background:'+COLORS[i%12]+'"></div></div><div style="font-size:9px;color:var(--text3);font-family:\'IBM Plex Mono\',monospace;margin-top:2px">'+alloc.toFixed(1)+'%</div></td><td><span class="sig '+sigCls+'">'+sig+'</span></td></tr>';
-  }).join('')||'<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:16px;font-family:\'IBM Plex Mono\',monospace">Belum ada posisi aktif</td></tr>';
+  }).join('')||'<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:16px;font-family:\'IBM Plex Mono\',monospace">'+(porto.length?'Tidak ada saham yang cocok dengan filter':'Belum ada posisi aktif')+'</td></tr>';
 }
 
 var _divSelected = new Set();

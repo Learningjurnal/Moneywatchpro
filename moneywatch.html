@@ -6,13 +6,13 @@
 <title>Money Watch Pro — Portofolio, Wealth & Analisa Quant</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23131324'/><path d='M7 21 L13 13 L18 17 L25 8' stroke='%2334d399' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/><circle cx='25' cy='8' r='2' fill='%2334d399'/></svg>">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/00-config.js?v=20260723g"></script>
+<script src="js/00-config.js?v=20260723h"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="css/main.css?v=20260723g">
-<link rel="stylesheet" href="css/wealth.css?v=20260723g">
+<link rel="stylesheet" href="css/main.css?v=20260723h">
+<link rel="stylesheet" href="css/wealth.css?v=20260723h">
 </head>
 <body>
 <body>
@@ -768,13 +768,33 @@
     <div class="metric"><div class="mlabel">Return Terbaik</div><div class="mval" id="p-best">-</div><div class="msub" id="p-best-sub"></div></div>
   </div>
   <div class="card">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+      <input id="porto-filter-search" placeholder="Cari ticker / nama..." class="finput" style="padding:5px 10px;font-size:11px;width:160px" oninput="renderPortofolio()"/>
+      <select class="finput fsel" id="porto-filter-sector" onchange="renderPortofolio()" style="padding:5px 8px;font-size:11px"><option value="">Semua Sektor</option></select>
+      <select class="finput fsel" id="porto-filter-signal" onchange="renderPortofolio()" style="padding:5px 8px;font-size:11px">
+        <option value="">Semua Sinyal</option><option value="BUY">BUY</option><option value="HOLD">HOLD</option><option value="SELL">SELL</option>
+      </select>
+      <select class="finput fsel" id="porto-filter-pnl" onchange="renderPortofolio()" style="padding:5px 8px;font-size:11px">
+        <option value="">Semua P&amp;L</option><option value="profit">Profit saja</option><option value="loss">Rugi saja</option>
+      </select>
+      <button class="btn btn-ghost btn-xs" onclick="resetPortoFilter()">↺ Reset</button>
+      <span style="font-size:10px;color:var(--text3);margin-left:auto" id="porto-filter-count"></span>
+    </div>
     <div style="overflow-x:auto">
       <table class="tbl">
         <thead><tr>
-          <th>Ticker</th><th>Nama</th><th>Sektor</th><th>Lot</th><th>Lembar</th>
-          <th>Avg Beli</th><th>Harga Pasar</th><th>Nilai Pasar</th>
-          <th>Modal</th><th>Unrealized P&amp;L</th><th>Return %</th>
-          <th>Alokasi</th><th>Signal</th>
+          <th onclick="sortPorto('name')" style="cursor:pointer;user-select:none">Ticker <span id="porto-sort-ico-name" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th>Nama</th>
+          <th onclick="sortPorto('sector')" style="cursor:pointer;user-select:none">Sektor <span id="porto-sort-ico-sector" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th onclick="sortPorto('lot')" style="cursor:pointer;user-select:none">Lot <span id="porto-sort-ico-lot" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th>Lembar</th>
+          <th>Avg Beli</th><th>Harga Pasar</th>
+          <th onclick="sortPorto('mv')" style="cursor:pointer;user-select:none">Nilai Pasar <span id="porto-sort-ico-mv" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th onclick="sortPorto('cost')" style="cursor:pointer;user-select:none">Modal <span id="porto-sort-ico-cost" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th onclick="sortPorto('unreal')" style="cursor:pointer;user-select:none">Unrealized P&amp;L <span id="porto-sort-ico-unreal" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th onclick="sortPorto('ret')" style="cursor:pointer;user-select:none">Return % <span id="porto-sort-ico-ret" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th onclick="sortPorto('alloc')" style="cursor:pointer;user-select:none">Alokasi <span id="porto-sort-ico-alloc" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th>Signal</th>
         </tr></thead>
         <tbody id="porto-tbody"></tbody>
       </table>
@@ -2261,21 +2281,21 @@
   </div>
 </div>
 
-<script src="js/01-data.js?v=20260723g"></script>
-<script src="js/02-storage.js?v=20260723g"></script>
-<script src="js/03-engine.js?v=20260723g"></script>
-<script src="js/04-render.js?v=20260723g"></script>
-<script src="js/05-assets.js?v=20260723g"></script>
-<script src="js/06-analysis-router.js?v=20260723g"></script>
-<script src="js/07-flowscan.js?v=20260723g"></script>
-<script src="js/08-auth.js?v=20260723g"></script>
-<script src="js/09-divinvest.js?v=20260723g"></script>
-<script src="js/10-hargawajar.js?v=20260723g"></script>
-<script src="js/11-quant.js?v=20260723g"></script>
-<script src="js/12-clean.js?v=20260723g"></script>
-<script src="js/13-realdata.js?v=20260723g"></script>
-<script src="js/14-admin.js?v=20260723g"></script>
-<script src="js/15-txbulk.js?v=20260723g"></script>
-<script src="js/20-wealth.js?v=20260723g"></script>
+<script src="js/01-data.js?v=20260723h"></script>
+<script src="js/02-storage.js?v=20260723h"></script>
+<script src="js/03-engine.js?v=20260723h"></script>
+<script src="js/04-render.js?v=20260723h"></script>
+<script src="js/05-assets.js?v=20260723h"></script>
+<script src="js/06-analysis-router.js?v=20260723h"></script>
+<script src="js/07-flowscan.js?v=20260723h"></script>
+<script src="js/08-auth.js?v=20260723h"></script>
+<script src="js/09-divinvest.js?v=20260723h"></script>
+<script src="js/10-hargawajar.js?v=20260723h"></script>
+<script src="js/11-quant.js?v=20260723h"></script>
+<script src="js/12-clean.js?v=20260723h"></script>
+<script src="js/13-realdata.js?v=20260723h"></script>
+<script src="js/14-admin.js?v=20260723h"></script>
+<script src="js/15-txbulk.js?v=20260723h"></script>
+<script src="js/20-wealth.js?v=20260723h"></script>
 </body>
 </html>
