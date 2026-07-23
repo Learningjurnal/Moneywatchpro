@@ -670,49 +670,54 @@ function buildIhsgChart(tf){
     labels=candles.map(function(_,i){return ''+i;});
   }
 
-  // SVG dimensions
+  // SVG dimensions — tinggi mengikuti kontainer nyata, bukan angka tetap
   var VW=svg.parentElement?svg.parentElement.offsetWidth||700:700;
-  var VH=155, padL=48, padR=8, padT=8, padB=22;
+  var VH=svg.parentElement?svg.parentElement.offsetHeight||200:200;
+  var padL=48, padR=8, padT=8, padB=22;
   var plotW=VW-padL-padR, plotH=VH-padT-padB;
   svg.setAttribute('viewBox','0 0 '+VW+' '+VH);
   svg.setAttribute('xmlns','http://www.w3.org/2000/svg');
 
-  var allH=candles.map(function(c){return c.h;}), allL=candles.map(function(c){return c.l;});
-  var mn=Math.min.apply(null,allL), mx=Math.max.apply(null,allH), rng=mx-mn||1;
-  // Add 5% padding top/bottom
-  mn-=rng*0.05; mx+=rng*0.05; rng=mx-mn;
+  // Area chart: pakai harga penutupan tiap titik (bukan OHLC candle)
+  var closes=candles.map(function(c){return c.c;});
+  var mn=Math.min.apply(null,closes), mx=Math.max.apply(null,closes), rng=mx-mn||1;
+  mn-=rng*0.08; mx+=rng*0.08; rng=mx-mn;
   var toY=function(v){return padT+((mx-v)/rng)*plotH;};
-  var n=candles.length;
-  var bw=Math.max(2,Math.floor(plotW/n)-2);
+  var n=closes.length;
+  var toX=function(i){return padL+(n<=1?0:(i/(n-1))*plotW);};
+
+  var up=closes[closes.length-1]>=closes[0];
+  var lineCol=up?'#00e5a0':'#f23645';
+  var fillIdSuffix=up?'up':'dn';
+  var gradId='ihsgFill-'+fillIdSuffix;
 
   var html='';
+  // Latar hitam solid di belakang seluruh chart
+  html+='<rect x="0" y="0" width="'+VW+'" height="'+VH+'" fill="#000000"/>';
+  html+='<defs><linearGradient id="'+gradId+'" x1="0" y1="0" x2="0" y2="1">'+
+    '<stop offset="0%" stop-color="'+lineCol+'" stop-opacity="0.35"/>'+
+    '<stop offset="100%" stop-color="'+lineCol+'" stop-opacity="0"/>'+
+  '</linearGradient></defs>';
   // Grid lines (Y)
   var yTicks=4;
   for(var gi=0;gi<=yTicks;gi++){
     var yv=mn+(rng*gi/yTicks);
     var gy=toY(yv);
-    html+='<line x1="'+padL+'" y1="'+gy.toFixed(1)+'" x2="'+(VW-padR)+'" y2="'+gy.toFixed(1)+'" stroke="rgba(41,98,255,0.08)" stroke-width="1"/>';
+    html+='<line x1="'+padL+'" y1="'+gy.toFixed(1)+'" x2="'+(VW-padR)+'" y2="'+gy.toFixed(1)+'" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>';
     html+='<text x="'+(padL-4)+'" y="'+(gy+3).toFixed(1)+'" text-anchor="end" font-size="8" fill="#787b86" font-family="IBM Plex Mono,monospace">'+Math.round(yv).toLocaleString('id-ID')+'</text>';
   }
   // X axis labels (show ~6 evenly)
   var xStep=Math.max(1,Math.floor(n/6));
   for(var xi=0;xi<n;xi+=xStep){
-    var xc=padL+xi*(plotW/n)+bw/2;
-    if(labels[xi]) html+='<text x="'+xc.toFixed(1)+'" y="'+(VH-4)+'" text-anchor="middle" font-size="8" fill="#787b86" font-family="IBM Plex Mono,monospace">'+labels[xi]+'</text>';
+    if(labels[xi]) html+='<text x="'+toX(xi).toFixed(1)+'" y="'+(VH-4)+'" text-anchor="middle" font-size="8" fill="#787b86" font-family="IBM Plex Mono,monospace">'+labels[xi]+'</text>';
   }
-  // Candles
-  candles.forEach(function(c,i){
-    var xc=padL+i*(plotW/n)+((plotW/n)-bw)/2;
-    var up=c.c>=c.o;
-    var col=up?'#089981':'#f23645';
-    var oy=toY(c.o),cy=toY(c.c),hy=toY(c.h),ly=toY(c.l);
-    var bodyTop=Math.min(oy,cy), bodyH=Math.max(1,Math.abs(cy-oy));
-    var midX=(xc+bw/2).toFixed(1);
-    // Wick
-    html+='<line x1="'+midX+'" y1="'+hy.toFixed(1)+'" x2="'+midX+'" y2="'+ly.toFixed(1)+'" stroke="'+col+'" stroke-width="1"/>';
-    // Body
-    html+='<rect x="'+xc.toFixed(1)+'" y="'+bodyTop.toFixed(1)+'" width="'+bw+'" height="'+bodyH.toFixed(1)+'" fill="'+col+'" rx="0.5"/>';
-  });
+  // Area path (isi gradasi turun ke dasar chart) + garis close di atasnya
+  var linePts=closes.map(function(c,i){return toX(i).toFixed(1)+','+toY(c).toFixed(1);});
+  var areaPath='M'+toX(0).toFixed(1)+','+(VH-padB)+' L'+linePts.join(' L')+' L'+toX(n-1).toFixed(1)+','+(VH-padB)+' Z';
+  html+='<path d="'+areaPath+'" fill="url(#'+gradId+')" stroke="none"/>';
+  html+='<polyline points="'+linePts.join(' ')+'" fill="none" stroke="'+lineCol+'" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>';
+  // Titik terakhir ditandai bulatan kecil
+  html+='<circle cx="'+toX(n-1).toFixed(1)+'" cy="'+toY(closes[n-1]).toFixed(1)+'" r="2.5" fill="'+lineCol+'"/>';
   svg.innerHTML=html;
 }
 

@@ -47,3 +47,45 @@ function mwZoom(delta){
   if(typeof showSaveStatus === 'function') showSaveStatus('Tampilan ' + Math.round(z * 100) + '%');
 }
 mwApplyZoom(parseFloat(localStorage.getItem(MW_ZOOM_KEY)) || MW_ZOOM_DEFAULT);
+
+// ── 4. Sidebar "spoiler" — grup nav bisa dilipat, status tersimpan per browser ──
+var SIDE_OPEN_KEY = 'mw_side_open_groups';
+function sideSaveOpenGroups(){
+  try{
+    var open = [].slice.call(document.querySelectorAll('.side-group.open')).map(function(g){ return g.getAttribute('data-group'); });
+    localStorage.setItem(SIDE_OPEN_KEY, JSON.stringify(open));
+  }catch(e){}
+}
+function sideToggleGroup(btn){
+  var group = btn.closest('.side-group');
+  if(!group) return;
+  group.classList.toggle('open');
+  sideSaveOpenGroups();
+}
+function sideSyncActiveGroup(){
+  document.querySelectorAll('.side-group').forEach(function(g){ g.classList.remove('has-active'); });
+  var activeBtn = document.querySelector('.side-nav button.on');
+  if(!activeBtn) return;
+  var group = activeBtn.closest('.side-group');
+  if(group){ group.classList.add('open','has-active'); sideSaveOpenGroups(); }
+}
+function sideInit(){
+  var saved = null;
+  try{ var r = localStorage.getItem(SIDE_OPEN_KEY); if(r) saved = JSON.parse(r); }catch(e){}
+  if(saved){
+    document.querySelectorAll('.side-group').forEach(function(g){
+      if(saved.indexOf(g.getAttribute('data-group')) > -1) g.classList.add('open');
+    });
+  }
+  sideSyncActiveGroup(); // grup berisi halaman aktif selalu ikut terbuka
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', sideInit);
+else sideInit();
+
+// Hook goPage supaya grup terkait otomatis terbuka saat navigasi dari luar sidebar
+// (mis. tombol "Detail →" di dalam kartu dashboard)
+var _sideGoPage = window.goPage;
+window.goPage = function(page, btn){
+  _sideGoPage.call(this, page, btn);
+  sideSyncActiveGroup();
+};

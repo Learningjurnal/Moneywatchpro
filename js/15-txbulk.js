@@ -164,3 +164,136 @@ function txConfirmImport(){
   if(typeof renderDashboard==='function') renderDashboard();
   if(typeof showSaveStatus==='function') showSaveStatus('✓ '+rows.length+' transaksi berhasil diimpor');
 }
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║  BULK IMPORT DIVIDEN — download template & upload Excel   ║
+// ╚══════════════════════════════════════════════════════════╝
+
+function divDownloadTemplate(){
+  if(typeof XLSX==='undefined'){ if(typeof showSaveStatus==='function') showSaveStatus('⚠ Pustaka Excel belum termuat, coba lagi sebentar','var(--red)'); return; }
+
+  var sample = [
+    {Tanggal:'2026-03-15', 'Kode Saham':'BBCA', 'Jumlah Lembar':5900, 'Dividen per Lembar':250},
+    {Tanggal:'2026-06-20', 'Kode Saham':'TLKM', 'Jumlah Lembar':10000, 'Dividen per Lembar':85}
+  ];
+  var wsDiv = XLSX.utils.json_to_sheet(sample);
+  wsDiv['!cols'] = [{wch:12},{wch:12},{wch:14},{wch:18}];
+
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, wsDiv, 'Dividen');
+
+  var petunjuk = [
+    ['PETUNJUK PENGISIAN — Template Dividen Money Watch Pro'],
+    [''],
+    ['Kolom', 'Keterangan'],
+    ['Tanggal', 'Tanggal pembayaran dividen, format YYYY-MM-DD'],
+    ['Kode Saham', 'Kode ticker IDX, contoh: BBCA, TLKM (tanpa akhiran .JK)'],
+    ['Jumlah Lembar', 'Jumlah lembar saham yang Anda miliki saat cum date'],
+    ['Dividen per Lembar', 'Dividen per lembar dalam Rupiah, SEBELUM dipotong pajak'],
+    [''],
+    ['PPh Dividen 10% dihitung OTOMATIS oleh aplikasi — jangan diisi manual.'],
+    ['Dividen yang diimpor akan menambah saldo RDN, sama seperti input manual "+ Catat Dividen".'],
+    ['Hapus 2 baris contoh sebelum mengisi data Anda, atau timpa langsung baris tersebut.'],
+    ['Setelah selesai, unggah file ini lewat tombol "📤 Upload Excel" di tab Dividen.']
+  ];
+  var wsInfo = XLSX.utils.aoa_to_sheet(petunjuk);
+  wsInfo['!cols'] = [{wch:18},{wch:78}];
+  XLSX.utils.book_append_sheet(wb, wsInfo, 'Petunjuk');
+
+  XLSX.writeFile(wb, 'Template_Dividen_MoneyWatchPro.xlsx');
+  if(typeof showSaveStatus==='function') showSaveStatus('✓ Template dividen diunduh — isi lalu upload kembali');
+}
+
+function divImportExcel(){
+  if(typeof XLSX==='undefined'){ if(typeof showSaveStatus==='function') showSaveStatus('⚠ Pustaka Excel belum termuat, coba lagi sebentar','var(--red)'); return; }
+  var inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.xlsx,.xls';
+  inp.onchange = function(){
+    var f = inp.files && inp.files[0];
+    if(!f) return;
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        var wb = XLSX.read(new Uint8Array(e.target.result), {type:'array', cellDates:true});
+        var sheetName = wb.SheetNames.indexOf('Dividen') > -1 ? 'Dividen' : wb.SheetNames[0];
+        var rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {defval:''});
+        divProcessImportRows(rows, f.name);
+      }catch(err){
+        if(typeof showSaveStatus==='function') showSaveStatus('⚠ Gagal membaca file: '+err.message,'var(--red)');
+      }
+    };
+    reader.readAsArrayBuffer(f);
+  };
+  inp.click();
+}
+
+function divValidateRow(r, idx){
+  var date = txParseDate(r['Tanggal']);
+  var ticker = String(r['Kode Saham']||'').trim().toUpperCase().replace(/\.JK$/,'');
+  var shares = parsePrice(r['Jumlah Lembar']);
+  var dps = parsePrice(r['Dividen per Lembar']);
+
+  var errs = [];
+  if(!date) errs.push('Tanggal tidak valid (pakai format YYYY-MM-DD)');
+  if(!ticker) errs.push('Kode Saham kosong');
+  if(!(shares>0)) errs.push('Jumlah Lembar harus angka > 0');
+  if(!(dps>0)) errs.push('Dividen per Lembar harus angka > 0');
+
+  return {row:idx+2, date:date, ticker:ticker, shares:shares, dps:dps, ok:errs.length===0, errs:errs};
+}
+
+var DIV_IMPORT_ROWS = [];
+
+function divProcessImportRows(rows, fileName){
+  if(!rows.length){ if(typeof showSaveStatus==='function') showSaveStatus('⚠ File kosong atau tidak ada baris data','var(--red)'); return; }
+  var parsed = rows.map(function(r,i){ return divValidateRow(r,i); });
+  var valid = parsed.filter(function(p){ return p.ok; });
+  var invalid = parsed.filter(function(p){ return !p.ok; });
+  DIV_IMPORT_ROWS = valid;
+
+  var body =
+    '<div style="font-size:12px;color:var(--text2);margin-bottom:12px">File <b>'+fileName+'</b>: '+
+      '<b class="up">'+valid.length+' baris valid</b>'+(invalid.length ? ' &nbsp;·&nbsp; <b class="dn">'+invalid.length+' baris bermasalah (akan dilewati)</b>' : '')+'.</div>'+
+    (invalid.length ? '<div style="max-height:150px;overflow-y:auto;background:var(--bg3);border-radius:8px;padding:8px 10px;margin-bottom:12px;font-size:11px;color:var(--text2)">'+
+      invalid.map(function(p){ return '<div style="padding:3px 0;border-bottom:1px solid var(--border)">Baris '+p.row+': '+p.errs.join('; ')+'</div>'; }).join('')+
+    '</div>' : '')+
+    (valid.length ? '<div style="overflow-x:auto;max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">'+
+      '<table class="tbl"><thead><tr><th>Tanggal</th><th>Kode</th><th>Lembar</th><th>Div/Lembar</th><th>Dividen Kotor</th></tr></thead><tbody>'+
+      valid.map(function(p){
+        return '<tr><td class="mono">'+p.date+'</td><td class="tp">'+p.ticker+'</td>'+
+          '<td class="mono">'+fmt(p.shares)+'</td><td class="mono">Rp '+fmt(p.dps)+'</td>'+
+          '<td class="mono">Rp '+fmt(p.shares*p.dps)+'</td></tr>';
+      }).join('')+
+      '</tbody></table></div>' : '<div style="font-size:12px;color:var(--red)">Tidak ada baris valid untuk diimpor — perbaiki file lalu upload ulang.</div>');
+
+  el('m-title').textContent = '📤 Konfirmasi Impor Dividen';
+  el('m-title').style.color = 'var(--purple)';
+  el('m-body').innerHTML = body +
+    '<div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">'+
+      '<button class="btn btn-ghost" onclick="closeModal()">Batal</button>'+
+      (valid.length ? '<button class="btn btn-green" onclick="divConfirmImport()">✓ Impor '+valid.length+' Dividen</button>' : '')+
+    '</div>';
+  el('modal').classList.add('on');
+}
+
+function divConfirmImport(){
+  var rows = DIV_IMPORT_ROWS.slice();
+  DIV_IMPORT_ROWS = [];
+  closeModal();
+  if(!rows.length) return;
+
+  var realSaveData = saveData;
+  saveData = function(){};
+  try{
+    rows.forEach(function(r){ addDiv(r.date, r.ticker, r.shares, r.dps); });
+  } finally {
+    saveData = realSaveData;
+  }
+  if(typeof rebuildRdnBalance==='function') rebuildRdnBalance();
+  saveData();
+
+  if(typeof renderDividen==='function') renderDividen();
+  if(typeof renderDashboard==='function') renderDashboard();
+  if(typeof showSaveStatus==='function') showSaveStatus('✓ '+rows.length+' dividen berhasil diimpor');
+}

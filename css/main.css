@@ -254,12 +254,27 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;back
 /* ── SIDEBAR NAV (tab dipindah ke samping) ── */
 .main-row{flex:1;display:flex;min-height:0}
 .side-nav{width:198px;flex-shrink:0;overflow-y:auto;background:rgba(19,19,31,.72);backdrop-filter:blur(14px);border-right:1px solid var(--border);padding:8px 8px 20px;display:flex;flex-direction:column}
-.side-sec{font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);padding:12px 10px 4px}
 .side-nav button{display:flex;align-items:center;gap:7px;width:100%;text-align:left;padding:7px 10px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text2);background:none;border:none;font-family:'Inter',sans-serif;transition:all var(--spring);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .side-nav button:hover{color:var(--text);background:rgba(255,255,255,.06)}
 .side-nav button.on{background:rgba(129,140,248,.15);color:var(--accent);font-weight:600;box-shadow:inset 2px 0 0 var(--accent)}
 .side-nav::-webkit-scrollbar{width:3px}
-@media(max-width:900px){.side-nav{width:56px}.side-nav .side-sec{visibility:hidden;height:8px;padding:4px}.side-nav button{justify-content:center;padding:8px 4px}}
+
+/* ── Sidebar groups — "spoiler"/accordion agar daftar panjang tidak berantakan ── */
+.side-group{margin-top:2px}
+.side-sec-toggle{display:flex!important;align-items:center;justify-content:space-between;width:100%;padding:10px 10px 10px 8px!important;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3)!important;background:none;border:none;cursor:pointer;border-radius:8px}
+.side-sec-toggle:hover{color:var(--text2)!important;background:rgba(255,255,255,.04)}
+.side-chevron{font-size:9px;transition:transform .2s ease;color:var(--text3)}
+.side-group.open .side-chevron{transform:rotate(180deg)}
+.side-group-items{max-height:0;overflow:hidden;transition:max-height .25s ease}
+.side-group.open .side-group-items{max-height:400px}
+.side-group.has-active .side-sec-toggle{color:var(--accent)!important}
+
+@media(max-width:900px){
+  .side-nav{width:56px}
+  .side-sec-toggle span:first-child,.side-chevron{display:none}
+  .side-group-items{max-height:none!important}
+  .side-nav button{justify-content:center;padding:8px 4px}
+}
 
 /* ══════════════════════════════════════════════
    READABILITY OVERRIDES — tampilan lebih besar & kontras
@@ -294,7 +309,8 @@ html,body{font-size:14px}
 .ibar-chg{font-size:12px}
 .side-nav{width:212px}
 .side-nav button{font-size:13.5px;padding:8.5px 11px}
-.side-sec{font-size:10px;padding:13px 11px 5px}
+.side-sec-toggle{font-size:10.5px!important}
+.side-group-items button{padding-left:19px!important}
 .pbtn{font-size:12px;padding:4px 12px}
 
 /* Kontrol ukuran tampilan (A− / A / A+) */

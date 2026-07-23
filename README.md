@@ -42,6 +42,13 @@ File asli Money Watch (10.700 baris) dipecah menjadi modul yang dimuat berurutan
 
 Setiap modul JS adalah script global klasik yang dimuat berurutan lewat `<script src>` di `index.html` — persis seperti saat masih satu file.
 
+## Perubahan v6.2 — Visual & Bulk Import Dividen
+
+- **Chart IHSG jadi area chart** dengan latar hitam solid, gradasi hijau/merah mengikuti tren, mengganti candlestick lama. Tinggi kontainer mengikuti ukuran nyata (bukan angka tetap 155px) agar proporsional dengan chart lain (referensi: halaman Monthly Returns).
+- **Logo mono color** — SVG "MW" di layar login & topbar yang tadinya dua warna (biru+hijau) sekarang satu warna aksen violet, konsisten dengan tema.
+- **Sidebar jadi "spoiler"/accordion** — 6 kategori (Portofolio, Analitik Pra-Beli, Market, Keuangan, Wealth, Pengaturan) bisa dilipat/dibuka per kategori, status tersimpan per browser. Kategori yang berisi halaman aktif otomatis terbuka saat navigasi (termasuk dari tombol di luar sidebar, mis. "Detail →").
+- **Bulk import Dividen** (tab Dividen) — tombol **⬇ Download Template** dan **📤 Upload Excel**, pola sama persis dengan bulk import Transaksi: pratinjau & validasi per baris sebelum masuk jurnal, PPh 10% dihitung otomatis, satu kali simpan untuk seluruh batch. Menggantikan tombol "Impor Dividen Lampiran" lama yang sudah tidak berfungsi (mengacu data lampiran yang sudah dikosongkan di v6.1).
+
 ## Perubahan v6 — Mode Data Real
 
 - **Navigasi pindah ke sidebar kiri** (menggantikan dropdown di topbar), dikelompokkan: Overview, Portofolio, Analitik Pra-Beli, Market, Keuangan, Wealth, Pengaturan.
@@ -77,6 +84,8 @@ Dua tombol baru di tab **Transaksi**:
 
 - **⬇ Download Template** — mengunduh `Template_Transaksi_MoneyWatchPro.xlsx` berisi sheet "Transaksi" siap isi (kolom: Tanggal, Aksi, Kode Saham, Sekuritas, Lot, Harga per Lembar) plus sheet "Daftar Sekuritas" (nama sekuritas yang valid) dan sheet "Petunjuk".
 - **📤 Upload Excel** — pilih file yang sudah diisi. Setiap baris divalidasi (format tanggal, Aksi harus BUY/SELL, Sekuritas harus dikenal, Lot & Harga harus angka positif); hasilnya ditampilkan sebagai pratinjau — baris valid dalam tabel, baris bermasalah dengan alasan spesifik per baris — sebelum Anda klik konfirmasi. Komisi, PPN, Levy, dan PPh dihitung otomatis sama seperti input manual (mengikuti sekuritas & tarif pajak yang aktif), bukan diisi dari file.
+
+Tab **Dividen** punya fitur serupa (⬇ Download Template / 📤 Upload Excel): kolom Tanggal, Kode Saham, Jumlah Lembar, Dividen per Lembar — PPh 10% dihitung otomatis dan dividen yang diimpor menambah saldo RDN, sama seperti input manual "+ Catat Dividen".
 
 ## Kelola Daftar Saham & Sinkronisasi Lintas Perangkat
 
