@@ -3,2247 +3,563 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Money Watch Pro — Portofolio, Wealth & Analisa Quant</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23131324'/><path d='M7 21 L13 13 L18 17 L25 8' stroke='%2334d399' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/><circle cx='25' cy='8' r='2' fill='%2334d399'/></svg>">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/00-config.js?v=20260723d"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="css/main.css?v=20260723d">
-<link rel="stylesheet" href="css/wealth.css?v=20260723d">
+<title>Money Watch Pro — Terminal Investasi untuk yang Serius Soal Data</title>
+<meta name="description" content="Portofolio saham IDX, crypto, reksa dana, dan ETF dalam satu dashboard — dilengkapi toolkit analisa kuant, kalkulator kekayaan, dan pajak yang dihitung otomatis.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23131324'/><path d='M7 21 L13 13 L18 17 L25 8' stroke='%238b8cf9' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/><circle cx='25' cy='8' r='2' fill='%238b8cf9'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#060609; --surface:#0e0e17; --surface-2:#15151f;
+  --signal:#8b8cf9; --signal-dim:rgba(139,140,249,.14);
+  --rise:#2dd4a7; --fall:#f66272; --amber:#f5b862;
+  --text:#eef0fb; --text-dim:#8286a8; --text-faint:#565a78;
+  --line:rgba(139,140,249,.14); --line-2:rgba(139,140,249,.28);
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --sans:'Manrope',system-ui,sans-serif;
+  --glow:0 0 60px rgba(139,140,249,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
+html,body{max-width:100%}
+body{
+  background:var(--ink); color:var(--text); font-family:var(--sans);
+  font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(900px 620px at 12% -8%, rgba(139,140,249,.14), transparent 60%),
+    radial-gradient(700px 520px at 100% 8%, rgba(45,212,167,.07), transparent 55%),
+    radial-gradient(600px 500px at 50% 105%, rgba(139,140,249,.08), transparent 60%);
+}
+body::after{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:radial-gradient(rgba(139,140,249,.05) 1px,transparent 1px);
+  background-size:26px 26px;
+  mask-image:radial-gradient(1000px 700px at 50% 0%, black, transparent 75%);
+}
+a{color:inherit}
+img,svg{display:block;max-width:100%}
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+section{position:relative;z-index:1}
+
+/* ── Type scale ── */
+h1,h2,h3{font-family:var(--mono);font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+.eyebrow{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--signal)}
+.lede{font-size:18px;color:var(--text-dim);line-height:1.75;max-width:56ch}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.02em;padding:13px 22px;border-radius:9px;cursor:pointer;text-decoration:none;transition:transform .15s ease,box-shadow .15s ease,background .15s ease,border-color .15s ease;border:1px solid transparent;white-space:nowrap}
+.btn:focus-visible{outline:2px solid var(--signal);outline-offset:3px}
+.btn-primary{background:var(--signal);color:#0a0a12;box-shadow:0 0 0 1px rgba(139,140,249,.3),0 14px 34px -12px rgba(139,140,249,.55)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 0 0 1px rgba(139,140,249,.45),0 18px 40px -10px rgba(139,140,249,.65)}
+.btn-ghost{background:rgba(255,255,255,.02);border-color:var(--line);color:var(--text)}
+.btn-ghost:hover{border-color:var(--line-2);background:rgba(139,140,249,.06)}
+
+/* ── Nav ── */
+.nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:16px 28px;backdrop-filter:blur(16px);background:rgba(6,6,9,.72);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:.01em}
+.brand .tag{color:var(--text-faint);font-weight:500;font-size:12px;letter-spacing:.08em}
+.nav-links{display:flex;align-items:center;gap:28px;font-size:14px;color:var(--text-dim)}
+.nav-links a{text-decoration:none;transition:color .15s}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{display:flex;align-items:center;gap:16px}
+@media(max-width:760px){.nav-links{display:none}}
+
+/* ── Hero ── */
+.hero{padding:76px 0 40px}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+.hero-grid > *{min-width:0}
+@media(max-width:940px){.hero-grid{grid-template-columns:1fr}}
+.live-pill{display:inline-flex;align-items:center;gap:7px;padding:5px 12px 5px 9px;border-radius:99px;background:rgba(45,212,167,.08);border:1px solid rgba(45,212,167,.25);font-family:var(--mono);font-size:11px;color:var(--rise);letter-spacing:.04em;margin-bottom:20px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--rise);animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(45,212,167,.5)}50%{opacity:.55;box-shadow:0 0 0 5px rgba(45,212,167,0)}}
+.hero h1{font-size:clamp(32px,4.6vw,54px);line-height:1.08;margin-bottom:22px}
+.hero h1 em{font-style:normal;color:var(--signal)}
+.hero .lede{margin-bottom:32px}
+.hero-ctas{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:36px}
+.hero-meta{display:flex;gap:26px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--text-faint)}
+.hero-meta b{color:var(--text-dim);font-weight:600}
+
+/* ── Hero visual: mock terminal panel ── */
+.panel{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.015));border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--glow),0 30px 60px -30px rgba(0,0,0,.7)}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
+.panel-dots{display:flex;gap:6px}
+.panel-dots span{width:8px;height:8px;border-radius:50%;background:var(--text-faint);opacity:.5}
+.panel-title{font-family:var(--mono);font-size:11px;color:var(--text-faint);letter-spacing:.06em}
+.mock-ticker{display:flex;overflow:hidden;border-bottom:1px solid var(--line);background:rgba(0,0,0,.25);width:100%;min-width:0}
+.mock-ticker-track{display:flex;gap:0;animation:tickerScroll 26s linear infinite}
+.mock-ticker:hover .mock-ticker-track{animation-play-state:paused}
+@keyframes tickerScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.tick{display:flex;align-items:center;gap:6px;padding:8px 16px;font-family:var(--mono);font-size:11px;white-space:nowrap;border-right:1px solid var(--line)}
+.tick b{font-weight:600}
+.tick .up{color:var(--rise)}.tick .dn{color:var(--fall)}
+.mock-chart{padding:18px 18px 6px}
+.mock-chart-head{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.mock-chart-head .lbl{font-family:var(--mono);font-size:11px;color:var(--text-faint);letter-spacing:.06em}
+.mock-chart-head .val{font-family:var(--mono);font-size:19px;font-weight:700}
+.mock-chart-head .chg{font-family:var(--mono);font-size:12px;color:var(--rise);background:rgba(45,212,167,.1);border:1px solid rgba(45,212,167,.25);padding:2px 8px;border-radius:99px}
+.chart-svg{width:100%;height:132px;display:block}
+.chart-path{fill:none;stroke:var(--rise);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:600;stroke-dashoffset:600;animation:draw 1.8s .3s ease forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.mock-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);margin-top:16px;border-top:1px solid var(--line)}
+.mock-stats div{background:var(--surface);padding:12px 14px}
+.mock-stats .k{font-family:var(--mono);font-size:9.5px;color:var(--text-faint);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+.mock-stats .v{font-family:var(--mono);font-size:14px;font-weight:600}
+
+/* ── Stats strip ── */
+.stats{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:rgba(255,255,255,.015)}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+@media(max-width:760px){.stats-row{grid-template-columns:repeat(2,1fr)}}
+.stat{padding:30px 20px;text-align:center;border-right:1px solid var(--line)}
+.stat:last-child{border-right:none}
+.stat .v{font-family:var(--mono);font-size:clamp(24px,3vw,32px);font-weight:700;color:var(--signal)}
+.stat .k{font-size:12.5px;color:var(--text-dim);margin-top:6px}
+
+/* ── Section shell ── */
+.section{padding:96px 0}
+.section-head{max-width:640px;margin-bottom:48px}
+.section-head .eyebrow{margin-bottom:12px}
+.section-head h2{font-size:clamp(24px,3vw,34px);line-height:1.18;margin-bottom:14px}
+.section-head p{color:var(--text-dim);font-size:15.5px;line-height:1.7}
+
+/* ── Feature grid ── */
+.fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:900px){.fgrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.fgrid{grid-template-columns:1fr}}
+.fcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;transition:border-color .2s,transform .2s,background .2s}
+.fcard:hover{border-color:var(--line-2);transform:translateY(-2px);background:var(--surface-2)}
+.fcard .ic{width:38px;height:38px;border-radius:10px;background:var(--signal-dim);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-family:var(--mono);font-size:15px;color:var(--signal)}
+.fcard h3{font-family:var(--sans);font-weight:700;font-size:15.5px;margin-bottom:8px;letter-spacing:0}
+.fcard p{font-size:13.5px;color:var(--text-dim);line-height:1.65}
+.fcard .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.fcard .tags span{font-family:var(--mono);font-size:10px;color:var(--text-faint);background:rgba(255,255,255,.03);border:1px solid var(--line);padding:3px 8px;border-radius:6px}
+
+/* ── Workflow (real sequence — numbered on purpose) ── */
+.flow{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+.flow-step{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:18px;padding:20px 24px;border-bottom:1px solid var(--line);position:relative}
+.flow-step:last-child{border-bottom:none}
+.flow-step:hover{background:rgba(139,140,249,.035)}
+.flow-num{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text-faint);opacity:.7}
+.flow-step:hover .flow-num{color:var(--signal);opacity:1}
+.flow-body h3{font-family:var(--sans);font-size:15px;font-weight:700;margin-bottom:4px}
+.flow-body p{font-size:13px;color:var(--text-dim);line-height:1.6;max-width:60ch}
+.flow-tag{font-family:var(--mono);font-size:10px;color:var(--text-faint);white-space:nowrap;border:1px solid var(--line);padding:4px 10px;border-radius:99px}
+@media(max-width:640px){.flow-step{grid-template-columns:40px 1fr;}.flow-tag{grid-column:2;justify-self:start}}
+
+/* ── Split rows (wealth / control sections) ── */
+.split{display:grid;grid-template-columns:.9fr 1.1fr;gap:56px;align-items:center;min-width:0}
+.split > *{min-width:0}
+.split.rev{grid-template-columns:1.1fr .9fr}
+.split.rev .split-visual{order:2}
+@media(max-width:900px){
+  .split,.split.rev{grid-template-columns:1fr}
+  .split.rev .split-visual{order:0}
+}
+.checklist{display:flex;flex-direction:column;gap:14px;margin-top:24px}
+.checklist li{list-style:none;display:flex;gap:12px;align-items:flex-start;font-size:14.5px;color:var(--text-dim);line-height:1.6}
+.checklist .chk{flex-shrink:0;width:20px;height:20px;border-radius:6px;background:var(--signal-dim);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;margin-top:1px}
+.checklist b{color:var(--text);font-weight:600}
+
+.split-visual{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+.ring-wrap{display:flex;align-items:center;gap:20px}
+.ring{position:relative;width:104px;height:104px;flex-shrink:0}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-center b{font-family:var(--mono);font-size:24px;font-weight:700}
+.ring-center span{font-size:9.5px;color:var(--text-faint);letter-spacing:.06em;text-transform:uppercase}
+.mini-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+.mini-row:last-child{border-bottom:none}
+.mini-row .k{color:var(--text-dim)}
+.mini-row .v{font-family:var(--mono);font-weight:600}
+
+.rows-list{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+.rows-list .row{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:13px 18px;border-bottom:1px solid var(--line);font-size:13px}
+.rows-list .row:last-child{border-bottom:none}
+.rows-list .row .name{font-weight:600}
+.rows-list .row .sub{font-size:11px;color:var(--text-faint);display:block;margin-top:1px}
+.rows-list .row .amt{font-family:var(--mono);font-weight:600}
+.rows-list .row .badge{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:6px}
+.badge.buy{background:rgba(45,212,167,.1);color:var(--rise);border:1px solid rgba(45,212,167,.25)}
+.badge.sell{background:rgba(246,98,114,.1);color:var(--fall);border:1px solid rgba(246,98,114,.25)}
+
+/* ── Tech / trust strip ── */
+.tech{border-top:1px solid var(--line);background:rgba(255,255,255,.015)}
+.tech-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line)}
+@media(max-width:760px){.tech-row{grid-template-columns:repeat(2,1fr)}}
+.tech-item{background:var(--ink);padding:26px 22px}
+.tech-item .k{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px}
+.tech-item .v{font-size:12.5px;color:var(--text-faint);line-height:1.55}
+
+/* ── Final CTA ── */
+.cta-final{padding:100px 0 110px;text-align:center}
+.terminal{max-width:560px;margin:0 auto 34px;background:var(--surface);border:1px solid var(--line);border-radius:12px;text-align:left;overflow:hidden;box-shadow:var(--glow)}
+.terminal-bar{display:flex;align-items:center;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.terminal-bar span{width:8px;height:8px;border-radius:50%;background:var(--text-faint);opacity:.5}
+.terminal-body{padding:20px 20px 22px;font-family:var(--mono);font-size:13px;line-height:1.9;color:var(--text-dim)}
+.terminal-body .prompt{color:var(--rise)}
+.terminal-body .cmd{color:var(--text)}
+.terminal-body .out{color:var(--text-faint)}
+.caret{display:inline-block;width:7px;height:14px;background:var(--signal);vertical-align:middle;margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.cta-final h2{font-size:clamp(24px,3.4vw,36px);margin-bottom:14px}
+.cta-final p{color:var(--text-dim);max-width:46ch;margin:0 auto 30px;font-size:15px}
+
+/* ── Footer ── */
+footer{border-top:1px solid var(--line);padding:34px 0}
+.foot-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.foot-brand{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:13px;color:var(--text-dim)}
+.foot-links{display:flex;gap:22px;font-size:13px;color:var(--text-faint)}
+.foot-links a{text-decoration:none}
+.foot-links a:hover{color:var(--text-dim)}
+</style>
 </head>
 <body>
-<body>
 
-<!-- ══════════════════════════════════════════════
-     AUTH OVERLAY — Login Screen
-     ══════════════════════════════════════════════ -->
-<div id="auth-overlay">
-  <div class="auth-box">
-    <div class="auth-logo" style="display:flex;align-items:center;justify-content:center;gap:10px">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="2" width="20" height="20" rx="4" stroke="#818cf8" stroke-width="1.5"/>
-        <path d="M7 14 L10 10 L13 13 L17 8" stroke="#818cf8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="17" cy="8" r="1.5" fill="#818cf8"/>
-        <path d="M7 17 H17" stroke="#818cf8" stroke-width="1" stroke-dasharray="2 1.5" opacity="0.4"/>
-      </svg>
-      Money<span>Watch</span>
-    </div>
-    <div class="auth-sub">Portofolio &amp; Analisa Investasi · v5</div>
-
-    <!-- Lockout notice -->
-    <div class="auth-lock" id="auth-lock-msg"></div>
-
-    <!-- Error msg -->
-    <div class="auth-err" id="auth-err"></div>
-
-    <!-- Login form -->
-    <div id="auth-login-form">
-      <div class="auth-field">
-        <label>Username</label>
-        <input type="email" id="auth-username" placeholder="Masukkan email..." autocomplete="email" onkeydown="if(event.key==='Enter')authDoLogin()">
-      </div>
-      <div class="auth-field">
-        <label>Password</label>
-        <input type="password" id="auth-password" placeholder="Masukkan password..." autocomplete="current-password" onkeydown="if(event.key==='Enter')authDoLogin()">
-      </div>
-      <button class="auth-btn" id="auth-login-btn" onclick="authDoLogin()">Masuk →</button>
-      <div class="auth-info">
-        Sesi aktif selama <strong style="color:var(--text2)">30 menit</strong> · Auto-logout jika tidak aktif<br>
-        Lupa password? <span style="color:var(--blue);cursor:pointer" onclick="authShowReset()">Reset via kode</span>
-        · <span style="color:var(--blue);cursor:pointer" onclick="authShowSetup('Buat akun baru')">Buat Akun</span>
-      </div>
-    </div>
-
-    <!-- Change password form (first login / reset) -->
-    <div id="auth-setup-form" style="display:none">
-      <div style="font-size:12px;color:var(--amber);background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.2);border-radius:7px;padding:9px 11px;margin-bottom:14px" id="auth-setup-msg">
-        Buat password baru
-      </div>
-      <div class="auth-field">
-        <label>Username Baru</label>
-        <input type="email" id="auth-new-user" placeholder="email@domain.com" autocomplete="email">
-      </div>
-      <div class="auth-field">
-        <label>Password Baru</label>
-        <input type="password" id="auth-new-pass" placeholder="min 8 karakter" autocomplete="new-password">
-      </div>
-      <div class="auth-field">
-        <label>Konfirmasi Password</label>
-        <input type="password" id="auth-new-pass2" placeholder="ulangi password" autocomplete="new-password">
-      </div>
-      <button class="auth-btn" onclick="authDoSetup()">Buat Akun →</button>
-      <div class="auth-info" id="auth-setup-back" style="cursor:pointer;color:var(--blue)" onclick="authShowLogin()">← Kembali ke login</div>
-    </div>
-
-    <!-- Reset form -->
-    <div id="auth-reset-form" style="display:none">
-      <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">
-        Masukkan <strong>kode reset</strong> yang tersimpan saat pertama kali setup akun.
-      </div>
-      <div class="auth-field">
-        <label>Kode Reset</label>
-        <input type="email" id="auth-reset-code" placeholder="email@domain.com">
-      </div>
-      <button class="auth-btn" onclick="authDoReset()">Verifikasi →</button>
-      <div class="auth-info" style="cursor:pointer;color:var(--blue)" onclick="authShowLogin()">← Kembali ke login</div>
-    </div>
-  </div>
-
-  <!-- Session timeout bar bawah -->
-  <div style="position:fixed;bottom:0;left:0;right:0">
-    <div class="auth-timeout-bar" style="margin:0">
-      <div class="auth-timeout-fill" id="auth-timeout-bar" style="width:100%"></div>
-    </div>
-  </div>
-</div>
-
-
-<div class="app" id="main-app" style="display:none">
-
-<!-- TOPBAR -->
-<div class="topbar">
-  <div style="display:flex;align-items:center;gap:14px;flex:1;justify-content:space-between">
-  <div class="logo" style="display:flex;align-items:center;gap:7px">
+<nav class="nav">
+  <div class="brand">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="2" width="20" height="20" rx="4" stroke="#818cf8" stroke-width="1.5"/>
-      <path d="M7 14 L10 10 L13 13 L17 8" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="17" cy="8" r="1.5" fill="#818cf8"/>
+      <rect x="2" y="2" width="20" height="20" rx="4" stroke="#8b8cf9" stroke-width="1.5"/>
+      <path d="M7 14 L10 10 L13 13 L17 8" stroke="#8b8cf9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="17" cy="8" r="1.5" fill="#8b8cf9"/>
     </svg>
-    <span class="logo" style="color:var(--text)">MW<span style="color:var(--border2)"> |</span> <span style="font-size:11px;letter-spacing:.3px;color:var(--text3);font-weight:400">PRO</span></span>
+    MW<span class="tag">&nbsp;| PRO</span>
   </div>
-  <div class="topbar-right">
-    <div class="zoom-ctl" title="Ukuran tampilan">
-      <button onclick="mwZoom(-0.05)" title="Perkecil tampilan">A−</button>
-      <button onclick="mwZoom(0)" title="Kembali ke ukuran standar">A</button>
-      <button onclick="mwZoom(0.05)" title="Perbesar tampilan">A+</button>
-    </div>
-    <div style="display:flex;align-items:center;gap:6px">
-      <span id="save-status-bar" style="font-size:9px;font-family:'IBM Plex Mono',monospace;transition:opacity .5s;opacity:0;color:var(--green);letter-spacing:.5px;text-transform:uppercase"></span>
-      <button class="btn btn-ghost btn-xs" onclick="openBackupModal()" style="font-size:11px;gap:4px;display:flex;align-items:center;border-color:var(--border2);color:var(--text2);letter-spacing:0">
-        💾 Backup
-      </button>
-    </div>
-    <div class="rdn-bar">
-      <span class="rdn-label">RDN</span>
-      <span class="rdn-val" id="tb-rdn">Rp 0</span>
-    </div>
-    <div class="ihsg-bar">
-      <span style="font-size:10px;color:var(--text3);font-family:'Inter',sans-serif">IHSG</span>
-      <span class="ibar-val" id="tb-ihsg">6.195,43</span>
-      <span class="ibar-chg" id="tb-chg"></span>
-    </div>
-    <div class="live"><div class="dot"></div>LIVE</div>
-    <!-- Finnhub status badge -->
-    <div id="fh-badge" onclick="openFinnhubSettings()" title="Klik untuk status koneksi Yahoo Finance"
-      style="display:flex;align-items:center;gap:4px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:'Inter',sans-serif;transition:all .15s;letter-spacing:0">
-      <span id="fh-dot" style="width:5px;height:5px;border-radius:50%;background:var(--text3);flex-shrink:0"></span>
-      <span id="fh-label">Simulasi</span>
-    </div>
-    <div class="clock" id="clock">--:--:--</div>
-    <!-- Session info -->
-    <div id="session-info" style="display:none;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3)">
-      <span style="color:var(--bb-orange)">◆</span>
-      <span id="session-user" style="color:var(--text2)">—</span>
-      <button onclick="authLogout()" title="Logout" style="background:none;border:1px solid rgba(242,54,69,.3);color:var(--red);cursor:pointer;font-size:10px;padding:2px 7px;border-radius:3px;font-family:'Inter',sans-serif;letter-spacing:0">Keluar</button>
-    </div>
+  <div class="nav-links">
+    <a href="#fitur">Fitur</a>
+    <a href="#cara-kerja">Cara Kerja</a>
+    <a href="#teknologi">Teknologi</a>
   </div>
-</div><!-- /topbar-left-group -->
-</div><!-- /topbar -->
-
-<!-- TICKER TAPE -->
-<div class="ticker-wrap" id="ticker-wrap">
-  <div class="ticker-inner" id="ticker-inner">
-    <!-- Items injected by JS -->
-  </div>
-</div>
-
-<!-- MAIN ROW: sidebar kiri + halaman -->
-<div class="main-row">
-
-<!-- SIDEBAR NAV -->
-<nav class="nav side-nav" id="side-nav">
-  <button class="on" onclick="goPage('dashboard',this)" style="margin-top:6px">📊 Dashboard</button>
-
-  <div class="side-group" data-group="portofolio">
-    <button class="side-sec-toggle" onclick="sideToggleGroup(this)"><span>Portofolio</span><span class="side-chevron">▾</span></button>
-    <div class="side-group-items">
-      <button onclick="goPage('portofolio',this)">📈 Saham IDX</button>
-      <button onclick="goPage('crypto',this)">🪙 Crypto</button>
-      <button onclick="goPage('reksadana',this)">🏦 Reksa Dana</button>
-      <button onclick="goPage('etf',this)">📊 ETF AS</button>
-      <button onclick="goPage('sektoral',this)">🏗 Sektoral</button>
-    </div>
-  </div>
-
-  <div class="side-group" data-group="analitik">
-    <button class="side-sec-toggle" onclick="sideToggleGroup(this)"><span>Analitik Pra-Beli</span><span class="side-chevron">▾</span></button>
-    <div class="side-group-items">
-      <button onclick="goPage('hargawajar',this)">💎 Harga Wajar</button>
-      <button onclick="goPage('flowscan',this)">🔬 FlowScan</button>
-      <button onclick="goPage('candle',this)">🕯 Candle Analysis</button>
-      <button onclick="goPage('backtester',this)">⚡ Backtester</button>
-      <button onclick="goPage('screener',this)">🔍 Screener LQ45</button>
-      <button onclick="goPage('pairs',this)">🔀 Pairs Trading</button>
-      <button onclick="goPage('watchlist',this)">⭐ Watchlist</button>
-    </div>
-  </div>
-
-  <div class="side-group" data-group="market">
-    <button class="side-sec-toggle" onclick="sideToggleGroup(this)"><span>Market</span><span class="side-chevron">▾</span></button>
-    <div class="side-group-items">
-      <button onclick="goPage('ranking',this)">🏆 Ranking</button>
-      <button onclick="goPage('heatmap',this)">🌡 Heatmap &amp; Factor</button>
-      <button onclick="goPage('correlation',this)">📉 Correlation</button>
-      <button onclick="goPage('monthly-returns',this)">📅 Monthly Returns</button>
-      <button onclick="goPage('scanner',this)">📡 Scanner</button>
-    </div>
-  </div>
-
-  <div class="side-group" data-group="keuangan">
-    <button class="side-sec-toggle" onclick="sideToggleGroup(this)"><span>Keuangan</span><span class="side-chevron">▾</span></button>
-    <div class="side-group-items">
-      <button onclick="goPage('transaksi',this)">📋 Transaksi</button>
-      <button onclick="goPage('dividen',this)">💵 Dividen</button>
-      <button onclick="goPage('divinvest',this)">💹 Div. Investing</button>
-      <button onclick="goPage('rdn',this)">🏦 RDN &amp; Kas</button>
-    </div>
-  </div>
-
-  <div class="side-group" data-group="wealth">
-    <button class="side-sec-toggle" onclick="sideToggleGroup(this)"><span>Wealth</span><span class="side-chevron">▾</span></button>
-    <div class="side-group-items">
-      <button onclick="goPage('wealth',this)">🌐 Net Worth</button>
-      <button onclick="goPage('wbank',this)">🏦 Bank &amp; Darurat</button>
-      <button onclick="goPage('wdebt',this)">💳 Hutang</button>
-      <button onclick="goPage('wpiutang',this)">🧾 Piutang</button>
-      <button onclick="goPage('wfire',this)">🔥 FIRE &amp; Proyeksi</button>
-    </div>
-  </div>
-
-  <div class="side-group" data-group="pengaturan">
-    <button class="side-sec-toggle" onclick="sideToggleGroup(this)"><span>Pengaturan</span><span class="side-chevron">▾</span></button>
-    <div class="side-group-items">
-      <button onclick="goPage('pajak',this)">🧾 Pajak &amp; PPh</button>
-      <button onclick="goPage('risiko',this)">⚠️ Manajemen Risiko</button>
-      <button onclick="openFinnhubSettings()">🔌 Koneksi Data</button>
-      <button onclick="goPage('admin',this)">🛠 Kelola Daftar Saham</button>
-    </div>
+  <div class="nav-cta">
+    <a class="btn btn-primary" href="index.html">Buka Aplikasi →</a>
   </div>
 </nav>
 
-<div class="pages">
-
-<!-- ===== DASHBOARD ===== -->
-<div id="page-dashboard" class="page on">
-
-  <!-- ROW 1: Total AUM hero + 4 P&L cards -->
-  <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1fr;gap:9px;margin-bottom:11px">
-    <!-- Hero: Total AUM -->
-    <div class="metric" style="background:linear-gradient(135deg,#0c1e3a 0%,#0e2444 100%);border-color:rgba(0,200,255,.25);position:relative;overflow:hidden">
-      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at top right,rgba(0,200,255,.07) 0%,transparent 60%);pointer-events:none"></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
-        <div class="mlabel" style="color:var(--accent);letter-spacing:1.5px">💼 TOTAL AUM DIKELOLA</div>
-        <button onclick="toggleMetric('aum')" id="eye-aum" title="Sembunyikan nilai"
-          style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 5px;line-height:1;border-radius:4px;transition:color .15s"
-          onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">👁</button>
-      </div>
-      <div class="mval lg" id="d-aum" style="color:var(--accent);font-size:26px">Rp 0</div>
-      <div class="msub" id="d-aum-sub" style="margin-top:6px"></div>
-      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap" id="d-aum-badges"></div>
-    </div>
-    <div class="metric">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
-        <div class="mlabel">Unrealized P&amp;L</div>
-        <button onclick="toggleMetric('unreal')" id="eye-unreal" title="Sembunyikan nilai"
-          style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 5px;line-height:1;border-radius:4px;transition:color .15s"
-          onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">👁</button>
-      </div>
-      <div class="mval" id="d-unreal">Rp 0</div>
-      <div class="msub" id="d-unreal-sub"></div>
-    </div>
-    <div class="metric">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
-        <div class="mlabel">Realized P&amp;L</div>
-        <button onclick="toggleMetric('real')" id="eye-real" title="Sembunyikan nilai"
-          style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 5px;line-height:1;border-radius:4px;transition:color .15s"
-          onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">👁</button>
-      </div>
-      <div class="mval" id="d-real">Rp 0</div>
-      <div class="msub neu">saham terealisasi</div>
-    </div>
-    <div class="metric">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
-        <div class="mlabel">Saldo RDN</div>
-        <button onclick="toggleMetric('rdn')" id="eye-rdn" title="Sembunyikan nilai"
-          style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 5px;line-height:1;border-radius:4px;transition:color .15s"
-          onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">👁</button>
-      </div>
-      <div class="mval up" id="d-rdn">Rp 0</div>
-      <div class="msub neu">dana kas tersedia</div>
-    </div>
-    <div class="metric">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
-        <div class="mlabel">Total Dividen YTD</div>
-        <button onclick="toggleMetric('div')" id="eye-div" title="Sembunyikan nilai"
-          style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 5px;line-height:1;border-radius:4px;transition:color .15s"
-          onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">👁</button>
-      </div>
-      <div class="mval" id="d-div">Rp 0</div>
-      <div class="msub neu" id="d-div-sub"></div>
-    </div>
-  </div>
-
-  <!-- ROW 1b: Risiko + Strategi/Alokasi -->
-  <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:11px;margin-bottom:11px;align-items:stretch">
-    <div style="display:flex;flex-direction:column;gap:11px;min-width:0">
-      <div class="card" style="margin:0">
-        <div class="cheader"><span class="ctitle">⚠️ Analisis Risiko Portofolio</span><button class="btn btn-ghost btn-xs" onclick="goPage('risiko')">Detail →</button></div>
-        <div id="d-risk-strip" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:9px"></div>
-      </div>
-      <div class="card" style="margin:0;flex:1">
-        <div class="cheader"><span class="ctitle">🎯 Strategi Trade &amp; Alokasi Aset</span><span class="badge b-gray">manual</span></div>
-        <div id="d-tradetype"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ROW 2: 4 Asset Class Cards dengan bobot -->
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:11px">
-    <!-- Saham IDX -->
-    <div class="metric" style="border-color:rgba(0,229,160,.3);cursor:pointer" onclick="goPage('portofolio')">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-        <div>
-          <div style="font-size:10px;font-weight:700;color:var(--green);font-family:'IBM Plex Mono',monospace;letter-spacing:.5px">📈 SAHAM IDX</div>
-          <div class="mval" id="d-porto" style="color:var(--green);margin-top:4px">Rp 0</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--green)" id="d-porto-bobot">0%</div>
-          <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace">dari AUM</div>
-        </div>
-      </div>
-      <div class="prog"><div class="progf" id="d-porto-bar" style="width:0%;background:var(--green)"></div></div>
-      <div style="margin-top:6px;display:flex;justify-content:space-between">
-        <span class="msub" id="d-porto-sub" style="color:var(--text2)"></span>
-        <span class="badge b-up" id="d-porto-cnt">0 saham</span>
-      </div>
-    </div>
-    <!-- Crypto -->
-    <div class="metric" style="border-color:rgba(247,147,26,.3);cursor:pointer" onclick="goPage('crypto')">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-        <div>
-          <div style="font-size:10px;font-weight:700;color:#f7931a;font-family:'IBM Plex Mono',monospace;letter-spacing:.5px">🪙 CRYPTO</div>
-          <div class="mval" id="d-crypto" style="color:#f7931a;margin-top:4px">Rp 0</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:#f7931a" id="d-crypto-bobot">0%</div>
-          <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace">dari AUM</div>
-        </div>
-      </div>
-      <div class="prog"><div class="progf" id="d-crypto-bar" style="width:0%;background:#f7931a"></div></div>
-      <div style="margin-top:6px;display:flex;justify-content:space-between">
-        <span class="msub" id="d-crypto-sub" style="color:var(--text2)"></span>
-        <span class="badge" style="background:rgba(247,147,26,.12);color:#f7931a" id="d-crypto-cnt">0 aset</span>
-      </div>
-    </div>
-    <!-- ETF -->
-    <div class="metric" style="border-color:rgba(0,200,255,.3);cursor:pointer" onclick="goPage('etf')">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-        <div>
-          <div style="font-size:10px;font-weight:700;color:var(--accent);font-family:'IBM Plex Mono',monospace;letter-spacing:.5px">📊 ETF AMERIKA</div>
-          <div class="mval" id="d-etf" style="color:var(--accent);margin-top:4px">Rp 0</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--accent)" id="d-etf-bobot">0%</div>
-          <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace">dari AUM</div>
-        </div>
-      </div>
-      <div class="prog"><div class="progf" id="d-etf-bar" style="width:0%;background:var(--accent)"></div></div>
-      <div style="margin-top:6px;display:flex;justify-content:space-between">
-        <span class="msub" id="d-etf-sub" style="color:var(--text2)"></span>
-        <span class="badge b-neu" id="d-etf-cnt">0 ETF</span>
-      </div>
-    </div>
-    <!-- Reksa Dana -->
-    <div class="metric" style="border-color:rgba(167,139,250,.3);cursor:pointer" onclick="goPage('reksadana')">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-        <div>
-          <div style="font-size:10px;font-weight:700;color:var(--purple);font-family:'IBM Plex Mono',monospace;letter-spacing:.5px">🏦 REKSA DANA</div>
-          <div class="mval" id="d-rd" style="color:var(--purple);margin-top:4px">Rp 0</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--purple)" id="d-rd-bobot">0%</div>
-          <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace">dari AUM</div>
-        </div>
-      </div>
-      <div class="prog"><div class="progf" id="d-rd-bar" style="width:0%;background:var(--purple)"></div></div>
-      <div style="margin-top:6px;display:flex;justify-content:space-between">
-        <span class="msub" id="d-rd-sub" style="color:var(--text2)"></span>
-        <span class="badge" id="d-rd-cnt" style="background:rgba(167,139,250,.12);color:var(--purple)">0 produk</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- ROW 3: Chart AUM allocation + IHSG chart + Top movers -->
-  <div style="display:grid;grid-template-columns:260px 1fr 240px;gap:11px;margin-bottom:11px">
-    <!-- Donut alokasi AUM -->
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Alokasi AUM</span><span class="badge b-gray" id="d-aum-total-badge">Rp 0</span></div>
-      <div style="position:relative;width:130px;height:130px;margin:0 auto 10px">
-        <canvas id="aumDonut"></canvas>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">
-          <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace">4 KELAS</div>
-          <div style="font-size:11px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text)">ASET</div>
-        </div>
-      </div>
-      <div id="aum-leg" style="display:flex;flex-direction:column;gap:5px"></div>
-    </div>
-    <!-- IHSG Chart -->
-    <div class="card">
-      <div class="cheader">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span class="ctitle">Pergerakan IHSG</span>
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--accent)" id="ihsg-close-disp">6.195,43</span>
-          <span class="badge b-up" id="ihsg-chg-disp">▲ 68,05 (+1,11%)</span>
-        </div>
-        <div style="display:flex;gap:4px">
-          <button class="pbtn on" onclick="setPeriod(this,'1H')">1H</button>
-          <button class="pbtn" onclick="setPeriod(this,'3H')">3H</button>
-          <button class="pbtn" onclick="setPeriod(this,'1M')">1 Bln</button>
-          <button class="pbtn" onclick="setPeriod(this,'1Y')">1 Thn</button>
-        </div>
-      </div>
-      <div class="cw" style="height:200px;position:relative;background:#000;border-radius:8px;overflow:hidden"><svg id="ihsgChart" style="width:100%;height:100%;display:block"></svg></div>
-      <!-- IHSG Stats Bar — Data Real 2 Jun 2026 -->
-      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
-        <div style="text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Open</div><div id="ihsg-op" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">6.210,00</div></div>
-        <div style="text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">High</div><div id="ihsg-hi" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--green)">6.264,26</div></div>
-        <div style="text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Low</div><div id="ihsg-lo" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--red)">6.143,63</div></div>
-        <div style="text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Mkt Cap</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">11.020T</div></div>
-        <div style="text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">PER</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">14,47</div></div>
-        <div style="text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">PBV</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">1,82</div></div>
-      </div>
-    </div>
-    <!-- Top Movers -->
-    <div class="card" style="display:flex;flex-direction:column">
-      <div class="cheader" style="margin-bottom:6px"><span class="ctitle">Top Movers Saham</span></div>
-      <div style="font-size:9px;color:var(--green);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:3px">▲ GAINERS</div>
-      <div id="gainers" style="flex:1"></div>
-      <div style="font-size:9px;color:var(--red);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-top:8px;margin-bottom:3px">▼ LOSERS</div>
-      <div id="losers"></div>
-    </div>
-  </div>
-
-  <!-- ROW 4: Per-aset breakdown + Recent tx -->
-  <div style="display:grid;grid-template-columns:1fr 300px;gap:11px;margin-bottom:11px">
-    <!-- Tabel ringkasan semua aset -->
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Ringkasan Semua Aset</span><span class="badge b-gray" id="d-total-items">0 instrumen</span></div>
-      <div style="overflow-x:auto">
-        <table class="tbl">
-          <thead><tr>
-            <th onclick="sortAssets('name')" style="cursor:pointer;user-select:none">Instrumen <span id="sort-ico-name" style="font-size:9px;color:var(--text3)">↕</span></th>
-            <th>Kelas Aset</th>
-            <th onclick="sortAssets('lot')" style="cursor:pointer;user-select:none">Lot <span id="sort-ico-lot" style="font-size:9px;color:var(--text3)">↕</span></th>
-            <th onclick="sortAssets('mv')" style="cursor:pointer;user-select:none">Nilai Pasar <span id="sort-ico-mv" style="font-size:9px;color:var(--text3)">↕</span></th>
-            <th>Modal</th>
-            <th onclick="sortAssets('pnl')" style="cursor:pointer;user-select:none">P&amp;L (Rp) <span id="sort-ico-pnl" style="font-size:9px;color:var(--text3)">↕</span></th>
-            <th onclick="sortAssets('ret')" style="cursor:pointer;user-select:none">Return % <span id="sort-ico-ret" style="font-size:9px;color:var(--text3)">↕</span></th>
-            <th>Bobot AUM</th>
-          </tr></thead>
-          <tbody id="d-asset-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-    <!-- Panel kanan: recent tx + kas -->
-    <div style="display:flex;flex-direction:column;gap:9px">
-      <div class="card">
-        <div class="cheader">
-          <span class="ctitle">Transaksi Terakhir</span>
-          <button class="btn btn-ghost btn-xs" onclick="goPage('transaksi')">Semua →</button>
-        </div>
-        <div id="recent-tx"></div>
-      </div>
-      <div class="card">
-        <div class="cheader"><span class="ctitle">Kas &amp; Likuiditas</span></div>
-        <div id="d-kas-detail"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ROW 5b: Bar Chart Modal vs Posisi -->
-  <div class="card" style="margin-bottom:11px">
-    <div class="cheader">
-      <span class="ctitle">📊 Modal vs Posisi Saat Ini (per Saham)</span>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span style="font-size:9px;color:var(--green);font-family:'IBM Plex Mono',monospace">■ Nilai Pasar</span>
-        <span style="font-size:9px;color:var(--accent);font-family:'IBM Plex Mono',monospace">■ Modal</span>
-        <span style="font-size:9px;color:var(--red);font-family:'IBM Plex Mono',monospace">■ Rugi / </span>
-        <span style="font-size:9px;color:var(--amber);font-family:'IBM Plex Mono',monospace">■ Untung</span>
-      </div>
-    </div>
-    <div class="cw" style="height:220px"><canvas id="modalPosisiChart"></canvas></div>
-  </div>
-
-  <!-- ROW 5: Sektoral + Dividen -->
-  <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:11px;margin-bottom:11px">
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Alokasi Sektoral Saham</span><span class="badge b-gray">IDX • Nilai Modal</span></div>
-      <div id="d-sectoral-detail"></div>
-    </div>
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Dividen Kumulatif 2018–2026</span></div>
-      <div style="font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--green);margin-bottom:4px" id="d-div-total">Rp 0</div>
-      <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:8px" id="d-div-info"></div>
-      <div id="d-dividen-list" style="max-height:130px;overflow-y:auto"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== RDN & KAS ===== -->
-<div id="page-rdn" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <div class="wrap hero-grid">
     <div>
-      <div class="ptitle">Rekening Dana Nasabah (RDN)</div>
-      <div class="psub">Kelola arus kas masuk &amp; keluar ke rekening RDN sekuritas Anda</div>
+      <div class="live-pill"><span class="live-dot"></span> LIVE · IHSG &amp; 900+ saham IDX real-time</div>
+      <h1>Terminal investasi untuk yang serius soal <em>data</em>.</h1>
+      <p class="lede">Money Watch Pro menyatukan portofolio saham IDX, crypto, reksa dana, dan ETF dalam satu dashboard gelap — lengkap dengan toolkit analisa kuant sebelum Anda menekan tombol beli, dan kalkulator kekayaan pribadi setelahnya. Harga diambil langsung dari pasar. Pajak dihitung otomatis.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary" href="index.html">Buka Aplikasi →</a>
+        <a class="btn btn-ghost" href="#cara-kerja">Lihat Alur Analisa ↓</a>
+      </div>
+      <div class="hero-meta">
+        <div><b>Rp 0</b> biaya lisensi</div>
+        <div><b>Yahoo Finance</b> sumber harga</div>
+        <div><b>Supabase</b> sinkron lintas perangkat</div>
+      </div>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-green" id="btn-setor">↑ Setor Dana</button>
-      <button class="btn btn-red" id="btn-tarik">↓ Tarik Dana</button>
-      <button class="btn btn-ghost" id="btn-fee" style="border-color:rgba(255,193,7,.4);color:var(--amber)">📋 Catat Biaya</button>
-    </div>
-  </div>
-  <div class="row4" style="margin-bottom:12px">
-    <div class="metric">
-      <div class="mlabel">Saldo RDN Aktif</div>
-      <div class="mval lg up" id="rdn-saldo">Rp 0</div>
-      <div class="msub neu" id="rdn-sekuritas">— sekuritas</div>
-    </div>
-    <div class="metric">
-      <div class="mlabel">Total Setoran</div>
-      <div class="mval" id="rdn-in">Rp 0</div>
-      <div class="msub neu" id="rdn-in-cnt">0 kali</div>
-    </div>
-    <div class="metric">
-      <div class="mlabel">Total Penarikan</div>
-      <div class="mval" id="rdn-out">Rp 0</div>
-      <div class="msub neu" id="rdn-out-cnt">0 kali</div>
-    </div>
-    <div class="metric">
-      <div class="mlabel">Dana Digunakan Beli</div>
-      <div class="mval" id="rdn-used">Rp 0</div>
-      <div class="msub neu">dari transaksi beli</div>
-    </div>
-  </div>
-  <div class="g2b">
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Arus Kas RDN</span></div>
-      <div class="cw" style="height:190px"><canvas id="rdnFlowChart"></canvas></div>
-    </div>
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Ringkasan Saldo</span></div>
-      <div id="rdn-summary"></div>
-      <div class="sep"></div>
-      <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:8px">PENGATURAN SEKURITAS AKTIF</div>
-      <div id="rdn-sec-info"></div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="cheader">
-      <span class="ctitle">Riwayat Mutasi RDN</span>
-      <select class="finput fsel" id="rdn-filter" style="width:150px;padding:4px 9px;font-size:10px">
-        <option value="all">Semua Mutasi</option>
-        <option value="SETOR">Setoran</option>
-        <option value="TARIK">Penarikan</option>
-        <option value="BUY">Pembelian Saham</option>
-        <option value="SELL">Penjualan Saham</option>
-        <option value="DIVIDEN">Penerimaan Dividen</option>
-        <option value="FEE">Biaya & Fee</option>
-      </select>
-    </div>
-    <div style="overflow-x:auto">
-      <table class="tbl">
-        <thead><tr><th>Tanggal</th><th>Jenis</th><th>Keterangan</th><th>Masuk (+)</th><th>Keluar (-)</th><th>Saldo</th><th></th></tr></thead>
-        <tbody id="rdn-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
 
-<!-- ===== TRANSAKSI ===== -->
-<div id="page-transaksi" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+    <div class="panel" aria-hidden="true">
+      <div class="panel-head">
+        <span class="panel-title">DASHBOARD · SAHAM IDX</span>
+        <div class="panel-dots"><span></span><span></span><span></span></div>
+      </div>
+      <div class="mock-ticker">
+        <div class="mock-ticker-track" id="mockTicker"></div>
+      </div>
+      <div class="mock-chart">
+        <div class="mock-chart-head">
+          <span class="lbl">IHSG</span>
+          <span class="val num">6.430,15</span>
+          <span class="chg num">▲ 95,68 (+1,51%)</span>
+        </div>
+        <svg class="chart-svg" viewBox="0 0 460 132" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="heroFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#2dd4a7" stop-opacity="0.32"/>
+              <stop offset="100%" stop-color="#2dd4a7" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M0,108 L460,108" stroke="rgba(139,140,249,.08)" stroke-width="1"/>
+          <path d="M0,80 L460,80" stroke="rgba(139,140,249,.08)" stroke-width="1"/>
+          <path d="M0,52 L460,52" stroke="rgba(139,140,249,.08)" stroke-width="1"/>
+          <path d="M0,110 L20,104 L45,106 L70,92 L95,96 L120,80 L145,84 L170,70 L195,74 L220,58 L245,62 L270,44 L295,50 L320,38 L345,42 L370,26 L395,30 L420,16 L460,10 L460,132 L0,132 Z" fill="url(#heroFill)"/>
+          <polyline class="chart-path" points="0,110 20,104 45,106 70,92 95,96 120,80 145,84 170,70 195,74 220,58 245,62 270,44 295,50 320,38 345,42 370,26 395,30 420,16 460,10"/>
+        </svg>
+      </div>
+      <div class="mock-stats">
+        <div><div class="k">Net Worth</div><div class="v num">Rp 412,6Jt</div></div>
+        <div><div class="k">Wealth Score</div><div class="v num">78 / 100</div></div>
+        <div><div class="k">Verdict FlowScan</div><div class="v num" style="color:var(--rise)">Akumulasi</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ STATS ═══ -->
+<section class="stats">
+  <div class="wrap stats-row">
+    <div class="stat"><div class="v num">900+</div><div class="k">Saham IDX — data resmi</div></div>
+    <div class="stat"><div class="v num">6</div><div class="k">Kelas aset dalam satu dashboard</div></div>
+    <div class="stat"><div class="v num">15+</div><div class="k">Modul analisa &amp; perencanaan</div></div>
+    <div class="stat"><div class="v num">100%</div><div class="k">Harga real-time, bukan simulasi</div></div>
+  </div>
+</section>
+
+<!-- ═══ FITUR — Portofolio ═══ -->
+<section class="section" id="fitur">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Portofolio</div>
+      <h2>Semua aset Anda, satu angka kekayaan bersih.</h2>
+      <p>Bukan sekadar pencatat transaksi — setiap kelas aset dihitung dengan metode yang benar, lalu digabung jadi satu gambaran utuh posisi keuangan Anda.</p>
+    </div>
+    <div class="fgrid">
+      <div class="fcard">
+        <div class="ic">📈</div>
+        <h3>Saham IDX</h3>
+        <p>Average cost otomatis, P&amp;L real-time, breakdown ke 11 sektor resmi IDX, plus sinyal teknikal per posisi.</p>
+        <div class="tags"><span>average cost</span><span>sektoral</span></div>
+      </div>
+      <div class="fcard">
+        <div class="ic">🪙</div>
+        <h3>Crypto</h3>
+        <p>Jurnal beli/jual per koin dengan harga real-time langsung dalam Rupiah — tanpa konversi manual.</p>
+        <div class="tags"><span>realized P&amp;L</span></div>
+      </div>
+      <div class="fcard">
+        <div class="ic">🏦</div>
+        <h3>Reksa Dana &amp; ETF</h3>
+        <p>Lacak NAB reksa dana per platform dan ETF luar negeri dalam USD, otomatis dikonversi ke kurs berjalan.</p>
+        <div class="tags"><span>multi-platform</span><span>kurs live</span></div>
+      </div>
+      <div class="fcard">
+        <div class="ic">🧾</div>
+        <h3>Pajak Otomatis</h3>
+        <p>Komisi, PPN, Levy BEI/KPEI/KSEI, dan PPh final dihitung per transaksi sesuai tarif sekuritas aktif Anda — bukan estimasi kasar.</p>
+        <div class="tags"><span>PMK 131/2024</span><span>PP 14/1997</span></div>
+      </div>
+      <div class="fcard">
+        <div class="ic">💵</div>
+        <h3>Dividen</h3>
+        <p>Catat penerimaan dividen dengan PPh 10% terpotong otomatis, langsung menambah saldo RDN Anda.</p>
+        <div class="tags"><span>PPh final 10%</span></div>
+      </div>
+      <div class="fcard">
+        <div class="ic">🏛️</div>
+        <h3>RDN &amp; Kas</h3>
+        <p>Saldo rekening dana nasabah terhitung otomatis dari setiap transaksi beli, jual, setor, dan tarik.</p>
+        <div class="tags"><span>rekonsiliasi otomatis</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CARA KERJA — alur pra-beli (urutan nyata) ═══ -->
+<section class="section" id="cara-kerja">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Analitik Kuant</div>
+      <h2>Enam langkah sebelum Anda menekan tombol beli.</h2>
+      <p>Ini bukan daftar fitur acak — ini urutan analisa yang sama, dari valuasi sampai ukuran posisi, yang tersedia langsung di dalam aplikasi.</p>
+    </div>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-num">01</div>
+        <div class="flow-body"><h3>Harga Wajar</h3><p>Valuasi berbasis Margin of Safety — bandingkan harga pasar dengan nilai intrinsik sebelum melihat apa pun yang lain.</p></div>
+        <div class="flow-tag">valuasi</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">02</div>
+        <div class="flow-body"><h3>FlowScan</h3><p>Deteksi aliran dana besar lewat CMF, RSI, moving average, dan VWAP — dirangkum jadi satu skor Verdict Gabungan 0–100.</p></div>
+        <div class="flow-tag">skor 0–100</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">03</div>
+        <div class="flow-body"><h3>Candle Analysis</h3><p>Baca pola candlestick untuk menentukan momentum masuk yang lebih presisi.</p></div>
+        <div class="flow-tag">timing</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">04</div>
+        <div class="flow-body"><h3>Backtester</h3><p>Uji strategi moving-average atau RSI pada data historis riil sebelum mempertaruhkan uang sungguhan.</p></div>
+        <div class="flow-tag">data historis</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">05</div>
+        <div class="flow-body"><h3>Screener LQ45</h3><p>Bandingkan kandidat dengan alternatif lain di indeks — pastikan ini pilihan terbaik, bukan cuma yang pertama dilihat.</p></div>
+        <div class="flow-tag">komparasi</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">06</div>
+        <div class="flow-body"><h3>Manajemen Risiko</h3><p>Tentukan ukuran posisi yang wajar sebelum eksekusi — langkah yang paling sering dilewatkan trader.</p></div>
+        <div class="flow-tag">position sizing</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ DATA PASAR ═══ -->
+<section class="section">
+  <div class="wrap split">
     <div>
-      <div class="ptitle">Transaksi Saham</div>
-      <div class="psub">Catat beli/jual saham dengan kalkulasi komisi &amp; pajak otomatis sesuai sekuritas</div>
+      <div class="eyebrow">Data Pasar</div>
+      <h2>Bukan simulasi. Harga sungguhan, setiap saat.</h2>
+      <p class="lede" style="margin-top:14px">Setiap chart, ranking, dan sinyal ditandai jelas: data riil dari Yahoo Finance, atau simulasi sementara sambil menunggu koneksi. Anda selalu tahu angka mana yang bisa dipercaya.</p>
+      <ul class="checklist">
+        <li><span class="chk">✓</span><span><b>IHSG live</b> — area chart real-time dengan riwayat pergerakan intraday.</span></li>
+        <li><span class="chk">✓</span><span><b>Ranking &amp; Heatmap</b> — 30 saham terbesar diberi skor akumulasi/distribusi.</span></li>
+        <li><span class="chk">✓</span><span><b>Correlation Matrix</b> — cari pasangan saham untuk diversifikasi atau pairs trading.</span></li>
+        <li><span class="chk">✓</span><span><b>Monthly Returns</b> — pola musiman return bulanan per saham, 3 tahun ke belakang.</span></li>
+      </ul>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-green" id="btn-beli">+ Beli Saham</button>
-      <button class="btn btn-red" id="btn-jual">− Jual Saham</button>
-      <button class="btn btn-ghost" onclick="txDownloadTemplate()" style="border-color:rgba(129,140,248,.3);color:var(--accent)" title="Unduh template Excel siap isi">⬇ Download Template</button>
-      <button class="btn btn-ghost" onclick="txImportExcel()" style="border-color:rgba(52,211,153,.3);color:var(--green)" title="Upload banyak transaksi sekaligus dari file Excel">📤 Upload Excel</button>
+    <div class="split-visual">
+      <div class="mini-row"><span class="k">BBCA</span><span class="v num" style="color:var(--fall)">6.425 ▼ 1,15%</span></div>
+      <div class="mini-row"><span class="k">GGRM</span><span class="v num" style="color:var(--rise)">17.550 ▲ 1,45%</span></div>
+      <div class="mini-row"><span class="k">BBNI</span><span class="v num" style="color:var(--text-dim)">3.610 ▲ 0,00%</span></div>
+      <div class="mini-row"><span class="k">BBRI</span><span class="v num" style="color:var(--rise)">3.040 ▲ 0,66%</span></div>
+      <div class="mini-row"><span class="k">TLKM</span><span class="v num" style="color:var(--fall)">2.690 ▼ 0,37%</span></div>
+      <div class="mini-row"><span class="k">USD/IDR</span><span class="v num" style="color:var(--rise)">17.903 ▲ kurs</span></div>
     </div>
   </div>
-  <div class="row4">
-    <div class="metric"><div class="mlabel">Total Transaksi</div><div class="mval" id="tx-cnt">0</div><div class="msub neu">semua waktu</div></div>
-    <div class="metric"><div class="mlabel">Total Beli</div><div class="mval" id="tx-buy">Rp 0</div><div class="msub neu" id="tx-buy-cnt">0 transaksi</div></div>
-    <div class="metric"><div class="mlabel">Total Jual</div><div class="mval" id="tx-sell">Rp 0</div><div class="msub neu" id="tx-sell-cnt">0 transaksi</div></div>
-    <div class="metric"><div class="mlabel">Total Komisi+Pajak</div><div class="mval" id="tx-tax">Rp 0</div><div class="msub neu">biaya keseluruhan</div></div>
-  </div>
-  <div class="card">
-    <div class="cheader">
-      <span class="ctitle">Riwayat Transaksi Saham</span>
-      <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
-        <input class="finput" id="tx-search" style="width:120px;padding:4px 9px;font-size:11px" placeholder="Cari ticker...">
-        <select class="finput fsel" id="tx-filter" style="width:90px;padding:4px 9px;font-size:11px">
-          <option value="all">Semua</option><option value="BUY">Beli</option><option value="SELL">Jual</option>
-        </select>
-        <button class="btn btn-ghost btn-xs" onclick="txSelectAll()" id="tx-sel-all-btn">☑ Pilih</button>
-        <button class="btn btn-red btn-xs" onclick="txDeleteSelected()" id="tx-del-sel-btn" style="display:none">🗑 Hapus Terpilih</button>
-        <button class="btn btn-red btn-xs" onclick="txClearAll()">🗑 Hapus Semua</button>
+</section>
+
+<!-- ═══ KEUANGAN HARIAN — bulk import ═══ -->
+<section class="section" style="background:rgba(255,255,255,.012)">
+  <div class="wrap split rev">
+    <div class="split-visual">
+      <div class="rows-list">
+        <div class="row">
+          <div><span class="badge buy">BUY</span></div>
+          <div><span class="name">BBCA</span><span class="sub">10 lot @ Rp 9.500 · Mirae Asset</span></div>
+          <div class="amt">Rp 9,52Jt</div>
+        </div>
+        <div class="row">
+          <div><span class="badge sell">SELL</span></div>
+          <div><span class="name">TLKM</span><span class="sub">5 lot @ Rp 2.700 · Stockbit</span></div>
+          <div class="amt">Rp 1,34Jt</div>
+        </div>
+        <div class="row">
+          <div><span class="badge buy">BUY</span></div>
+          <div><span class="name">ANTM</span><span class="sub">20 lot @ Rp 3.100 · Mirae Asset</span></div>
+          <div class="amt">Rp 6,21Jt</div>
+        </div>
       </div>
     </div>
-    <div style="overflow-x:auto">
-      <table class="tbl">
-        <thead><tr>
-          <th><input type="checkbox" id="tx-check-all" onchange="txToggleAll(this.checked)" style="cursor:pointer"></th>
-          <th>Tanggal</th><th>Aksi</th><th>Ticker</th><th>Sekuritas</th><th>Lot</th><th>Lembar</th>
-          <th>Harga/Lbr</th><th>Nilai Kotor</th><th>Komisi</th><th>Pajak PPh</th>
-          <th>Total Bersih</th><th>P&amp;L</th><th></th>
-        </tr></thead>
-        <tbody id="tx-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- ===== PORTOFOLIO ===== -->
-<div id="page-portofolio" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
     <div>
-      <div class="ptitle">Portofolio Saham</div>
-      <div class="psub">Posisi aktif, unrealized P&amp;L, alokasi dan sinyal teknikal</div>
-    </div>
-    <button class="btn btn-blue" id="btn-beli2">+ Beli Saham</button>
-  </div>
-  <!-- Cash widget saham -->
-  <div style="background:rgba(0,0,0,.15);border:1px solid #00e5a033;border-radius:9px;padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-    <span style="font-size:10px;font-weight:700;color:#00e5a0;letter-spacing:.8px;white-space:nowrap">💰 KAS AKUN SAHAM (RDN)</span>
-    <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:#00e5a0" id="cash-saham-disp">Rp 0</span>
-    <input type="number" id="cash-saham-input" placeholder="Set kas..." class="finput" style="width:140px;padding:4px 9px;font-size:11px">
-    <button class="btn btn-ghost btn-xs" style="color:#00e5a0;border-color:#00e5a044" onclick="saveCashInput('saham')">💾 Simpan</button>
-    <span style="font-size:10px;color:var(--text3);flex:1">Dana tersedia di rekening sekuritas untuk trading saham IDX</span>
-  </div>
-  <div class="row4">
-    <div class="metric"><div class="mlabel">Total Modal</div><div class="mval" id="p-invest">Rp 0</div></div>
-    <div class="metric"><div class="mlabel">Nilai Pasar</div><div class="mval" id="p-market">Rp 0</div></div>
-    <div class="metric"><div class="mlabel">Unrealized P&amp;L</div><div class="mval" id="p-unreal">Rp 0</div><div class="msub" id="p-unreal-pct"></div></div>
-    <div class="metric"><div class="mlabel">Return Terbaik</div><div class="mval" id="p-best">-</div><div class="msub" id="p-best-sub"></div></div>
-  </div>
-  <div class="card">
-    <div style="overflow-x:auto">
-      <table class="tbl">
-        <thead><tr>
-          <th>Ticker</th><th>Nama</th><th>Sektor</th><th>Lot</th><th>Lembar</th>
-          <th>Avg Beli</th><th>Harga Pasar</th><th>Nilai Pasar</th>
-          <th>Modal</th><th>Unrealized P&amp;L</th><th>Return %</th>
-          <th>Alokasi</th><th>Signal</th>
-        </tr></thead>
-        <tbody id="porto-tbody"></tbody>
-      </table>
+      <div class="eyebrow">Keuangan Harian</div>
+      <h2>Upload puluhan transaksi sekaligus lewat Excel.</h2>
+      <p class="lede" style="margin-top:14px">Unduh template siap isi, catat riwayat transaksi atau dividen Anda, lalu upload kembali. Setiap baris divalidasi satu per satu sebelum masuk jurnal — komisi, PPN, Levy, dan PPh tetap dihitung otomatis, bukan dibaca dari file.</p>
+      <ul class="checklist">
+        <li><span class="chk">✓</span><span>Template Excel dengan kolom siap isi dan daftar sekuritas valid.</span></li>
+        <li><span class="chk">✓</span><span>Pratinjau sebelum commit — baris bermasalah ditandai dengan alasan spesifik.</span></li>
+        <li><span class="chk">✓</span><span>Satu kali sinkronisasi untuk seluruh batch, bukan per baris.</span></li>
+      </ul>
     </div>
   </div>
-</div>
+</section>
 
-<!-- ===== DIVIDEN ===== -->
-<div id="page-dividen" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+<!-- ═══ WEALTH ═══ -->
+<section class="section">
+  <div class="wrap split">
     <div>
-      <div class="ptitle">Dashboard Dividen</div>
-      <div class="psub">Riwayat penerimaan dividen per tahun 2018–2026 · PPh 10% · Proyeksi 5 tahun ke depan</div>
+      <div class="eyebrow">Wealth Management</div>
+      <h2>Dari portofolio ke rencana pensiun dini.</h2>
+      <p class="lede" style="margin-top:14px">Net worth Anda bukan cuma jumlah saham — gabungkan dengan tabungan, hutang, dan piutang, lalu lihat berapa lama lagi menuju kebebasan finansial.</p>
+      <ul class="checklist">
+        <li><span class="chk">✓</span><span><b>Dana darurat</b> — meteran 3 &amp; 6 bulan pengeluaran, otomatis dari saldo bank Anda.</span></li>
+        <li><span class="chk">✓</span><span><b>Strategi hutang</b> — bandingkan Avalanche (hemat bunga) vs Snowball (motivasi cepat).</span></li>
+        <li><span class="chk">✓</span><span><b>Kalkulator FIRE</b> — proyeksi 20 tahun dengan skenario Lean, Regular, dan Fat FIRE.</span></li>
+      </ul>
     </div>
-    <div style="display:flex;gap:7px;flex-wrap:wrap">
-      <button class="btn btn-ghost btn-xs" onclick="selectAllDiv()" id="div-sel-all-btn">☑ Pilih Semua</button>
-      <button class="btn btn-red btn-xs" onclick="deleteSelectedDiv()" id="div-del-sel-btn" style="display:none">🗑 Hapus Terpilih</button>
-      <button class="btn btn-red btn-xs" onclick="clearAllDiv()">🗑 Hapus Semua</button>
-      <button class="btn btn-blue" id="btn-div">+ Catat Dividen</button>
-      <button class="btn btn-ghost" onclick="divDownloadTemplate()" style="border-color:rgba(167,139,250,.35);color:var(--purple)" title="Unduh template Excel siap isi">⬇ Download Template</button>
-      <button class="btn btn-ghost" onclick="divImportExcel()" style="border-color:rgba(52,211,153,.3);color:var(--green)" title="Upload banyak dividen sekaligus dari file Excel">📤 Upload Excel</button>
-    </div>
-  </div>
-  <div class="row4">
-    <div class="metric"><div class="mlabel">Total Dividen Bersih</div><div class="mval" id="dv-total">Rp 0</div><div class="msub neu" id="dv-total-sub"></div></div>
-    <div class="metric"><div class="mlabel">Dividen YTD 2026</div><div class="mval" id="dv-ytd">Rp 0</div><div class="msub neu" id="dv-ytd-sub"></div></div>
-    <div class="metric"><div class="mlabel">PPh Dividen (10%)</div><div class="mval" id="dv-tax">Rp 0</div><div class="msub neu">dipotong otomatis</div></div>
-    <div class="metric"><div class="mlabel">Dividend Yield (est.)</div><div class="mval" id="dv-yield">0,00%</div><div class="msub neu">dari portofolio</div></div>
-  </div>
-  <!-- Chart tabs: per tahun -->
-  <div class="g2c" style="margin-bottom:11px">
-    <div class="card">
-      <div class="cheader">
-        <span class="ctitle">Dividen Per Tahun (2018–2026)</span>
-      </div>
-      <div class="cw" style="height:185px"><canvas id="divYearChart"></canvas></div>
-    </div>
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Dividen Per Saham (Kumulatif)</span></div>
-      <div class="cw" style="height:185px"><canvas id="divChart"></canvas></div>
-    </div>
-  </div>
-  <!-- Proyeksi 5 tahun -->
-  <div class="card" style="margin-bottom:11px">
-    <div class="cheader">
-      <span class="ctitle">📈 Proyeksi Dividen 5 Tahun (2027–2031)</span>
-      <div style="display:flex;gap:6px;align-items:center">
-        <span style="font-size:10px;color:var(--text3)">Asumsi pertumbuhan:</span>
-        <select class="finput fsel" id="div-growth-sel" onchange="renderDividen()" style="padding:3px 7px;font-size:10px">
-          <option value="0.05">+5%/th</option>
-          <option value="0.08" selected>+8%/th</option>
-          <option value="0.10">+10%/th</option>
-          <option value="0.15">+15%/th</option>
-          <option value="0">Flat</option>
-        </select>
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:10px" id="div-proj-cards"></div>
-    <div class="cw" style="height:130px"><canvas id="divProjChart"></canvas></div>
-  </div>
-  <!-- Tabel per tahun -->
-  <div class="card">
-    <div class="cheader">
-      <span class="ctitle">Riwayat Dividen</span>
-      <div style="display:flex;gap:5px">
-        <select class="finput fsel" id="div-year-filter" onchange="renderDividen()" style="padding:3px 7px;font-size:10px">
-          <option value="all">Semua Tahun</option>
-          <option value="2026">2026</option>
-          <option value="2025">2025</option>
-          <option value="2024">2024</option>
-          <option value="2023">2023</option>
-          <option value="2022">2022</option>
-          <option value="2021">2021</option>
-          <option value="2020">2020</option>
-          <option value="2019">2019</option>
-          <option value="2018">2018</option>
-        </select>
-      </div>
-    </div>
-    <div style="overflow-x:auto">
-      <table class="tbl">
-        <thead><tr>
-          <th><input type="checkbox" id="div-check-all" onchange="divToggleAll(this.checked)" style="cursor:pointer"></th>
-          <th>Tanggal</th><th>Ticker</th><th>Lembar</th><th>Div/Lbr</th><th>Kotor</th><th>PPh 10%</th><th>Bersih</th><th>Yield</th><th>Aksi</th>
-        </tr></thead>
-        <tbody id="div-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-<!-- ===== DIVIDEN INVESTING ===== -->
-<div id="page-divinvest" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-    <div>
-      <div class="ptitle">💹 Dividen Investing Dashboard</div>
-      <div class="psub">Analisa DPR · Proyeksi Probabilistik · Rating Profesional · Rencana Dividen Tahun Depan</div>
-    </div>
-    <div style="display:flex;gap:7px;flex-wrap:wrap">
-      <button class="btn btn-green" onclick="openDivInvestForm()">+ Input Dividen</button>
-      <button class="btn btn-ghost btn-xs" onclick="renderDivInvest()" title="Refresh">🔄 Refresh</button>
-    </div>
-  </div>
-
-  <!-- Metric Row -->
-  <div class="row4" style="margin-bottom:11px">
-    <div class="metric"><div class="mlabel">Total Realisasi (Net)</div><div class="mval up" id="di-total-net">Rp 0</div><div class="msub neu" id="di-total-sub">sejak 2019</div></div>
-    <div class="metric"><div class="mlabel">Emiten Rutin Bayar</div><div class="mval" id="di-emiten-cnt">0</div><div class="msub neu" id="di-emiten-sub">dari portofolio</div></div>
-    <div class="metric"><div class="mlabel">Proyeksi Next Year</div><div class="mval up" id="di-proj-next">Rp 0</div><div class="msub neu" id="di-proj-sub">estimasi probabilistik</div></div>
-    <div class="metric"><div class="mlabel">Avg. Div. Yield</div><div class="mval" id="di-avg-yield">0,00%</div><div class="msub neu">vs harga pasar saat ini</div></div>
-  </div>
-
-  <!-- Input History Dividen Form (hidden by default) -->
-  <div id="di-form-box" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
-    <div class="cheader" style="margin-bottom:10px">
-      <span class="ctitle">📝 Input History Dividen Payment</span>
-      <button class="btn btn-ghost btn-xs" onclick="closeDivInvestForm()">✕ Tutup</button>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px">
-      <div class="fg"><label class="flabel">Ticker</label>
-        <input class="finput" id="di-inp-ticker" placeholder="BBCA" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
-      <div class="fg"><label class="flabel">Tanggal Bayar</label>
-        <input class="finput" type="date" id="di-inp-date"></div>
-      <div class="fg"><label class="flabel">DPS (Rp/lbr)</label>
-        <input class="finput" type="number" id="di-inp-dps" placeholder="50" min="0"></div>
-      <div class="fg"><label class="flabel">Jumlah Lembar</label>
-        <input class="finput" type="number" id="di-inp-shares" placeholder="10000" min="0"></div>
-      <div class="fg"><label class="flabel">Harga Beli Avg (Rp)</label>
-        <input class="finput" type="number" id="di-inp-avgprice" placeholder="8500" min="0" title="Untuk kalkulasi yield on cost"></div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <button class="btn btn-green" onclick="saveDivInvestEntry()">💾 Simpan</button>
-      <button class="btn btn-ghost btn-xs" onclick="openDivBatchInput()">📋 Input Batch Multi-tahun</button>
-      <span style="font-size:10px;color:var(--text3)">PPh 10% dipotong otomatis · Yield on Cost dihitung dari harga beli</span>
-    </div>
-    <!-- Batch input area -->
-    <div id="di-batch-box" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-      <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Batch: Satu baris per pembayaran, format → <code style="background:rgba(255,255,255,.06);padding:2px 5px;border-radius:3px">TICKER,YYYY-MM-DD,DPS,LEMBAR,HARGA_BELI</code></div>
-      <textarea class="finput" id="di-batch-text" rows="6" style="font-family:'IBM Plex Mono',monospace;font-size:11px;resize:vertical;width:100%" placeholder="BBCA,2023-06-15,150,10000,9500&#10;TLKM,2023-08-10,100,5000,3800&#10;BMRI,2022-07-01,200,3000,5500"></textarea>
-      <button class="btn btn-amber btn-xs" style="margin-top:6px" onclick="saveDivBatch()">📥 Import Semua</button>
-    </div>
-  </div>
-
-  <!-- Rating Overview Cards -->
-  <div class="card" style="margin-bottom:11px">
-    <div class="cheader">
-      <span class="ctitle">🏅 Rating Emiten Dividen (Analisa Profesional)</span>
-      <div style="display:flex;gap:5px;align-items:center">
-        <span style="font-size:10px;color:var(--text3)">Urutkan:</span>
-        <select class="finput fsel" id="di-sort-sel" onchange="renderDivInvest()" style="padding:3px 7px;font-size:10px">
-          <option value="rating">Rating</option>
-          <option value="yield">Yield</option>
-          <option value="projected">Proyeksi</option>
-          <option value="consistency">Konsistensi</option>
-          <option value="total">Total Realisasi</option>
-        </select>
-      </div>
-    </div>
-    <div id="di-rating-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:9px;margin-top:4px"></div>
-  </div>
-
-  <!-- DPR Table per emiten -->
-  <div class="g2c" style="margin-bottom:11px">
-    <div class="card">
-      <div class="cheader"><span class="ctitle">📊 Realisasi Pendapatan per Emiten</span></div>
-      <div style="overflow-x:auto">
-        <table class="tbl" id="di-real-tbl">
-          <thead><tr><th>Emiten</th><th>Tahun Bayar</th><th>Total Net (Rp)</th><th>Avg DPS</th><th>YoC%</th><th>Konsistensi</th></tr></thead>
-          <tbody id="di-real-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-    <div class="card">
-      <div class="cheader"><span class="ctitle">📉 Tidak Membayar Dividen</span><span class="badge b-dn" id="di-no-div-cnt">0</span></div>
-      <div id="di-no-div-list" style="padding:6px 0"></div>
-    </div>
-  </div>
-
-  <!-- Proyeksi Next Year Detail -->
-  <div class="card" style="margin-bottom:11px">
-    <div class="cheader">
-      <span class="ctitle">🔮 Proyeksi Dividen Tahun Depan (Probabilistik)</span>
-      <div style="display:flex;gap:6px;align-items:center">
-        <span style="font-size:10px;color:var(--text3)">Skenario:</span>
-        <select class="finput fsel" id="di-scenario" onchange="renderDivInvest()" style="padding:3px 7px;font-size:10px">
-          <option value="base">Base Case</option>
-          <option value="bull">Bullish (+20% DPS)</option>
-          <option value="bear">Bearish (-20% DPS)</option>
-        </select>
-      </div>
-    </div>
-    <div id="di-proj-detail" style="overflow-x:auto">
-      <table class="tbl">
-        <thead><tr><th>Emiten</th><th>Shares</th><th>Prob. Bayar</th><th>Est. DPS</th><th>Exp. Gross</th><th>Exp. Net</th><th>Rating</th><th>Catatan</th></tr></thead>
-        <tbody id="di-proj-tbody"></tbody>
-      </table>
-    </div>
-    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <div style="font-size:11px;color:var(--text2)">
-        <span>📐 Metodologi: P(bayar) × E[DPS] berdasarkan CAGR 3-tahun terakhir &amp; skor konsistensi historis (2019–kini)</span>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:10px;color:var(--text3)">Total Proyeksi (Net setelah PPh 10%)</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;color:var(--green)" id="di-total-proj-disp">Rp 0</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- History chart per tahun per emiten -->
-  <div class="card" style="margin-bottom:11px">
-    <div class="cheader">
-      <span class="ctitle">📅 History DPS per Tahun per Emiten</span>
-      <select class="finput fsel" id="di-history-ticker" onchange="renderDivHistoryChart()" style="padding:3px 7px;font-size:10px"><option value="ALL">Semua Emiten</option></select>
-    </div>
-    <div class="cw" style="height:200px"><canvas id="diHistChart"></canvas></div>
-  </div>
-
-  <!-- Riwayat input -->
-  <div class="card">
-    <div class="cheader">
-      <span class="ctitle">📋 Riwayat History Dividen (Input Manual)</span>
-      <div style="display:flex;gap:5px">
-        <select class="finput fsel" id="di-hist-year" onchange="renderDivInvest()" style="padding:3px 7px;font-size:10px">
-          <option value="all">Semua</option>
-          <option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option>
-          <option value="2023">2023</option><option value="2022">2022</option><option value="2021">2021</option>
-          <option value="2020">2020</option><option value="2019">2019</option>
-        </select>
-        <button class="btn btn-red btn-xs" onclick="clearDivInvestData()">🗑 Hapus Semua</button>
-      </div>
-    </div>
-    <div style="overflow-x:auto">
-      <table class="tbl">
-        <thead><tr><th>Tanggal</th><th>Ticker</th><th>DPS</th><th>Lembar</th><th>Gross</th><th>PPh 10%</th><th>Net</th><th>YoC%</th><th>Aksi</th></tr></thead>
-        <tbody id="di-hist-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-<!-- ===== SEKTORAL ===== -->
-<div id="page-sektoral" class="page">
-  <div class="ptitle" style="margin-bottom:2px">Analisa Sektoral IDX</div>
-  <div class="psub">Distribusi portofolio berdasarkan 11 sektor IDX Indonesia</div>
-  <div class="row4">
-    <div class="metric"><div class="mlabel">Sektor Terbesar</div><div class="mval" style="font-size:15px" id="sec-top">-</div><div class="msub neu" id="sec-top-pct"></div></div>
-    <div class="metric"><div class="mlabel">Jumlah Sektor</div><div class="mval" id="sec-cnt">0</div><div class="msub neu">dari 11 sektor IDX</div></div>
-    <div class="metric"><div class="mlabel">Diversifikasi Score</div><div class="mval" id="sec-div-score">0/10</div><div class="msub neu" id="sec-div-label"></div></div>
-    <div class="metric"><div class="mlabel">Konsentrasi Risiko</div><div class="mval" id="sec-conc">0%</div><div class="msub neu" id="sec-conc-sub">sektor teratas</div></div>
-  </div>
-  <div class="g2b">
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Alokasi Per Sektor IDX</span></div>
-      <div class="cw" style="height:220px"><canvas id="sectorChart"></canvas></div>
-    </div>
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Detail Sektor</span></div>
-      <div id="sector-detail"></div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="cheader"><span class="ctitle">Saham Per Sektor</span></div>
-    <div id="sector-stocks"></div>
-  </div>
-</div>
-
-<!-- ===== RISIKO ===== -->
-<div id="page-risiko" class="page">
-  <div class="ptitle" style="margin-bottom:2px">Analisa Risiko Portofolio</div>
-  <div class="psub">Volatilitas, Value at Risk (VaR), korelasi, dan metrik risiko lainnya</div>
-  <div class="row4">
-    <div class="metric">
-      <div class="mlabel">Risk Score</div>
-      <div class="mval lg" id="risk-score">0</div>
-      <div class="msub" id="risk-score-label"></div>
-    </div>
-    <div class="metric">
-      <div class="mlabel">Value at Risk (95%)</div>
-      <div class="mval dn" id="var-95">Rp 0</div>
-      <div class="msub neu">potensi rugi 1 hari</div>
-    </div>
-    <div class="metric">
-      <div class="mlabel">Value at Risk (99%)</div>
-      <div class="mval dn" id="var-99">Rp 0</div>
-      <div class="msub neu">skenario ekstrem</div>
-    </div>
-    <div class="metric">
-      <div class="mlabel">Sharpe Ratio (est.)</div>
-      <div class="mval" id="risk-sharpe">0.00</div>
-      <div class="msub neu">risk-adjusted return</div>
-    </div>
-  </div>
-  <div class="row4">
-    <div class="metric">
-      <div class="mlabel">Volatilitas Portofolio</div>
-      <div class="mval" id="risk-vol">0%</div>
-      <div class="msub neu">estimasi tahunan</div>
-    </div>
-    <div class="metric">
-      <div class="mlabel">Beta Portofolio</div>
-      <div class="mval" id="risk-beta">0.00</div>
-      <div class="msub neu">vs IHSG</div>
-    </div>
-    <div class="metric">
-      <div class="mlabel">Max Drawdown</div>
-      <div class="mval dn" id="risk-dd">0%</div>
-      <div class="msub neu">penurunan terbesar</div>
-    </div>
-    <div class="metric">
-      <div class="mlabel">Win Rate</div>
-      <div class="mval" id="risk-win">0%</div>
-      <div class="msub neu" id="risk-win-sub">trade menang</div>
-    </div>
-  </div>
-  <div class="g2b">
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Distribusi Return</span></div>
-      <div class="cw" style="height:190px"><canvas id="retDistChart"></canvas></div>
-    </div>
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Profil Risiko Per Saham</span></div>
-      <div id="risk-per-stock"></div>
-    </div>
-  </div>
-  <div class="g2c">
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Skenario Stress Test</span></div>
-      <div id="stress-test"></div>
-    </div>
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Rekomendasi Manajemen Risiko</span></div>
-      <div id="risk-reco"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== PAJAK ===== -->
-<div id="page-pajak" class="page">
-  <div class="ptitle" style="margin-bottom:2px">Pajak &amp; Biaya Transaksi</div>
-  <div class="psub">Rekap PPh &amp; komisi broker — tarif dapat disesuaikan manual di panel Pengaturan</div>
-  <div class="alert alert-info" id="pj-info-bar">ℹ️ Memuat pengaturan pajak...</div>
-  <div class="row4">
-    <div class="metric"><div class="mlabel" id="pj-pph-label">PPh Transaksi</div><div class="mval" id="pj-pph">Rp 0</div><div class="msub neu" id="pj-pph-sub"></div></div>
-    <div class="metric"><div class="mlabel">PPh Dividen (10%)</div><div class="mval" id="pj-div">Rp 0</div><div class="msub neu" id="pj-div-sub"></div></div>
-    <div class="metric"><div class="mlabel">Komisi Broker</div><div class="mval" id="pj-kom">Rp 0</div><div class="msub neu" id="pj-kom-sub"></div></div>
-    <div class="metric"><div class="mlabel">Total Beban</div><div class="mval" id="pj-tot">Rp 0</div><div class="msub neu">semua biaya</div></div>
-  </div>
-  <div class="g2c">
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Rincian Per Sekuritas</span></div>
-      <div id="pj-by-sec"></div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:11px">
-      <!-- ⚙️ Pengaturan Tarif Pajak -->
-      <div class="card" style="border-color:rgba(255,193,7,.3)">
-        <div class="cheader">
-          <span class="ctitle" style="color:var(--amber)">⚙️ Pengaturan Tarif Pajak</span>
-          <button class="btn btn-amber btn-xs" onclick="saveTaxFromUI()">💾 Simpan</button>
+    <div class="split-visual">
+      <div class="ring-wrap">
+        <div class="ring">
+          <svg width="104" height="104" viewBox="0 0 104 104" style="transform:rotate(-90deg)">
+            <circle cx="52" cy="52" r="44" fill="none" stroke="var(--surface-2)" stroke-width="9"/>
+            <circle cx="52" cy="52" r="44" fill="none" stroke="var(--signal)" stroke-width="9" stroke-linecap="round" stroke-dasharray="276" stroke-dashoffset="61"/>
+          </svg>
+          <div class="ring-center"><b class="num">78</b><span>SCORE</span></div>
         </div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Sesuai regulasi: PMK 131/2024 (PPN 12%), PP 14/1997 (PPh Final 0,1% jual), BEI+KPEI+KSEI Levy 0,043%. PPh Beli tidak ada dalam hukum Indonesia.</div>
-        <div class="fgrid" style="grid-template-columns:1fr 1fr 1fr">
-          <div class="fg">
-            <label class="flabel">PPN × Komisi (%)</label>
-            <div style="display:flex;align-items:center;gap:7px">
-              <input class="finput" type="number" id="tax-ppn-input" step="1" min="0" max="20" style="font-family:'IBM Plex Mono',monospace" oninput="taxPreviewLive()" placeholder="12">
-              <span style="font-size:13px;font-weight:700;color:var(--amber);font-family:'IBM Plex Mono',monospace" id="tax-ppn-disp">12%</span>
-            </div>
-            <div style="font-size:9px;color:var(--text3);margin-top:3px">PMK 131/2024 — masukkan angka persen (mis: 12)</div>
-          </div>
-          <div class="fg">
-            <label class="flabel">Levy BEI+KPEI+KSEI (%)</label>
-            <div style="display:flex;align-items:center;gap:7px">
-              <input class="finput" type="number" id="tax-levy-input" step="0.001" min="0" max="1" style="font-family:'IBM Plex Mono',monospace" oninput="taxPreviewLive()" placeholder="0.043">
-              <span style="font-size:13px;font-weight:700;color:var(--cyan);font-family:'IBM Plex Mono',monospace" id="tax-levy-disp">0.043%</span>
-            </div>
-            <div style="font-size:9px;color:var(--text3);margin-top:3px">Masukkan dalam % (mis: 0.043 = 0,043% = BEI 0,018%+KPEI 0,010%+KSEI 0,015%)</div>
-          </div>
-          <div class="fg">
-            <label class="flabel">PPh Final Jual (%)</label>
-            <div style="display:flex;align-items:center;gap:7px">
-              <input class="finput" type="number" id="tax-jual-input" step="0.01" min="0" max="5" style="font-family:'IBM Plex Mono',monospace" oninput="taxPreviewLive()" placeholder="0.10">
-              <span style="font-size:13px;font-weight:700;color:var(--red);font-family:'IBM Plex Mono',monospace" id="tax-jual-disp">0.10%</span>
-            </div>
-            <div style="font-size:9px;color:var(--text3);margin-top:3px">PP 14/1997 — hanya atas penjualan saham</div>
-          </div>
-        </div>
-        <div style="margin-top:10px">
-          <div style="font-size:10px;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px">Preset Regulasi</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <button class="btn btn-ghost btn-xs" onclick="applyTaxPreset(0.12,0.001,0.00043)" style="border-color:rgba(255,193,7,.4);color:var(--amber)">✅ PPN12% + PPh0,1% + Levy0,043% (Resmi)</button>
-            <button class="btn btn-ghost btn-xs" onclick="applyTaxPreset(0.11,0.001,0.00043)">PPN11% (sebelum Jan 2025)</button>
-            <button class="btn btn-ghost btn-xs" onclick="applyTaxPreset(0.12,0,0)">PPN saja (0% PPh/Levy)</button>
-          </div>
-        </div>
-        <div class="taxbox" style="margin-top:10px">
-          <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:6px">PREVIEW TOTAL BIAYA (10 lot @ Rp 5.000, komisi Stockbit 0,15%/0,25%)</div>
-          <div class="taxrow"><span>Total Biaya Beli</span><span class="mono amb" id="tax-prev-beli">Rp 0</span></div>
-          <div class="taxrow"><span>Total Biaya Jual</span><span class="mono dn" id="tax-prev-jual">Rp 0</span></div>
-          <div class="taxrow tot"><span>Total Keduanya</span><span class="mono" id="tax-prev-diff">Rp 0</span></div>
-        </div>
-      </div>
-      <!-- 🏦 Tarif PPh per Sekuritas -->
-      <div class="card">
-        <div class="cheader"><span class="ctitle">🏦 Tarif PPh per Sekuritas</span><div style="display:flex;gap:5px"><button class="btn btn-ghost btn-xs" onclick="resetSekTax()">Reset</button><button class="btn btn-amber btn-xs" onclick="saveSekTax()">💾 Simpan</button></div></div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Override komisi per sekuritas jika berbeda dari SEKURITAS data. PPh Final (0,1%) dan Levy (0,043%) adalah tarif tetap — tidak bisa di-override per broker.</div>
-        <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:7px;font-size:9px;color:var(--text3);letter-spacing:.6px;font-family:'IBM Plex Mono',monospace;padding-bottom:4px;border-bottom:1px solid var(--border2)"><span>SEKURITAS</span><span>KOMISI BELI %</span><span>KOMISI JUAL %</span></div>
-        <div id="sek-tax-rows" style="max-height:230px;overflow-y:auto"></div>
-      </div>
-      <!-- Kalkulator Real-time -->
-      <div class="card">
-        <div class="cheader"><span class="ctitle">Kalkulator Pajak Real-time</span></div>
-        <div class="fg" style="margin-bottom:8px">
-          <label class="flabel">Sekuritas</label>
-          <select class="finput fsel" id="sim-sec" onchange="simCalcTax()"></select>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-          <div class="fg"><label class="flabel">Jumlah Lot</label><input class="finput" type="number" id="sim-lot" placeholder="10" min="1" oninput="simCalcTax()"></div>
-          <div class="fg"><label class="flabel">Harga/Lembar (Rp)</label><input class="finput" type="number" id="sim-price" placeholder="8900" oninput="simCalcTax()"></div>
-        </div>
-        <div class="taxbox">
-          <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:7px">SIMULASI JUAL</div>
-          <div class="taxrow"><span>Nilai Kotor</span><span class="mono" id="s-gross">Rp 0</span></div>
-          <div class="taxrow"><span id="s-pph-label">PPh Jual</span><span class="mono dn" id="s-pph">-Rp 0</span></div>
-          <div class="taxrow"><span id="s-kom-label">Komisi Jual</span><span class="mono amb" id="s-kom">-Rp 0</span></div>
-          <div class="taxrow tot"><span>Diterima Bersih</span><span class="mono up" id="s-net">Rp 0</span></div>
-        </div>
-        <div class="taxbox" style="margin-top:7px">
-          <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:7px">SIMULASI BELI</div>
-          <div class="taxrow"><span>Nilai Beli</span><span class="mono" id="s-buy">Rp 0</span></div>
-          <div class="taxrow"><span id="s-pph-beli-label">PPh/Levy Beli</span><span class="mono amb" id="s-pph-beli">-Rp 0</span></div>
-          <div class="taxrow"><span id="s-bkom-label">Komisi Beli</span><span class="mono amb" id="s-bkom">-Rp 0</span></div>
-          <div class="taxrow tot"><span>Total Dibayar</span><span class="mono amb" id="s-btot">Rp 0</span></div>
+        <div style="flex:1">
+          <div class="mini-row"><span class="k">FIRE Progress</span><span class="v num">42,3%</span></div>
+          <div class="mini-row"><span class="k">Dana Darurat</span><span class="v num" style="color:var(--rise)">6,8 bln</span></div>
+          <div class="mini-row"><span class="k">Debt Ratio</span><span class="v num">18,2%</span></div>
         </div>
       </div>
     </div>
   </div>
-  <div class="card">
-    <div class="cheader">
-      <span class="ctitle">Rincian PPh Per Transaksi</span>
-      <div style="display:flex;gap:6px;align-items:center">
-        <span class="badge b-gray" id="pj-pph-rate-badge">Beli 0,18% · Jual 0,28%</span>
+</section>
+
+<!-- ═══ TEKNOLOGI ═══ -->
+<section class="tech" id="teknologi">
+  <div class="wrap" style="padding:70px 28px 0">
+    <div class="section-head" style="margin-bottom:36px">
+      <div class="eyebrow">Di Balik Layar</div>
+      <h2>Dibangun dari sumber data resmi, bukan angka karangan.</h2>
+    </div>
+  </div>
+  <div class="wrap tech-row" style="padding:0 28px 70px">
+    <div class="tech-item"><div class="k">Yahoo Finance</div><div class="v">Sumber harga real-time untuk IHSG, saham IDX, kurs USD/IDR, dan crypto.</div></div>
+    <div class="tech-item"><div class="k">IDX Stock Screener</div><div class="v">Daftar &amp; sektor emiten diimpor langsung dari data resmi bursa — bisa direset kapan saja.</div></div>
+    <div class="tech-item"><div class="k">Supabase</div><div class="v">Data tersimpan di akun Anda sendiri, tersinkron otomatis lintas perangkat.</div></div>
+    <div class="tech-item"><div class="k">PMK 131/2024 · PP 14/1997</div><div class="v">Basis regulasi untuk perhitungan PPN, Levy, dan PPh final atas transaksi saham.</div></div>
+  </div>
+</section>
+
+<!-- ═══ CTA FINAL ═══ -->
+<section class="cta-final">
+  <div class="wrap">
+    <div class="terminal" aria-hidden="true">
+      <div class="terminal-bar"><span></span><span></span><span></span></div>
+      <div class="terminal-body">
+        <div><span class="prompt">$</span> <span class="cmd">buka moneywatch --portofolio</span></div>
+        <div class="out">Menghubungkan ke Yahoo Finance… selesai</div>
+        <div class="out">Memuat 900+ saham IDX… selesai</div>
+        <div><span class="prompt">$</span> <span class="cmd">_</span><span class="caret"></span></div>
       </div>
     </div>
-    <div style="overflow-x:auto">
-      <table class="tbl">
-        <thead><tr><th>Tanggal</th><th>Aksi</th><th>Ticker</th><th>Sekuritas</th><th>Nilai Transaksi</th><th>PPh</th><th>Komisi</th><th>Total Biaya</th></tr></thead>
-        <tbody id="pj-tbody"></tbody>
-      </table>
-    </div>
+    <h2>Portofolio Anda menunggu untuk dianalisa.</h2>
+    <p>Tidak ada biaya, tidak ada pendaftaran rumit — masuk dan mulai catat transaksi pertama Anda hari ini.</p>
+    <a class="btn btn-primary" href="index.html" style="padding:15px 30px;font-size:14px">Buka Aplikasi →</a>
   </div>
-</div>
-<!-- ===== CRYPTO ===== -->
-<div id="page-crypto" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-    <div>
-      <div class="ptitle">Portofolio Crypto</div>
-      <div class="psub">Tracking aset kripto dengan harga dalam Rupiah (IDR) — real-time simulasi</div>
-    </div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-blue" onclick="openCryptoModal('buy')">+ Beli Crypto</button>
-      <button class="btn btn-red" onclick="openCryptoModal('sell')">− Jual Crypto</button>
-    </div>
-  </div>
-    <!-- Cash widget crypto -->
-  <div style="background:rgba(0,0,0,.15);border:1px solid #f7931a33;border-radius:9px;padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-    <span style="font-size:10px;font-weight:700;color:#f7931a;letter-spacing:.8px;white-space:nowrap">💰 KAS CRYPTO (WALLET/EXCHANGE)</span>
-    <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:#f7931a" id="cash-crypto-disp">Rp 0</span>
-    <input type="number" id="cash-crypto-input" placeholder="Set kas..." class="finput" style="width:140px;padding:4px 9px;font-size:11px">
-    <button class="btn btn-ghost btn-xs" style="color:#f7931a;border-color:#f7931a44" onclick="saveCashInput('crypto')">💾 Simpan</button>
-    <span style="font-size:10px;color:var(--text3);flex:1">Saldo IDR di exchange crypto (Indodax, Tokocrypto, dll)</span>
-  </div>
-  <div class="row5">
-    <div class="metric"><div class="mlabel">Nilai Crypto (IDR)</div><div class="mval lg" id="cr-total">Rp 0</div><div class="msub" id="cr-total-sub"></div></div>
-    <div class="metric"><div class="mlabel">Total Modal</div><div class="mval" id="cr-modal">Rp 0</div></div>
-    <div class="metric"><div class="mlabel">Unrealized P&amp;L</div><div class="mval" id="cr-unreal">Rp 0</div><div class="msub" id="cr-unreal-pct"></div></div>
-    <div class="metric"><div class="mlabel">Kurs USD/IDR</div><div class="mval" id="cr-kurs">Rp 0</div><div class="msub neu">estimasi live</div></div>
-    <div class="metric"><div class="mlabel">Aset Terbaik</div><div class="mval" id="cr-best">-</div><div class="msub" id="cr-best-sub"></div></div>
-  </div>
-  <div class="g2b">
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Komposisi Crypto</span><span class="badge b-neu" id="cr-cnt">0 aset</span></div>
-      <div style="display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:center">
-        <div class="cw" style="height:150px"><canvas id="cryptoDonut"></canvas></div>
-        <div id="crypto-leg"></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Pergerakan Harga (IDR)</span></div>
-      <div class="cw" style="height:150px"><canvas id="cryptoPriceChart"></canvas></div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="cheader"><span class="ctitle">Posisi Crypto Aktif</span></div>
-    <div style="overflow-x:auto">
-      <table class="tbl">
-        <thead><tr>
-          <th>Koin</th><th>Nama</th><th>Kategori</th><th>Jumlah</th><th>Avg Beli (IDR)</th>
-          <th>Harga Pasar (IDR)</th><th>Harga (USD)</th><th>Nilai (IDR)</th>
-          <th>Modal (IDR)</th><th>P&amp;L (IDR)</th><th>Return %</th><th>Alokasi</th><th>Signal</th>
-        </tr></thead>
-        <tbody id="crypto-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-  <div class="card" style="margin-top:0">
-    <div class="cheader"><span class="ctitle">Riwayat Transaksi Crypto</span></div>
-    <div style="overflow-x:auto">
-      <table class="tbl">
-        <thead><tr><th>Tanggal</th><th>Aksi</th><th>Koin</th><th>Jumlah</th><th>Harga/Unit (IDR)</th><th>Total (IDR)</th><th>P&amp;L</th><th></th></tr></thead>
-        <tbody id="crypto-tx-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
+</section>
 
-<!-- ===== ETF AMERIKA ===== -->
-<div id="page-etf" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-    <div>
-      <div class="ptitle">Portofolio ETF Amerika Serikat</div>
-      <div class="psub">Tracking ETF US dengan konversi harga USD → IDR otomatis</div>
+<footer>
+  <div class="wrap foot-row">
+    <div class="foot-brand">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="20" height="20" rx="4" stroke="#8b8cf9" stroke-width="1.5"/>
+        <path d="M7 14 L10 10 L13 13 L17 8" stroke="#8b8cf9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Money Watch Pro — Portofolio, Wealth &amp; Analisa Kuant
     </div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-blue" onclick="openEtfModal('buy')">+ Beli ETF</button>
-      <button class="btn btn-red" onclick="openEtfModal('sell')">− Jual ETF</button>
-    </div>
-  </div>
-    <!-- Cash widget etf -->
-  <div style="background:rgba(0,0,0,.15);border:1px solid #00c8ff33;border-radius:9px;padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-    <span style="font-size:10px;font-weight:700;color:#00c8ff;letter-spacing:.8px;white-space:nowrap">💰 KAS ETF (USD ACCOUNT)</span>
-    <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:#00c8ff" id="cash-etf-disp">$ 0</span>
-    <input type="number" id="cash-etf-input" placeholder="Set kas..." class="finput" style="width:140px;padding:4px 9px;font-size:11px">
-    <button class="btn btn-ghost btn-xs" style="color:#00c8ff;border-color:#00c8ff44" onclick="saveCashInput('etf')">💾 Simpan</button>
-    <span style="font-size:10px;color:var(--text3);flex:1">Saldo USD di broker internasional (IBKR, dll)</span>
-  </div>
-  <div class="row5">
-    <div class="metric"><div class="mlabel">Nilai ETF (IDR)</div><div class="mval lg" id="etf-total">Rp 0</div><div class="msub" id="etf-total-sub"></div></div>
-    <div class="metric"><div class="mlabel">Nilai ETF (USD)</div><div class="mval" id="etf-total-usd">$ 0</div></div>
-    <div class="metric"><div class="mlabel">Unrealized P&amp;L (IDR)</div><div class="mval" id="etf-unreal">Rp 0</div><div class="msub" id="etf-unreal-pct"></div></div>
-    <div class="metric"><div class="mlabel">Kurs USD/IDR</div><div class="mval" id="etf-kurs">Rp 0</div><div class="msub neu">referensi BI</div></div>
-    <div class="metric"><div class="mlabel">ETF Terbaik</div><div class="mval" id="etf-best">-</div><div class="msub" id="etf-best-sub"></div></div>
-  </div>
-  <div class="g2b">
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Komposisi ETF</span><span class="badge b-neu" id="etf-cnt">0 ETF</span></div>
-      <div style="display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:center">
-        <div class="cw" style="height:150px"><canvas id="etfDonut"></canvas></div>
-        <div id="etf-leg"></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Performa Per Kategori</span></div>
-      <div id="etf-category"></div>
+    <div class="foot-links">
+      <a href="index.html">Aplikasi</a>
+      <a href="#fitur">Fitur</a>
+      <a href="#teknologi">Teknologi</a>
     </div>
   </div>
-  <div class="card">
-    <div class="cheader"><span class="ctitle">Posisi ETF Aktif</span></div>
-    <div style="overflow-x:auto">
-      <table class="tbl">
-        <thead><tr>
-          <th>Ticker</th><th>Nama</th><th>Kategori</th><th>Lembar</th><th>Avg Beli (USD)</th>
-          <th>Harga (USD)</th><th>Nilai (IDR)</th><th>Modal (IDR)</th>
-          <th>P&amp;L (IDR)</th><th>P&amp;L (USD)</th><th>Return %</th><th>Alokasi</th><th>Signal</th>
-        </tr></thead>
-        <tbody id="etf-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-  <div class="card" style="margin-top:0">
-    <div class="cheader"><span class="ctitle">Riwayat Transaksi ETF</span></div>
-    <div style="overflow-x:auto">
-      <table class="tbl">
-        <thead><tr><th>Tanggal</th><th>Aksi</th><th>Ticker</th><th>Lembar</th><th>Harga (USD)</th><th>Total (USD)</th><th>Total (IDR)</th><th>Kurs</th><th>P&amp;L (IDR)</th><th></th></tr></thead>
-        <tbody id="etf-tx-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
+</footer>
 
-<!-- ===== REKSA DANA ===== -->
-<div id="page-reksadana" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-    <div>
-      <div class="ptitle">Reksa Dana</div>
-      <div class="psub">Riwayat investasi reksa dana 2018–2026 — seluruh posisi sudah dicairkan</div>
-    </div>
-    <span class="badge b-amb" style="font-size:11px;padding:5px 12px;align-self:center">Posisi Aktif: 0 produk</span>
-  </div>
-
-  <!-- Info banner -->
-  <div style="background:rgba(255,193,7,.07);border:1px solid rgba(255,193,7,.25);border-radius:10px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px">
-    <span style="font-size:22px">📋</span>
-    <div>
-      <div style="font-size:12px;font-weight:700;color:var(--amber)">Semua reksa dana sudah dicairkan</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:2px">Data berikut adalah <strong>riwayat historis</strong> transaksi reksa dana dari 3 platform (BIBIT, IPOT, POEMS). Total gain kumulatif: <strong style="color:var(--green)">Rp 19.626.491</strong>. Gunakan tombol + Beli RD untuk mulai mencatat posisi aktif baru.</div>
-    </div>
-    <button class="btn btn-green btn-sm" onclick="openRdModal('beli')" style="flex-shrink:0">+ Beli RD Baru</button>
-  </div>
-
-  <!-- Summary metrics -->
-    <!-- Cash widget reksadana -->
-  <div style="background:rgba(0,0,0,.15);border:1px solid #a78bfa33;border-radius:9px;padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-    <span style="font-size:10px;font-weight:700;color:#a78bfa;letter-spacing:.8px;white-space:nowrap">💰 KAS REKSA DANA (BIBIT/IPOT)</span>
-    <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:#a78bfa" id="cash-reksadana-disp">Rp 0</span>
-    <input type="number" id="cash-reksadana-input" placeholder="Set kas..." class="finput" style="width:140px;padding:4px 9px;font-size:11px">
-    <button class="btn btn-ghost btn-xs" style="color:#a78bfa;border-color:#a78bfa44" onclick="saveCashInput('reksadana')">💾 Simpan</button>
-    <span style="font-size:10px;color:var(--text3);flex:1">Saldo IDR di platform reksa dana (Bibit, IPOT, POEMS)</span>
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:11px">
-    <div class="metric" style="border-color:rgba(0,229,160,.3)">
-      <div class="mlabel">Total Gain Kumulatif</div>
-      <div class="mval up" id="rd-total" style="font-size:18px">Rp 0</div>
-      <div class="msub neu">realisasi 2018–2026</div>
-    </div>
-    <div class="metric">
-      <div class="mlabel">Gain BIBIT</div>
-      <div class="mval up" id="rd-gain-bibit">Rp 0</div>
-      <div class="msub neu" id="rd-gain-bibit-sub"></div>
-    </div>
-    <div class="metric">
-      <div class="mlabel">Gain IPOT</div>
-      <div class="mval" id="rd-gain-ipot">Rp 0</div>
-      <div class="msub neu" id="rd-gain-ipot-sub"></div>
-    </div>
-    <div class="metric">
-      <div class="mlabel">Gain POEMS</div>
-      <div class="mval" id="rd-gain-poems">Rp 0</div>
-      <div class="msub neu" id="rd-gain-poems-sub"></div>
-    </div>
-    <div class="metric">
-      <div class="mlabel">Posisi Aktif Saat Ini</div>
-      <div class="mval" id="rd-aktif-val">Rp 0</div>
-      <div class="msub" id="rd-aktif-sub"></div>
-    </div>
-  </div>
-
-  <!-- Charts -->
-  <div class="g2b" style="margin-bottom:11px">
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Gain per Kategori (Semua Platform)</span></div>
-      <div class="cw" style="height:160px"><canvas id="rdPerfChart"></canvas></div>
-    </div>
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Gain per Platform</span></div>
-      <div style="display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center">
-        <div class="cw" style="height:160px"><canvas id="rdDonut"></canvas></div>
-        <div id="rd-leg"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Posisi aktif user (rdTx) -->
-  <div class="card" style="margin-bottom:9px">
-    <div class="cheader">
-      <span class="ctitle">Posisi Aktif (Input Manual)</span>
-      <div style="display:flex;gap:7px">
-        <button class="btn btn-green btn-xs" onclick="openRdModal('beli')">+ Beli</button>
-        <button class="btn btn-red btn-xs" onclick="openRdModal('jual')">− Jual</button>
-      </div>
-    </div>
-    <div style="overflow-x:auto">
-      <table class="tbl">
-        <thead><tr><th>Nama RD</th><th>Jenis</th><th>Platform</th><th>Unit</th><th>NAB Beli</th><th>NAB Kini</th><th>Nilai (Rp)</th><th>P&amp;L</th><th>Return %</th><th>Risiko</th><th>Aksi</th></tr></thead>
-        <tbody id="rd-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- History table -->
-  <div class="card">
-    <div class="cheader">
-      <span class="ctitle">Riwayat Historis 2018–2026</span>
-      <div style="display:flex;gap:5px">
-        <button class="btn btn-ghost btn-xs" onclick="rdFilterPlatform('all',this)" style="color:var(--accent)">Semua</button>
-        <button class="btn btn-ghost btn-xs" onclick="rdFilterPlatform('BIBIT',this)">BIBIT</button>
-        <button class="btn btn-ghost btn-xs" onclick="rdFilterPlatform('IPOT',this)">IPOT</button>
-        <button class="btn btn-ghost btn-xs" onclick="rdFilterPlatform('POEMS',this)">POEMS</button>
-      </div>
-    </div>
-    <div style="overflow-x:auto">
-      <table class="tbl">
-        <thead><tr><th>Nama Produk</th><th>Jenis</th><th>Platform</th><th>Gain/Loss (Rp)</th><th>Return %</th><th>Dividen (Rp)</th><th>Status</th></tr></thead>
-        <tbody id="rd-history-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Riwayat transaksi user -->
-  <div class="card" style="margin-top:9px">
-    <div class="cheader"><span class="ctitle">Log Transaksi Input Manual</span></div>
-    <div style="overflow-x:auto">
-      <table class="tbl">
-        <thead><tr><th>Tanggal</th><th>Aksi</th><th>Reksa Dana</th><th>Unit</th><th>NAB/Unit</th><th>Nilai (Rp)</th><th>P&amp;L</th><th></th></tr></thead>
-        <tbody id="rd-tx-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-
-<!-- ====================================================
-     FLOWSCAN — BIG MONEY ANALISA (dari index.html)
-     ==================================================== -->
-
-<!-- FlowScan Dashboard -->
-<div id="page-flowscan" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-    <div>
-      <div class="ptitle">🔬 FlowScan — Analisa Big Money</div>
-      <div class="psub">Deteksi akumulasi & distribusi institusional via volume flow analysis</div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:4px 10px">
-        <i class="ti ti-search" style="color:var(--text3);font-size:13px"></i>
-        <input id="fs-ticker-input" placeholder="Cari kode saham..." value="BBCA"
-          style="background:none;border:none;outline:none;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;text-transform:uppercase;width:140px;letter-spacing:.8px"
-          onkeydown="if(event.key==='Enter')fsRunAnalysis()"/>
-      </div>
-      <div style="display:flex;gap:3px;background:var(--bg);border-radius:7px;padding:3px">
-        <button class="pbtn" onclick="fsSetPeriod(7,this)">1 Mgg</button>
-        <button class="pbtn on" onclick="fsSetPeriod(30,this)">1 Bln</button>
-        <button class="pbtn" onclick="fsSetPeriod(90,this)">3 Bln</button>
-        <button class="pbtn" onclick="fsSetPeriod(252,this)">1 Thn</button>
-      </div>
-      <button class="btn btn-blue" onclick="fsRunAnalysis()" style="font-size:12px">Analisa ↗</button>
-    </div>
-  </div>
-
-  <!-- Summary cards -->
-  <div id="fs-cards" class="row5" style="margin-bottom:12px"></div>
-
-  <!-- Chart + Watchlist bar -->
-  <div style="background:rgba(0,212,170,.04);border:.5px solid rgba(0,212,170,.15);border-radius:8px;padding:8px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between" id="fs-wl-bar">
-    <span id="fs-wl-bar-txt" style="font-size:12px;color:var(--text2)">Tambah saham ke watchlist untuk memantau secara rutin</span>
-    <button id="fs-wl-btn" class="btn btn-ghost btn-sm" onclick="fsToogleWatchlistCurrent()">⭐ Tambah ke Watchlist</button>
-  </div>
-
-  <!-- Notice untuk timeframe pendek -->
-  <div id="fs-period-notice" style="display:none;align-items:center;gap:8px;background:rgba(255,193,7,.06);border:1px solid rgba(255,193,7,.2);border-radius:8px;padding:8px 14px;margin-bottom:10px"></div>
-
-  <!-- Analysis tabs -->
-  <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:13px;overflow-x:auto">
-    <button class="tab on" onclick="fsSt('all',this)">📊 Analisa Lengkap</button>
-    <button class="tab" onclick="fsSt('tbl',this)">Data Harian</button>
-  </div>
-
-  <!-- OV -->
-  <div id="fs-prob" style="margin-bottom:11px"></div>
-  <div id="fs-st-ov">
-    <div class="g2b">
-      <div class="card">
-        <div class="cheader"><span class="ctitle">Pergerakan Harga + MA</span><span style="font-size:10px;color:var(--text2)" id="fs-price-lbl"></span></div>
-        <div class="cw" style="height:200px"><canvas id="fsCPr"></canvas></div>
-      </div>
-      <div class="card">
-        <div class="cheader"><span class="ctitle">Volume + Big Money Signal</span></div>
-        <div class="cw" style="height:200px"><canvas id="fsCVo"></canvas></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- VOL -->
-  <div id="fs-st-vol" style="display:none">
-    <div class="g2b">
-      <div class="card">
-        <div class="cheader"><span class="ctitle">Chaikin Money Flow (CMF-20)</span></div>
-        <div class="cw" style="height:200px"><canvas id="fsCCm"></canvas></div>
-      </div>
-      <div class="card">
-        <div class="cheader"><span class="ctitle">Net Flow Institusional (Juta)</span></div>
-        <div class="cw" style="height:200px"><canvas id="fsCNf"></canvas></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="cheader"><span class="ctitle">RSI-14</span></div>
-      <div class="cw" style="height:120px"><canvas id="fsCRs"></canvas></div>
-    </div>
-  </div>
-
-  <!-- IND -->
-  <div id="fs-st-ind" style="display:none">
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Indikator Teknikal</span></div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px" id="fs-ind-grid"></div>
-    </div>
-  </div>
-
-  <!-- VWAP -->
-  <div id="fs-st-vwap" style="display:none">
-    <div class="g2b" style="margin-bottom:10px">
-      <div class="card">
-        <div class="cheader">
-          <span class="ctitle">VWAP + Band (Harian)</span>
-          <div style="display:flex;gap:6px;align-items:center">
-            <span style="font-size:10px;color:var(--text3)">Band:</span>
-            <select class="finput fsel" id="vwap-band-sel" onchange="fsRenderVWAP()" style="padding:3px 7px;font-size:10px">
-              <option value="1">±1σ</option>
-              <option value="2" selected>±2σ</option>
-              <option value="3">±3σ</option>
-            </select>
-          </div>
-        </div>
-        <div class="cw" style="height:220px"><canvas id="fsVwapChart"></canvas></div>
-      </div>
-      <div class="card">
-        <div class="cheader"><span class="ctitle">Level VWAP Key</span></div>
-        <div id="vwap-levels" style="display:flex;flex-direction:column;gap:6px;padding:4px 0"></div>
-        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px">Signal VWAP</div>
-          <div id="vwap-signal" style="font-size:12px;line-height:1.75;color:var(--text2)"></div>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="cheader"><span class="ctitle">VWAP Multi-Period (1H / 5H / 20H)</span></div>
-      <div class="cw" style="height:150px"><canvas id="fsVwapMulti"></canvas></div>
-    </div>
-  </div>
-
-  <!-- TBL -->
-  <div id="fs-st-tbl" style="display:none">
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Data Harian</span></div>
-      <div style="overflow-x:auto">
-        <table class="tbl">
-          <thead><tr><th>Tanggal</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Chg%</th><th>Volume</th><th>Vol Ratio</th><th>Buy Vol</th><th>Sell Vol</th><th>CMF</th><th>Signal</th></tr></thead>
-          <tbody id="fs-daily-body"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<!-- Ranking -->
-<div id="page-ranking" class="page">
-  <div class="ptitle">🏆 Ranking 30 Saham Terbesar IHSG</div>
-  <div class="psub">Diurutkan berdasarkan skor akumulasi big money • Klik Lihat untuk analisa detail • <span style="color:#00e5a0">●</span> = data riil Yahoo &nbsp;·&nbsp; <span style="color:#ff3d5a">○ SIM</span> = data simulasi, harga tidak akurat — perbaiki di <a href="#" onclick="goPage('admin');return false" style="color:var(--accent)">🛠 Kelola Daftar Saham</a></div>
-  <div class="card" style="margin-top:11px">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:11px">
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;flex:1" id="rk-sum"></div>
-      <div style="display:flex;gap:7px">
-        <select class="finput fsel" id="rk-sort" onchange="fsRenderRanking()" style="padding:4px 8px;font-size:11px">
-          <option value="score">Skor</option><option value="cap">Market Cap</option>
-          <option value="cmf">CMF</option><option value="chg">Chg%</option>
-        </select>
-        <select class="finput fsel" id="rk-sig" onchange="fsRenderRanking()" style="padding:4px 8px;font-size:11px">
-          <option value="all">Semua</option><option value="AKUMULASI">Akumulasi</option>
-          <option value="DISTRIBUSI">Distribusi</option><option value="NETRAL">Netral</option>
-        </select>
-      </div>
-    </div>
-    <div style="height:200px;margin-bottom:12px"><canvas id="rk-chart"></canvas></div>
-    <div style="overflow-x:auto">
-      <table class="tbl">
-        <thead><tr><th>#</th><th>Kode</th><th>Nama</th><th>Harga</th><th>Chg%</th><th>Cap (T)</th><th>Skor</th><th>Sinyal</th><th>CMF</th><th>RSI</th><th>WL</th><th></th></tr></thead>
-        <tbody id="rk-body"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- Heatmap -->
-<div id="page-heatmap" class="page">
-  <div class="ptitle">🌡 Heatmap & Factor Analysis</div>
-  <div class="psub">Visualisasi akumulasi/distribusi & faktor fundamental saham LQ45</div>
-
-  <!-- Tab switcher -->
-  <div style="display:flex;gap:4px;margin-bottom:12px">
-    <button class="pbtn on" id="hm-tab-flow" onclick="hmSwitchTab('flow',this)">🌡 Flow Heatmap</button>
-    <button class="pbtn" id="hm-tab-factor" onclick="hmSwitchTab('factor',this)">📐 Factor Heatmap</button>
-  </div>
-
-  <!-- Flow Heatmap panel -->
-  <div id="hm-panel-flow">
-    <div class="card" style="margin-top:0">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-        <select class="finput fsel" id="hm-mode" onchange="fsRenderHeatmap()" style="padding:4px 8px;font-size:11px">
-          <option value="score">Skor</option><option value="cmf">CMF</option><option value="chg">Chg%</option>
-        </select>
-        <span style="font-size:11px;color:var(--text3)">Klik sel → analisa detail di FlowScan</span>
-      </div>
-      <div id="hm-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:5px;margin-bottom:10px"></div>
-      <div style="display:flex;gap:14px;font-size:11px;color:var(--text3);flex-wrap:wrap">
-        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(0,229,160,.12);border:1px solid rgba(0,229,160,.3);border-radius:2px"></span>Akumulasi</span>
-        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(255,61,90,.12);border:1px solid rgba(255,61,90,.3);border-radius:2px"></span>Distribusi</span>
-        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--bg3);border:1px solid var(--border);border-radius:2px"></span>Netral</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Factor Heatmap panel -->
-  <div id="hm-panel-factor" style="display:none">
-    <div class="card" style="margin-bottom:10px">
-      <div class="cheader"><span class="ctitle">⚙️ Pengaturan</span><button class="btn btn-bb btn-xs" onclick="fhmRender()">🔄 Refresh</button></div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <div class="fg">
-          <div class="flabel">Faktor</div>
-          <select class="finput fsel" id="fhm-factor" onchange="fhmRender()" style="width:180px">
-            <option value="rsi">RSI (14)</option>
-            <option value="mom1m">Momentum 1M (%)</option>
-            <option value="mom3m">Momentum 3M (%)</option>
-            <option value="vol">Volatilitas 30D (%)</option>
-            <option value="score">Composite Score</option>
-          </select>
-        </div>
-        <div class="fg">
-          <div class="flabel">Urutan</div>
-          <select class="finput fsel" id="fhm-sort" onchange="fhmRender()" style="width:160px">
-            <option value="sector">Per Sektor</option>
-            <option value="value">Nilai (Desc)</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="card" style="margin-bottom:10px">
-      <div class="cheader"><span class="ctitle" id="fhm-title">Factor Heatmap</span></div>
-      <div id="fhm-grid" style="margin-bottom:12px"></div>
-    </div>
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Distribusi Faktor</span></div>
-      <div style="position:relative;height:200px"><canvas id="fhm-dist-chart"></canvas></div>
-    </div>
-  </div>
-</div>
-
-<!-- Scanner -->
-<div id="page-scanner" class="page">
-  <div class="ptitle">📡 Big Money Scanner</div>
-  <div class="psub">Filter saham dengan kriteria CMF, skor akumulasi, dan volume ratio</div>
-  <div class="card" style="margin-top:11px">
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
-      <span style="font-size:12px;color:var(--text2)">CMF min:</span>
-      <select class="finput fsel" id="sc-cmf" style="padding:4px 8px;font-size:11px"><option value="-1">Semua</option><option value="0">Positif</option><option value="0.1" selected>+10%+</option><option value="0.2">+20%+</option></select>
-      <span style="font-size:12px;color:var(--text2)">Skor min:</span>
-      <select class="finput fsel" id="sc-sc" style="padding:4px 8px;font-size:11px"><option value="0">Semua</option><option value="50">50+</option><option value="60" selected>60+</option><option value="70">70+</option></select>
-      <span style="font-size:12px;color:var(--text2)">Vol Ratio:</span>
-      <select class="finput fsel" id="sc-vr" style="padding:4px 8px;font-size:11px"><option value="0">Semua</option><option value="1.2">1.2×+</option><option value="1.5" selected>1.5×+</option><option value="2">2×+</option></select>
-      <button class="btn btn-blue" onclick="fsRunScanner()" style="font-size:12px">Scan ↗</button>
-    </div>
-    <div id="sc-results"><div style="color:var(--text3);text-align:center;padding:20px;font-size:13px">Tekan Scan untuk memfilter saham.</div></div>
-  </div>
-</div>
-
-<!-- Alerts -->
-<div id="page-alerts" class="page">
-  <div class="ptitle">🔔 Signal Alerts</div>
-  <div class="psub">Notifikasi otomatis: akumulasi kuat, distribusi, anomali volume</div>
-  <div class="card" style="margin-top:11px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <span class="ctitle">Live Alerts</span>
-      <button class="btn btn-blue" onclick="fsGenAlerts()" style="font-size:12px">Refresh ↗</button>
-    </div>
-    <div id="al-list" style="display:flex;flex-direction:column;gap:7px"><div style="color:var(--text3);text-align:center;padding:20px;font-size:13px">Klik Refresh untuk generate signal alerts.</div></div>
-  </div>
-</div>
-
-<!-- Watchlist -->
-<div id="page-watchlist" class="page">
-  <div class="ptitle">⭐ Watchlist Saya</div>
-  <div class="psub">Pantau saham pilihan dengan analisa big money real-time</div>
-  <div class="card" style="margin-top:11px">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-      <div style="display:flex;gap:7px;align-items:center">
-        <input id="wl-add-input" placeholder="Kode saham..."
-          style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:5px 10px;border-radius:7px;font-size:12px;outline:none;text-transform:uppercase;font-family:'IBM Plex Mono',monospace;width:120px"
-          onkeydown="if(event.key==='Enter')fsAddFromInput()"/>
-        <button class="btn btn-blue" onclick="fsAddFromInput()" style="font-size:12px">+ Tambah</button>
-      </div>
-      <div style="display:flex;gap:5px;flex-wrap:wrap" id="wl-sort-row">
-        <button class="btn btn-ghost btn-sm on-sort" onclick="fsSetWlSort('default',this)">Default</button>
-        <button class="btn btn-ghost btn-sm" onclick="fsSetWlSort('score',this)">Skor ↓</button>
-        <button class="btn btn-ghost btn-sm" onclick="fsSetWlSort('chg',this)">Chg% ↓</button>
-        <button class="btn btn-ghost btn-sm" onclick="fsSetWlSort('signal',this)">Akumulasi dulu</button>
-      </div>
-    </div>
-    <div style="margin-bottom:12px">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Quick add:</div>
-      <div id="wl-qa-chips" style="display:flex;flex-wrap:wrap;gap:5px"></div>
-    </div>
-    <div id="wl-page-list"></div>
-  </div>
-</div>
-
-
-<!-- ===== HARGA WAJAR (MoS Valuasi) ===== -->
-<div id="page-hargawajar" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-    <div>
-      <div class="ptitle">💎 Harga Wajar — Valuasi MoS</div>
-      <div class="psub">Input data keuangan historis → hitung Margin of Safety · metodologi: EPS-based IRR + Future Stock Price (9-step)</div>
-    </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-      <button class="btn btn-blue" onclick="hw_resetAll()" style="font-size:10px">🔄 Reset</button>
-      <button class="btn" onclick="hw_saveToStorage()" style="font-size:10px;border-color:rgba(0,212,170,.35);color:var(--green)">💾 Simpan</button>
-    </div>
-  </div>
-
-  <!-- Main 2-column layout -->
-  <div style="display:grid;grid-template-columns:1fr 340px;gap:10px">
-
-    <!-- LEFT: Input Data Keuangan -->
-    <div>
-      <!-- Header input: ticker + parameter -->
-      <div class="card" style="margin-bottom:10px">
-        <div class="cheader"><span class="ctitle">⚙️ PARAMETER</span></div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-          <div style="min-width:120px">
-            <div style="font-size:9px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px">Kode Saham</div>
-            <input id="hw-ticker-input" type="text" placeholder="e.g. BBCA" maxlength="6"
-              style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:5px 8px;width:100%;border-radius:2px;text-transform:uppercase"
-              oninput="this.value=this.value.toUpperCase()">
-          </div>
-          <div style="min-width:140px">
-            <div style="font-size:9px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px">Harga Saham Saat Ini (Rp)</div>
-            <input id="hw-current-price" type="number" placeholder="e.g. 9500" step="50"
-              style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:5px 8px;width:100%;border-radius:2px"
-              >
-          </div>
-          <div style="min-width:120px">
-            <div style="font-size:9px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px">Min Return (%/thn)</div>
-            <input id="hw-min-return" type="number" value="6" step="1" min="1" max="30"
-              style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:5px 8px;width:100%;border-radius:2px"
-              >
-          </div>
-          <div style="min-width:120px">
-            <div style="font-size:9px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px">Proyeksi (tahun)</div>
-            <input id="hw-proj-years" type="number" value="5" step="1" min="1" max="15"
-              style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:5px 8px;width:100%;border-radius:2px"
-              >
-          </div>
-          <div style="display:flex;align-items:flex-end;padding-bottom:0">
-            <button onclick="hw_recalc()" id="hw-hitung-btn"
-              style="height:38px;padding:0 22px;background:var(--bb-orange);border:none;border-radius:2px;color:#0a0a0f;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.5px;white-space:nowrap;transition:opacity .15s"
-              onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
-              ⚡ HITUNG
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Data table -->
-      <div class="card" style="margin-bottom:10px">
-        <div class="cheader">
-          <span class="ctitle">📊 DATA KEUANGAN HISTORIS</span>
-          <button class="btn" onclick="hw_addYear()" style="font-size:9px;padding:3px 8px;border-color:rgba(255,102,0,.3);color:var(--bb-orange)">+ Tambah Tahun</button>
-        </div>
-        <div style="overflow-x:auto">
-          <table class="tbl" id="hw-data-table">
-            <thead>
-              <tr>
-                <th style="white-space:nowrap">Tahun</th>
-                <th style="white-space:nowrap">EPS <span style="color:var(--bb-orange);font-weight:400">(Rp/saham)</span></th>
-                <th style="white-space:nowrap">Total Equity <span style="color:var(--bb-orange);font-weight:400">(Miliar Rp)</span></th>
-                <th style="white-space:nowrap">Shares <span style="color:var(--bb-orange);font-weight:400">(Juta lembar)</span></th>
-                <th style="white-space:nowrap">DPS <span style="color:var(--bb-orange);font-weight:400">(Rp/saham)</span></th>
-                <th style="white-space:nowrap">PER <span style="color:var(--bb-orange);font-weight:400">(kali)</span></th>
-                <th style="white-space:nowrap">Net Income <span style="color:var(--bb-orange);font-weight:400">(Miliar Rp)</span></th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="hw-data-body"></tbody>
-          </table>
-        </div>
-        <!-- Panduan unit -->
-        <div style="margin-top:10px;background:var(--bg3);border-radius:2px;padding:10px 12px;border-left:3px solid rgba(255,102,0,.5)">
-          <div style="font-size:9px;color:var(--bb-orange);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;font-weight:700">📌 PANDUAN INPUT — SATUAN WAJIB</div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px 16px;font-size:9px;font-family:'IBM Plex Mono',monospace">
-            <div><span style="color:var(--text3)">EPS &amp; DPS</span><br><b style="color:var(--text)">Rupiah per saham</b><br><span style="color:var(--text3)">contoh: 179 = Rp 179/saham</span></div>
-            <div><span style="color:var(--text3)">Total Equity &amp; Net Income</span><br><b style="color:var(--text)">Miliar Rupiah</b><br><span style="color:var(--text3)">contoh: 150537 = Rp 150,5 Triliun</span></div>
-            <div><span style="color:var(--text3)">Shares</span><br><b style="color:var(--text)">Juta lembar saham</b><br><span style="color:var(--text3)">contoh: 99062 = 99,06 miliar lembar</span></div>
-            <div><span style="color:var(--text3)">PER</span><br><b style="color:var(--text)">Kali (x) — tanpa satuan</b><br><span style="color:var(--text3)">contoh: 16.5 = PER 16,5x</span></div>
-            <div><span style="color:var(--text3)">Harga Saham</span><br><b style="color:var(--text)">Rupiah per saham</b><br><span style="color:var(--text3)">contoh: 2810 = Rp 2.810/saham</span></div>
-            <div><span style="color:var(--amber)">⚠️ Sel oranye</span><br><b style="color:var(--amber)">= nilai perlu dicek</b><br><span style="color:var(--text3)">hover sel untuk petunjuk</span></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Calculation Steps Display -->
-      <div class="card" id="hw-steps-card" style="margin-bottom:10px;display:none">
-        <div class="cheader"><span class="ctitle">🔬 LANGKAH KALKULASI MoS</span></div>
-        <div id="hw-steps-body" style="display:grid;grid-template-columns:1fr 1fr;gap:6px"></div>
-      </div>
-
-      <!-- Historical chart -->
-      <div class="card" id="hw-chart-card" style="display:none">
-        <div class="cheader">
-          <span class="ctitle">📈 TREND HISTORIS</span>
-          <div style="display:flex;gap:4px">
-            <button id="hw-chart-btn-eps" onclick="hw_switchChart('eps')" class="btn" style="font-size:9px;padding:2px 7px;border-color:rgba(255,102,0,.5);color:var(--bb-orange);background:rgba(255,102,0,.12)">EPS &amp; PER</button>
-            <button id="hw-chart-btn-eq" onclick="hw_switchChart('eq')" class="btn" style="font-size:9px;padding:2px 7px">Equity &amp; NI</button>
-          </div>
-        </div>
-        <div style="position:relative;height:160px;width:100%">
-          <canvas id="hw-history-chart"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT: Result Panel -->
-    <div>
-      <!-- Main verdict card -->
-      <div class="card" id="hw-verdict-card" style="margin-bottom:10px;border-top-width:2px;border-top-color:var(--text3)">
-        <div style="text-align:center;padding:10px 0">
-          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">VALUASI</div>
-          <div id="hw-ticker-display" style="font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--bb-orange);margin-bottom:4px">—</div>
-          <div id="hw-verdict-badge" style="display:inline-block;padding:4px 14px;border-radius:2px;font-size:11px;font-weight:700;font-family:'IBM Plex Mono',monospace;background:var(--bg4);color:var(--text3);border:1px solid var(--border)">BELUM DIHITUNG</div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
-          <div style="background:var(--bg3);border-radius:2px;padding:8px;text-align:center">
-            <div style="font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Harga Wajar</div>
-            <div id="hw-fair-price" style="font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--amber)">—</div>
-          </div>
-          <div style="background:var(--bg3);border-radius:2px;padding:8px;text-align:center">
-            <div style="font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Harga Saat Ini</div>
-            <div id="hw-current-display" style="font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text)">—</div>
-          </div>
-          <div style="background:var(--bg3);border-radius:2px;padding:8px;text-align:center">
-            <div style="font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Margin of Safety</div>
-            <div id="hw-mos-pct" style="font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text3)">—</div>
-          </div>
-          <div style="background:var(--bg3);border-radius:2px;padding:8px;text-align:center">
-            <div style="font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Initial IRR</div>
-            <div id="hw-irr-display" style="font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text3)">—</div>
-          </div>
-        </div>
-        <!-- MoS gauge bar -->
-        <div style="margin-top:10px">
-          <div style="font-size:9px;color:var(--text3);margin-bottom:4px;display:flex;justify-content:space-between">
-            <span>Diskon</span><span id="hw-mos-label" style="color:var(--text2)">—</span><span>Premium</span>
-          </div>
-          <div style="background:var(--bg4);border-radius:1px;height:8px;overflow:hidden;position:relative">
-            <div id="hw-mos-bar" style="height:100%;width:50%;background:var(--text3);transition:all .5s;border-radius:1px"></div>
-          </div>
-        </div>
-        <!-- Kesimpulan -->
-        <div id="hw-conclusion" style="display:none;margin-top:12px;padding:10px;background:var(--bg3);border-radius:2px;border-left:3px solid var(--text3)">
-          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">KESIMPULAN</div>
-          <div id="hw-conclusion-text" style="font-size:10px;color:var(--text2);font-family:'IBM Plex Mono',monospace;line-height:1.7"></div>
-        </div>
-      </div>
-
-      <!-- Metrics grid -->
-      <div class="card" style="margin-bottom:10px">
-        <div class="cheader"><span class="ctitle">📋 METRIC VALUASI</span></div>
-        <div id="hw-metrics-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
-          <div class="metric" id="hw-m-roe"><div class="mlabel">Avg ROE</div><div class="mval" id="hw-v-roe">—</div></div>
-          <div class="metric" id="hw-m-dpr"><div class="mlabel">Avg DPR</div><div class="mval" id="hw-v-dpr">—</div></div>
-          <div class="metric" id="hw-m-per"><div class="mlabel">Avg PER</div><div class="mval" id="hw-v-per">—</div></div>
-          <div class="metric" id="hw-m-eps"><div class="mlabel">EPS Terkini</div><div class="mval" id="hw-v-eps">—</div></div>
-          <div class="metric" id="hw-m-eq"><div class="mlabel">Equity/Share</div><div class="mval" id="hw-v-eq">—</div></div>
-          <div class="metric" id="hw-m-feps"><div class="mlabel">Future EPS</div><div class="mval" id="hw-v-feps">—</div></div>
-          <div class="metric" id="hw-m-fsp"><div class="mlabel">Future Price</div><div class="mval" id="hw-v-fsp">—</div></div>
-          <div class="metric" id="hw-m-roe2"><div class="mlabel">ROE after Payout</div><div class="mval" id="hw-v-roe2">—</div></div>
-        </div>
-      </div>
-
-      <!-- Saved analyses list -->
-      <div class="card">
-        <div class="cheader"><span class="ctitle">📚 HISTORI ANALISA</span>
-          <button class="btn" onclick="hw_clearHistory()" style="font-size:9px;padding:2px 7px;border-color:rgba(255,34,68,.3);color:var(--red)">Hapus Semua</button>
-        </div>
-        <div id="hw-history-list" style="max-height:200px;overflow-y:auto">
-          <div style="font-size:10px;color:var(--text3);text-align:center;padding:16px">Belum ada analisa tersimpan</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== CANDLE ANALYSIS ===== -->
-<div id="page-candle" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-    <div>
-      <div class="ptitle">🕯 Candle Analysis — Psikologi & Money Management</div>
-      <div class="psub">Klasifikasi psikologi candle, sinyal entry/exit zona, position sizing &amp; backtest equity · saham aktif: <b style="color:var(--accent)" id="cd-ticker">ADMR</b></div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <div style="display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:4px 10px">
-        <i class="ti ti-search" style="color:var(--text3);font-size:13px"></i>
-        <input id="cd-tk-input" placeholder="Kode saham..." value="ADMR"
-          style="background:none;border:none;outline:none;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;text-transform:uppercase;width:110px;letter-spacing:.8px"
-          onkeydown="if(event.key==='Enter')cdLoadInput()"/>
-      </div>
-      <button class="btn btn-blue" onclick="cdLoadInput()" style="font-size:12px">Muat ↗</button>
-      <button class="btn btn-ghost" onclick="cdAutoZona()" style="font-size:12px;border-color:rgba(45,212,191,.35);color:var(--teal)" title="Hitung ulang zona/stop/TP otomatis dari struktur harga">🎯 Auto Zona</button>
-      <button class="btn btn-ghost" onclick="cdRecalc()" style="font-size:12px">↻ Hitung Ulang</button>
-    </div>
-  </div>
-  <!-- Quick load: saham di portofolio -->
-  <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:11px">
-    <span style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace">QUICK:</span>
-    <div id="cd-chips" style="display:flex;flex-wrap:wrap;gap:5px"></div>
-  </div>
-  <!-- Catatan sumber data -->
-  <div id="cd-src-note" style="display:flex;align-items:flex-start;gap:8px;background:rgba(77,166,255,.06);border:1px solid rgba(77,166,255,.2);border-radius:8px;padding:7px 12px;margin-bottom:11px;font-size:11px;color:var(--text2);line-height:1.5"></div>
-  <div class="row5" id="cd-head" style="margin-bottom:11px"></div>
-  <div class="card" style="margin-bottom:11px">
-    <div class="cheader"><span class="ctitle">Parameter Money Management & Zona Harga</span>
-      <span style="font-size:10px;color:var(--text3)">Ubah nilai lalu klik “Hitung Ulang”</span></div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px">
-      <label class="cdset"><span>Initial Capital</span><input id="cd-cap" type="number"></label>
-      <label class="cdset"><span>Risiko/Trade (%)</span><input id="cd-risk" type="number" step="0.5"></label>
-      <label class="cdset"><span>Max Posisi (%)</span><input id="cd-maxpos" type="number" step="5"></label>
-      <label class="cdset"><span>Entry Zone 1 Low</span><input id="cd-z1l" type="number"></label>
-      <label class="cdset"><span>Entry Zone 1 High</span><input id="cd-z1h" type="number"></label>
-      <label class="cdset"><span>Entry Zone 2 Low</span><input id="cd-z2l" type="number"></label>
-      <label class="cdset"><span>Entry Zone 2 High</span><input id="cd-z2h" type="number"></label>
-      <label class="cdset"><span>Breakout Level</span><input id="cd-brk" type="number"></label>
-      <label class="cdset"><span>Stop Invalidasi</span><input id="cd-si" type="number"></label>
-      <label class="cdset"><span>Stop Besar</span><input id="cd-sb" type="number"></label>
-      <label class="cdset"><span>TP 1</span><input id="cd-tp1" type="number"></label>
-      <label class="cdset"><span>TP 2</span><input id="cd-tp2" type="number"></label>
-      <label class="cdset"><span>TP 3</span><input id="cd-tp3" type="number"></label>
-    </div>
-  </div>
-  <div class="row4" id="cd-metrics" style="margin-bottom:11px"></div>
-  <div class="g2c">
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Harga Close + Zona (TP / Stop / Entry)</span></div>
-      <div class="cw" style="height:230px"><canvas id="cdPrice"></canvas></div>
-    </div>
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Kurva Equity (Backtest)</span></div>
-      <div class="cw" style="height:230px"><canvas id="cdEquity"></canvas></div>
-    </div>
-  </div>
-  <div class="card" style="margin-bottom:11px">
-    <div class="cheader"><span class="ctitle">Psikologi Candle — 3 Sesi Terakhir</span></div>
-    <div id="cd-psyco" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
-  </div>
-  <div class="card">
-    <div class="cheader"><span class="ctitle">Data Candle Harian + Sinyal</span>
-      <span style="font-size:10px;color:var(--text3)">trigger sinyal pakai harga Low harian (sesuai sheet)</span></div>
-    <div style="overflow-x:auto;max-height:360px;overflow-y:auto">
-      <table class="tbl">
-        <thead><tr>
-          <th>Tanggal</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Volume</th>
-          <th>Body</th><th>Up Shadow</th><th>Low Shadow</th><th>Psikologi</th>
-          <th>Sinyal</th><th>Posisi</th><th>Trade P&amp;L</th>
-        </tr></thead>
-        <tbody id="cd-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-
-<!-- ===== BACKTESTER (from QuantTrader) ===== -->
-<div id="page-backtester" class="page">
-  <div class="ptitle">⚡ Backtester Strategi</div>
-  <div class="psub">Uji strategi MA Crossover / RSI / XGBoost Signal dengan data harga real Yahoo Finance. Data live jika koneksi aktif.</div>
-  <div style="display:grid;grid-template-columns:300px 1fr;gap:12px;margin-top:12px">
-    <!-- Sidebar config -->
-    <div>
-      <div class="card" style="margin-bottom:10px">
-        <div class="cheader"><span class="ctitle">⚙️ Konfigurasi Strategi</span></div>
-        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
-          <button class="pbtn on" id="bt-strat-ma" onclick="btSetStrat('ma',this)">MA Cross</button>
-          <button class="pbtn" id="bt-strat-rsi" onclick="btSetStrat('rsi',this)">RSI Rev.</button>
-          <button class="pbtn" id="bt-strat-xgb" onclick="btSetStrat('xgb',this)">XGBoost*</button>
-        </div>
-        <div class="fg" style="margin-bottom:8px">
-          <div class="flabel">Ticker IDX</div>
-          <div style="display:flex;gap:6px">
-            <input class="finput" id="bt-ticker" value="BBCA" style="flex:1;text-transform:uppercase" placeholder="BBCA, TLKM...">
-            <button class="btn btn-bb btn-xs" onclick="btFetchLive()" title="Ambil data live Yahoo Finance">📡</button>
-          </div>
-          <div style="font-size:9px;color:var(--text3);margin-top:3px;font-family:'IBM Plex Mono',monospace">Tambahkan .JK otomatis · Tekan 📡 untuk data live</div>
-        </div>
-        <div class="fg" style="margin-bottom:8px">
-          <div class="flabel">Periode Backtest</div>
-          <select class="finput fsel" id="bt-period">
-            <option value="365">1 Tahun</option>
-            <option value="730" selected>2 Tahun</option>
-            <option value="1095">3 Tahun</option>
-            <option value="1825">5 Tahun</option>
-          </select>
-        </div>
-        <!-- MA params -->
-        <div id="bt-params-ma">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-            <div class="fg"><div class="flabel">Fast MA</div><input class="finput" id="bt-ma-fast" type="number" value="10"></div>
-            <div class="fg"><div class="flabel">Slow MA</div><input class="finput" id="bt-ma-slow" type="number" value="30"></div>
-          </div>
-          <div class="fg" style="margin-bottom:8px">
-            <div class="flabel">Tipe MA</div>
-            <select class="finput fsel" id="bt-ma-type"><option value="sma">SMA</option><option value="ema" selected>EMA</option></select>
-          </div>
-        </div>
-        <!-- RSI params -->
-        <div id="bt-params-rsi" style="display:none">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-            <div class="fg"><div class="flabel">RSI Period</div><input class="finput" id="bt-rsi-n" type="number" value="14"></div>
-            <div class="fg"><div class="flabel">Oversold</div><input class="finput" id="bt-rsi-os" type="number" value="30"></div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-            <div class="fg"><div class="flabel">Overbought</div><input class="finput" id="bt-rsi-ob" type="number" value="70"></div>
-            <div class="fg"><div class="flabel">Stop Loss %</div><input class="finput" id="bt-rsi-sl" type="number" value="5" step="0.5"></div>
-          </div>
-        </div>
-        <!-- XGB params -->
-        <div id="bt-params-xgb" style="display:none">
-          <div class="alert alert-warn" style="margin-bottom:8px">⚠ XGBoost = simulasi. Produksi butuh Python backend.</div>
-          <div class="fg" style="margin-bottom:8px">
-            <div class="flabel">Train/Test Split</div>
-            <select class="finput fsel" id="bt-xgb-sp"><option value="0.7">70/30</option><option value="0.8" selected>80/20</option></select>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-          <div class="fg"><div class="flabel">Modal (Rp)</div><input class="finput" id="bt-capital" value="100000000" type="number"></div>
-          <div class="fg"><div class="flabel">Komisi %</div><input class="finput" id="bt-comm" value="0.2" type="number" step="0.05"></div>
-        </div>
-        <button class="btn btn-blue" style="width:100%;justify-content:center" onclick="runBacktest()">▶ Jalankan Backtest</button>
-        <!-- Data status -->
-        <div id="bt-data-status" style="margin-top:8px;font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace;text-align:center">Status: —</div>
-      </div>
-
-      <!-- Live data panel -->
-      <div class="card">
-        <div class="cheader"><span class="ctitle">📡 Data Sumber</span></div>
-        <div id="bt-datasrc" style="font-size:10px;color:var(--text2);font-family:'IBM Plex Mono',monospace;line-height:1.8">
-          <div>Sumber: <span id="bt-src-label" style="color:var(--amber)">Simulasi</span></div>
-          <div>Ticker: <span id="bt-src-ticker" style="color:var(--bb-orange)">BBCA.JK</span></div>
-          <div>Data poin: <span id="bt-src-count" style="color:var(--text)">—</span></div>
-          <div>Terbaru: <span id="bt-src-date" style="color:var(--text)">—</span></div>
-          <div>Harga: <span id="bt-src-price" style="color:var(--green)">—</span></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Results -->
-    <div>
-      <div id="bt-empty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:300px;color:var(--text3);gap:10px">
-        <div style="font-size:36px">⚡</div>
-        <div style="font-size:12px">Konfigurasi strategi dan klik Jalankan Backtest</div>
-      </div>
-      <div id="bt-results" style="display:none">
-        <!-- Metrics row -->
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px" id="bt-metrics"></div>
-        <!-- Equity chart -->
-        <div class="card" style="margin-bottom:10px">
-          <div class="cheader"><span class="ctitle">Equity Curve vs Buy &amp; Hold</span></div>
-          <div style="position:relative;height:220px"><canvas id="bt-equity-chart"></canvas></div>
-        </div>
-        <!-- Signal chart (SVG) -->
-        <div class="card" style="margin-bottom:10px">
-          <div class="cheader">
-            <span class="ctitle">Candlestick + Signal Overlay</span>
-            <span class="badge b-gray" id="bt-candle-sub"></span>
-          </div>
-          <svg id="bt-candle-svg" style="width:100%;display:block" viewBox="0 0 900 240"></svg>
-        </div>
-        <!-- Drawdown + Monthly return -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-          <div class="card">
-            <div class="cheader"><span class="ctitle">Drawdown (%)</span></div>
-            <div style="position:relative;height:180px"><canvas id="bt-dd-chart"></canvas></div>
-          </div>
-          <div class="card">
-            <div class="cheader"><span class="ctitle">Monthly Return Heatmap</span></div>
-            <div id="bt-monthly-hm" style="overflow-x:auto"></div>
-          </div>
-        </div>
-        <!-- Transaction log -->
-        <div class="card">
-          <div class="cheader"><span class="ctitle">Log Transaksi</span><span class="badge b-gray" id="bt-tx-count"></span></div>
-          <div style="overflow-x:auto">
-            <table class="tbl">
-              <thead><tr><th>#</th><th>Masuk</th><th>Keluar</th><th>Aksi</th><th>Harga Masuk</th><th>Harga Keluar</th><th>Durasi</th><th>Return</th><th>PnL (Rp)</th></tr></thead>
-              <tbody id="bt-tx-tbody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== SCREENER LQ45 ===== -->
-<div id="page-screener" class="page">
-  <div class="ptitle">🔍 Screener Saham LQ45</div>
-  <div class="psub">Filter saham LQ45 berdasarkan indikator teknikal · Data harga live dari Yahoo Finance</div>
-  <div class="card" style="margin:12px 0 10px">
-    <div class="cheader"><span class="ctitle">⚙️ Filter</span><button class="btn btn-bb btn-xs" onclick="scFetchAndRun()">📡 Ambil Data Live + Scan</button></div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
-      <div class="fg"><div class="flabel">RSI Min</div><input class="finput" id="sc-rsi-min" type="number" value="0"></div>
-      <div class="fg"><div class="flabel">RSI Max</div><input class="finput" id="sc-rsi-max" type="number" value="100"></div>
-      <div class="fg"><div class="flabel">Min Return 1M%</div><input class="finput" id="sc-mom-min" type="number" value="-99"></div>
-      <div class="fg"><div class="flabel">Posisi MA</div>
-        <select class="finput fsel" id="sc-ma-pos">
-          <option value="all">Semua</option>
-          <option value="above">Di atas MA50</option>
-          <option value="below">Di bawah MA50</option>
-        </select>
-      </div>
-    </div>
-    <div style="margin-top:8px">
-      <button class="btn btn-green" onclick="scRunFilter()">🔍 Scan Sekarang</button>
-      <span style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-left:10px" id="sc-status">—</span>
-    </div>
-  </div>
-  <div class="card">
-    <div class="cheader"><span class="ctitle">Hasil Screener</span><span class="badge b-gray" id="sc-result-count">—</span></div>
-    <div style="overflow-x:auto">
-      <table class="tbl">
-        <thead><tr><th>Ticker</th><th>Nama</th><th>Sektor</th><th>Harga</th><th>RSI 14</th><th>Mom 1M%</th><th>Mom 3M%</th><th>Vol 30D%</th><th>vs MA50</th><th>Score</th><th>Signal</th></tr></thead>
-        <tbody id="sc-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- ===== PAIRS TRADING ===== -->
-<div id="page-pairs" class="page">
-  <div class="ptitle">🔀 Pairs Trading</div>
-  <div class="psub">Temukan pasangan saham berkorelasi tinggi untuk strategi long-short. Data real Yahoo Finance.</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
-    <div class="card">
-      <div class="cheader"><span class="ctitle">⚙️ Konfigurasi</span><button class="btn btn-bb btn-xs" onclick="pairsFetch()">📡 Live</button></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <div class="fg"><div class="flabel">Saham A</div><input class="finput" id="pt-a" value="BBCA" style="text-transform:uppercase"></div>
-        <div class="fg"><div class="flabel">Saham B</div><input class="finput" id="pt-b" value="BBRI" style="text-transform:uppercase"></div>
-      </div>
-      <div class="fg" style="margin-bottom:10px">
-        <div class="flabel">Window Korelasi</div>
-        <select class="finput fsel" id="pt-window">
-          <option value="90">90 Hari</option>
-          <option value="180" selected>180 Hari</option>
-          <option value="365">1 Tahun</option>
-        </select>
-      </div>
-      <button class="btn btn-blue" style="width:100%;justify-content:center" onclick="pairsAnalyze()">Analisa Pairs</button>
-    </div>
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Statistik Pairs</span></div>
-      <div id="pt-stats" style="font-size:11px;color:var(--text2);font-family:'IBM Plex Mono',monospace;line-height:2">Belum dianalisa</div>
-    </div>
-  </div>
-  <div class="card" style="margin-top:10px">
-    <div class="cheader"><span class="ctitle">Spread Z-Score</span><span class="badge b-gray" id="pt-signal-badge">—</span></div>
-    <div style="position:relative;height:220px"><canvas id="pt-spread-chart"></canvas></div>
-  </div>
-  <div class="card" style="margin-top:10px">
-    <div class="cheader"><span class="ctitle">Harga Normalisasi (Base 100)</span></div>
-    <div style="position:relative;height:200px"><canvas id="pt-price-chart"></canvas></div>
-  </div>
-</div>
-
-<!-- ===== CORRELATION MATRIX (QuantTrader) ===== -->
-<div id="page-correlation" class="page">
-  <div class="ptitle">📉 Correlation Matrix</div>
-  <div class="psub">Matriks korelasi return antar saham Top 10 LQ45</div>
-  <div class="card" style="margin:12px 0 10px">
-    <div class="cheader"><span class="ctitle">⚙️ Pengaturan</span><button class="btn btn-bb btn-xs" onclick="corrRender()">🔄 Refresh</button></div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">
-      <div class="fg">
-        <div class="flabel">Periode Return</div>
-        <select class="finput fsel" id="corr-period" onchange="corrRender()" style="width:140px">
-          <option value="daily">Harian</option>
-          <option value="weekly" selected>Mingguan</option>
-        </select>
-      </div>
-      <div class="fg">
-        <div class="flabel">Window</div>
-        <select class="finput fsel" id="corr-window" onchange="corrRender()" style="width:120px">
-          <option value="90">90 hari</option>
-          <option value="180" selected>180 hari</option>
-          <option value="365">1 tahun</option>
-        </select>
-      </div>
-    </div>
-  </div>
-  <div class="card" style="margin-bottom:10px">
-    <div class="cheader"><span class="ctitle">Correlation Matrix — Top 10 LQ45</span></div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:11px;color:var(--text3)">
-      <span style="color:var(--red)">-1.0</span>
-      <div style="flex:1;height:8px;border-radius:4px;background:linear-gradient(to right,#ff2244,#1a1a2a,#00d4aa)"></div>
-      <span style="color:var(--green)">+1.0</span>
-    </div>
-    <div id="corr-matrix"></div>
-  </div>
-  <div class="card">
-    <div class="cheader"><span class="ctitle">Pasangan Korelasi Tertinggi &amp; Terendah</span></div>
-    <div id="corr-pairs"></div>
-  </div>
-</div>
-
-<!-- ===== MONTHLY RETURNS (QuantTrader) ===== -->
-<div id="page-monthly-returns" class="page">
-  <div class="ptitle">📅 Monthly Return Calendar</div>
-  <div class="psub">Pola return bulanan historis per saham. Hijau = positif, merah = negatif.</div>
-  <div class="card" style="margin:12px 0 10px">
-    <div class="cheader"><span class="ctitle">⚙️ Pilih Saham</span><button class="btn btn-bb btn-xs" onclick="mrFetch()">📡 Data Live</button></div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">
-      <div class="fg">
-        <div class="flabel">Ticker</div>
-        <select class="finput fsel" id="mr-ticker" onchange="mrRender()" style="width:160px">
-          <option value="BBCA">BBCA</option><option value="BBRI">BBRI</option>
-          <option value="BMRI">BMRI</option><option value="TLKM">TLKM</option>
-          <option value="ASII">ASII</option><option value="ANTM">ANTM</option>
-          <option value="ADRO">ADRO</option><option value="UNVR">UNVR</option>
-        </select>
-      </div>
-      <div class="fg">
-        <div class="flabel">Mulai Tahun</div>
-        <select class="finput fsel" id="mr-year" onchange="mrRender()" style="width:120px">
-          <option value="2019">2019</option><option value="2020">2020</option>
-          <option value="2021">2021</option><option value="2022">2022</option>
-          <option value="2023">2023</option><option value="2024" selected>2024</option>
-        </select>
-      </div>
-    </div>
-  </div>
-  <div class="card" style="margin-bottom:10px">
-    <div class="cheader"><span class="ctitle" id="mr-title">Monthly Return Calendar</span></div>
-    <div id="mr-heatmap"></div>
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Rata-rata Return per Bulan</span></div>
-      <div style="position:relative;height:200px"><canvas id="mr-avg-chart"></canvas></div>
-    </div>
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Win Rate per Bulan (%)</span></div>
-      <div style="position:relative;height:200px"><canvas id="mr-wr-chart"></canvas></div>
-    </div>
-  </div>
-</div>
-
-
-<!-- ===== WEALTH MODULE (integrasi dari Wealth OS) ===== -->
-<div id="page-wealth" class="page"></div>
-<div id="page-wbank" class="page"></div>
-<div id="page-wdebt" class="page"></div>
-<div id="page-wpiutang" class="page"></div>
-<div id="page-wfire" class="page"></div>
-
-<!-- ===== ADMIN — KELOLA DAFTAR SAHAM ===== -->
-<div id="page-admin" class="page"></div>
-
-</div><!-- /pages -->
-</div><!-- /main-row --><!-- ===== BACKUP MODAL ===== -->
-<div id="backup-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
-  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:20px;width:460px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div>
-        <div style="font-size:15px;font-weight:700;color:var(--accent)">💾 Backup &amp; Restore</div>
-        <div style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-top:2px">Kelola data jurnal investasimu</div>
-      </div>
-      <button onclick="closeBackupModal()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;line-height:1;padding:4px">✕</button>
-    </div>
-    <div id="backup-modal-body"></div>
-  </div>
-</div>
-
-</div><!-- /app -->
-
-<!-- MODAL -->
-<div class="overlay" id="modal">
-  <div class="modal">
-    <div class="mhead">
-      <div class="mtitle" id="m-title">Modal</div>
-      <button class="mclose" id="m-close">×</button>
-    </div>
-    <div id="m-body"></div>
-  </div>
-</div>
-
-
-<!-- WEALTH MODAL -->
-<div class="overlay" id="wmodal">
-  <div class="modal" style="width:480px">
-    <div class="mhead">
-      <div class="mtitle" id="wm-title">Wealth</div>
-      <button class="mclose" onclick="wCloseModal()">×</button>
-    </div>
-    <div id="wm-body"></div>
-  </div>
-</div>
-
-<script src="js/01-data.js?v=20260723d"></script>
-<script src="js/02-storage.js?v=20260723d"></script>
-<script src="js/03-engine.js?v=20260723d"></script>
-<script src="js/04-render.js?v=20260723d"></script>
-<script src="js/05-assets.js?v=20260723d"></script>
-<script src="js/06-analysis-router.js?v=20260723d"></script>
-<script src="js/07-flowscan.js?v=20260723d"></script>
-<script src="js/08-auth.js?v=20260723d"></script>
-<script src="js/09-divinvest.js?v=20260723d"></script>
-<script src="js/10-hargawajar.js?v=20260723d"></script>
-<script src="js/11-quant.js?v=20260723d"></script>
-<script src="js/12-clean.js?v=20260723d"></script>
-<script src="js/13-realdata.js?v=20260723d"></script>
-<script src="js/14-admin.js?v=20260723d"></script>
-<script src="js/15-txbulk.js?v=20260723d"></script>
-<script src="js/20-wealth.js?v=20260723d"></script>
+<script>
+(function(){
+  var tickers = [
+    {s:'IHSG',v:'6.430,15',c:'+1,51%',up:true},
+    {s:'BBCA',v:'6.425',c:'-1,15%',up:false},
+    {s:'BBRI',v:'3.040',c:'+0,66%',up:true},
+    {s:'BMRI',v:'4.430',c:'+0,23%',up:true},
+    {s:'TLKM',v:'2.690',c:'-0,37%',up:false},
+    {s:'GGRM',v:'17.550',c:'+1,45%',up:true},
+    {s:'ANTM',v:'3.130',c:'+0,32%',up:true},
+    {s:'ASII',v:'5.100',c:'-0,97%',up:false},
+    {s:'USD/IDR',v:'17.903',c:'kurs',up:true},
+    {s:'BTC/IDR',v:'1,19M',c:'live',up:true}
+  ];
+  function row(t){
+    return '<div class="tick"><b>'+t.s+'</b><span class="num">'+t.v+'</span><span class="num '+(t.up?'up':'dn')+'">'+(t.up?'▲':'▼')+' '+t.c+'</span></div>';
+  }
+  var html = tickers.map(row).join('') + tickers.map(row).join('');
+  var el = document.getElementById('mockTicker');
+  if(el) el.innerHTML = html;
+})();
+</script>
 </body>
 </html>
