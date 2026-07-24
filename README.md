@@ -38,7 +38,7 @@ File asli Money Watch (10.700 baris) dipecah menjadi modul yang dimuat berurutan
 | `js/14-admin.js` | **BARU** — Admin Panel Kelola Daftar Saham: edit nama/sektor, tambah/kecualikan ticker, **import Excel IDX Stock Screener** (reset total universe bawaan), sinkron lintas perangkat via Supabase |
 | `js/15-txbulk.js` | **BARU** — Bulk Import Transaksi: download template Excel siap isi + upload banyak transaksi beli/jual sekaligus, dengan pratinjau & validasi per baris sebelum masuk ke jurnal |
 | `js/20-wealth.js` | **BARU** — Modul Wealth (adaptasi Wealth OS) |
-| `sql/idx_universe_migration.sql` | **BARU** — Migrasi Supabase untuk sinkronisasi Daftar Saham (lihat bagian di bawah) |
+| `sql/schema_migration.sql` | **BARU** — Migrasi Supabase konsolidasi (Daftar Saham, Strategi per Emiten, override komisi, versi skema — lihat bagian di bawah) |
 
 Setiap modul JS adalah script global klasik yang dimuat berurutan lewat `<script src>` di `index.html` — persis seperti saat masih satu file.
 
@@ -92,13 +92,15 @@ Tab **Dividen** punya fitur serupa (⬇ Download Template / 📤 Upload Excel): 
 
 Menu **🛠 Kelola Daftar Saham** (sidebar → Pengaturan) punya fitur **Import & RESET TOTAL** dari file Excel resmi IDX Stock Screener (kolom wajib: `Kode Saham`, `Nama Perusahaan`, `Sektor`; opsional: `Subsektor`, `Industri`, `Index`, `Mkt Cap`). Meng-import akan menghapus total universe bawaan dan Screener LQ45 statis, digantikan sepenuhnya oleh isi file — LQ45 otomatis dibangun ulang dari kolom `Index`. Portofolio & watchlist Anda tidak ikut terhapus.
 
-**Agar daftar saham ini otomatis ikut ke perangkat/browser lain saat Anda login**, jalankan migrasi berikut **sekali** di Supabase SQL Editor project Anda:
+**Agar daftar saham ini (dan Strategi per Emiten, override komisi) otomatis ikut ke perangkat/browser lain saat Anda login**, jalankan migrasi berikut **sekali** di Supabase SQL Editor project Anda:
 
 ```
-sql/idx_universe_migration.sql
+sql/schema_migration.sql
 ```
 
-Ini menambah 4 kolom (`idx_universe`, `idx_universe_info`, `admin_meta`, `admin_extra`) ke tabel `user_settings` yang sudah ada. Tanpa migrasi ini, fitur import tetap berfungsi penuh tapi **hanya tersimpan lokal di browser tersebut** (aplikasi mendeteksi kolom belum ada dan otomatis melewati sinkronisasi bagian ini tanpa mengganggu sinkronisasi data lain seperti transaksi/dividen). Setelah migrasi dijalankan, import/edit/hapus/kecualikan saham di satu perangkat akan otomatis muncul di perangkat lain saat login berikutnya. Tombol **↺ Kembalikan ke Daftar Bawaan** juga menghapus salinan di cloud, bukan hanya lokal.
+File ini mengkonsolidasikan semua migrasi kolom `user_settings` (`idx_universe`, `idx_universe_info`, `admin_meta`, `admin_extra`, `trade_strategy`, `sek_tax_override`) plus kolom `schema_version` yang dipakai aplikasi untuk mendeteksi kalau migrasi belum dijalankan. Aman dijalankan berkali-kali (`add column if not exists`), termasuk kalau versi migrasi lama sudah pernah dijalankan sebagian.
+
+Tanpa migrasi ini, fitur-fitur tersebut tetap berfungsi penuh tapi **hanya tersimpan lokal di browser tersebut** — aplikasi mendeteksi kolom belum ada, otomatis melewati sinkronisasi bagian ini tanpa mengganggu sinkronisasi data inti (transaksi/dividen/RDN/dst), dan menampilkan **banner peringatan kuning di Dashboard** (bukan cuma pesan di console) supaya jelas ada data yang tidak ikut tersinkron. Setelah migrasi dijalankan dan tersimpan sekali, banner otomatis hilang. Tombol **↺ Kembalikan ke Daftar Bawaan** juga menghapus salinan di cloud, bukan hanya lokal.
 
 ## Keamanan & Publikasi ke GitHub
 

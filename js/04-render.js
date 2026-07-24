@@ -2,6 +2,7 @@
 // RENDER FUNCTIONS
 // ============================================================
 function renderDashboard(){
+  if(typeof updateSchemaWarnBanner==='function') updateSchemaWarnBanner();
   var porto=getPortfolio();
   var cryptoPorto=getCryptoPortfolio();
   var etfPorto=getEtfPortfolio();

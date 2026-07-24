@@ -745,8 +745,18 @@ function goPage(name,btn){
   currentPage=name;
   renderPage(name);
   closeDD();
+  toggleSidebar(false); // di mobile, drawer sidebar otomatis tertutup setelah memilih halaman
   // Re-render cash widgets when switching to portfolio pages
   if(['portofolio','crypto','etf','reksadana'].includes(name)) setTimeout(renderCashWidgets,50);
+}
+
+// ── Sidebar drawer (mobile ≤640px) ──
+function toggleSidebar(force){
+  var nav = el('side-nav'), backdrop = el('sidebar-backdrop');
+  if(!nav) return;
+  var open = typeof force==='boolean' ? force : !nav.classList.contains('open');
+  nav.classList.toggle('open', open);
+  if(backdrop) backdrop.classList.toggle('on', open);
 }
 
 function renderPage(name){

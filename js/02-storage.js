@@ -16,33 +16,32 @@ async function supaSaveAllData(){
   if(!_currentUser) return;
   var uid = _currentUser.id;
   try {
-    var basePayload = {user_id:uid,active_sekuritas:activeSekuritas,rdn_balance:rdnBalance,cash_accounts:CASH_ACCOUNTS,tax_cfg:TAX_SETTINGS,sek_tax_override:sekTaxOverride||{},trade_strategy:tradeStrategy||{},next_tx_id:nextTxId,next_div_id:nextDivId,next_rdn_id:nextRdnId,next_crypto_id:nextCryptoId||1,next_etf_id:nextEtfId||1,next_rd_id:nextRdId||1,updated_at:new Date().toISOString()};
-    // Sinkronisasi Daftar Saham (hasil import Excel IDX + override Admin Panel)
-    // lintas perangkat — lihat sql/idx_universe_migration.sql.
-    var idxPayload = {
+    // Field inti — sudah ada sejak skema awal, selalu aman dikirim.
+    var coreFields = {user_id:uid,active_sekuritas:activeSekuritas,rdn_balance:rdnBalance,cash_accounts:CASH_ACCOUNTS,tax_cfg:TAX_SETTINGS,next_tx_id:nextTxId,next_div_id:nextDivId,next_rdn_id:nextRdnId,next_crypto_id:nextCryptoId||1,next_etf_id:nextEtfId||1,next_rd_id:nextRdId||1,updated_at:new Date().toISOString()};
+    // Field yang butuh sql/schema_migration.sql (Strategi per Emiten, override
+    // komisi, sinkronisasi Daftar Saham lintas perangkat, penanda versi skema).
+    var newFields = {
+      sek_tax_override: sekTaxOverride||{},
+      trade_strategy: tradeStrategy||{},
+      schema_version: SCHEMA_VERSION,
       idx_universe: (typeof IDX_UNIVERSE!=='undefined') ? IDX_UNIVERSE : null,
       idx_universe_info: (typeof IDX_UNIVERSE_INFO!=='undefined') ? IDX_UNIVERSE_INFO : null,
       admin_meta: (typeof ADMIN_META!=='undefined') ? ADMIN_META : {},
       admin_extra: (typeof ADMIN_EXTRA!=='undefined') ? ADMIN_EXTRA : []
     };
-    var settingsRes = await _supabase.from('user_settings').upsert(Object.assign({}, basePayload, idxPayload), {onConflict:'user_id'});
+    var settingsRes = await _supabase.from('user_settings').upsert(Object.assign({}, coreFields, newFields), {onConflict:'user_id'});
     if(settingsRes.error && /column .* does not exist/i.test(settingsRes.error.message||'')){
-      // Migrasi kolom Daftar Saham belum dijalankan di Supabase — simpan tanpa
-      // field baru dulu, supaya sinkronisasi data lain (transaksi, dividen, dst)
-      // tidak ikut gagal hanya karena fitur ini belum di-setup.
-      console.warn('Kolom sinkronisasi Daftar Saham belum ada di Supabase. Jalankan sql/idx_universe_migration.sql sekali di SQL Editor Supabase agar daftar saham ikut tersinkron.');
-      settingsRes = await _supabase.from('user_settings').upsert(basePayload, {onConflict:'user_id'});
-    }
-    if(settingsRes.error && /column .* does not exist/i.test(settingsRes.error.message||'')){
-      // Kolom trade_strategy/sek_tax_override juga belum ada — strip keduanya
-      // supaya sisa data (transaksi, dividen, RDN, dst) tetap tersinkron.
-      // Strategi per-emiten & override komisi TIDAK akan ikut tersimpan ke
-      // cloud sampai sql/trade_strategy_migration.sql dijalankan.
-      console.warn('Kolom trade_strategy/sek_tax_override belum ada di Supabase. Jalankan sql/trade_strategy_migration.sql sekali di SQL Editor Supabase agar Strategi per Emiten ikut tersinkron & tidak hilang saat reload.');
-      var strippedPayload = Object.assign({}, basePayload);
-      delete strippedPayload.trade_strategy;
-      delete strippedPayload.sek_tax_override;
-      settingsRes = await _supabase.from('user_settings').upsert(strippedPayload, {onConflict:'user_id'});
+      // Migrasi belum dijalankan di Supabase — simpan tanpa kolom baru dulu,
+      // supaya data inti (transaksi, dividen, RDN, dst) tetap tersinkron.
+      // Strategi per-emiten, override komisi, dan Daftar Saham TIDAK akan ikut
+      // tersimpan ke cloud sampai migrasi dijalankan — lihat sql/schema_migration.sql.
+      window._schemaOutdated = true;
+      if(typeof updateSchemaWarnBanner==='function') updateSchemaWarnBanner();
+      console.warn('Skema Supabase belum diperbarui. Jalankan sql/schema_migration.sql sekali di SQL Editor Supabase agar Strategi per Emiten, override komisi, dan Daftar Saham ikut tersinkron & tidak hilang saat reload.');
+      settingsRes = await _supabase.from('user_settings').upsert(coreFields, {onConflict:'user_id'});
+    } else if(!settingsRes.error){
+      window._schemaOutdated = false;
+      if(typeof updateSchemaWarnBanner==='function') updateSchemaWarnBanner();
     }
     if(settingsRes.error) throw new Error('Upsert user_settings failed: '+settingsRes.error.message);
 
@@ -77,6 +76,14 @@ async function supaLoadAllData(){
     var sRes=await _supabase.from('user_settings').select('*').eq('user_id',uid).maybeSingle();
     if(sRes.data){
       var s=sRes.data;activeSekuritas=s.active_sekuritas||'Mirae Asset';rdnBalance=s.rdn_balance||0;if(s.cash_accounts)Object.assign(CASH_ACCOUNTS,s.cash_accounts);if(s.tax_cfg){Object.assign(TAX_SETTINGS,s.tax_cfg);if(typeof saveTaxSettings==='function')saveTaxSettings();}if(s.sek_tax_override)sekTaxOverride=s.sek_tax_override;if(s.trade_strategy)tradeStrategy=s.trade_strategy;nextTxId=s.next_tx_id||1;nextDivId=s.next_div_id||1;nextRdnId=s.next_rdn_id||1;nextCryptoId=s.next_crypto_id||1;nextEtfId=s.next_etf_id||1;nextRdId=s.next_rd_id||1;
+      // schema_version eksplisit lebih rendah dari yang diharapkan = pasti belum
+      // migrasi. null/undefined tidak dianggap outdated di sini (bisa jadi baris
+      // baru yang belum pernah tersimpan) — deteksi otoritatif tetap dari
+      // kegagalan upsert di supaSaveAllData().
+      if(typeof s.schema_version==='number' && s.schema_version < SCHEMA_VERSION){
+        window._schemaOutdated = true;
+        if(typeof updateSchemaWarnBanner==='function') updateSchemaWarnBanner();
+      }
       // Daftar Saham (import Excel IDX + override Admin Panel) — samakan dengan perangkat lain
       try{
         var univChanged = (s.idx_universe && typeof idxApplyFromCloud==='function') ? idxApplyFromCloud(s.idx_universe, s.idx_universe_info) : false;
@@ -288,6 +295,13 @@ function showSaveStatus(msg, color){
   bar.style.color = color || 'var(--green)';
   bar.style.opacity = '1';
   setTimeout(function(){ bar.style.opacity = '0'; }, 2000);
+}
+
+// ── Peringatan skema Supabase belum diperbarui — tampil di UI, bukan cuma console ──
+function updateSchemaWarnBanner(){
+  var box = el('schema-warn-banner');
+  if(!box) return;
+  box.style.display = window._schemaOutdated ? 'flex' : 'none';
 }
 
 // ============================================================

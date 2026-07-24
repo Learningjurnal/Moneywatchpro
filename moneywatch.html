@@ -6,14 +6,14 @@
 <title>Money Watch Pro — Portofolio, Wealth & Analisa Quant</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23131324'/><path d='M7 21 L13 13 L18 17 L25 8' stroke='%2334d399' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/><circle cx='25' cy='8' r='2' fill='%2334d399'/></svg>">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/00-config.js?v=20260723p"></script>
+<script src="js/00-config.js?v=20260723t"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.0/dist/ort.min.js"></script>
-<link rel="stylesheet" href="css/main.css?v=20260723p">
-<link rel="stylesheet" href="css/wealth.css?v=20260723p">
+<link rel="stylesheet" href="css/main.css?v=20260723t">
+<link rel="stylesheet" href="css/wealth.css?v=20260723t">
 </head>
 <body>
 <body>
@@ -107,6 +107,8 @@
 <!-- TOPBAR -->
 <div class="topbar">
   <div style="display:flex;align-items:center;gap:14px;flex:1;justify-content:space-between">
+  <div style="display:flex;align-items:center;gap:6px">
+  <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="Buka/tutup menu navigasi">☰</button>
   <div class="logo" style="display:flex;align-items:center;gap:7px">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="2" y="2" width="20" height="20" rx="4" stroke="#818cf8" stroke-width="1.5"/>
@@ -114,6 +116,7 @@
       <circle cx="17" cy="8" r="1.5" fill="#818cf8"/>
     </svg>
     <span class="logo" style="color:var(--text)">MW<span style="color:var(--border2)"> |</span> <span style="font-size:11px;letter-spacing:.3px;color:var(--text3);font-weight:400">PRO</span></span>
+  </div>
   </div>
   <div class="topbar-right">
     <div class="zoom-ctl" title="Ukuran tampilan">
@@ -163,6 +166,8 @@
 
 <!-- MAIN ROW: sidebar kiri + halaman -->
 <div class="main-row">
+
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebar(false)"></div>
 
 <!-- SIDEBAR NAV -->
 <nav class="nav side-nav" id="side-nav">
@@ -239,9 +244,12 @@
 <div id="page-dashboard" class="page on">
 
   <div class="load-banner" id="dash-load-banner"><span class="load-dot"></span><span id="dash-load-text"></span></div>
+  <div class="alert alert-warn" id="schema-warn-banner" style="display:none;align-items:center;gap:8px">
+    ⚠ Skema database belum diperbarui — beberapa data (Strategi per Emiten, override komisi, Daftar Saham) tidak ikut tersimpan ke cloud dan bisa hilang saat reload. Jalankan <code style="font-family:'IBM Plex Mono',monospace">sql/schema_migration.sql</code> sekali di Supabase SQL Editor untuk memperbaikinya.
+  </div>
 
   <!-- ROW 1: Total AUM hero + 4 P&L cards -->
-  <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1fr;gap:9px;margin-bottom:11px">
+  <div class="dash-hero-row" style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1fr;gap:9px;margin-bottom:11px">
     <!-- Hero: Total AUM -->
     <div class="metric" style="background:linear-gradient(135deg,#0c1e3a 0%,#0e2444 100%);border-color:rgba(0,200,255,.25);position:relative;overflow:hidden">
       <div style="position:absolute;inset:0;background:radial-gradient(ellipse at top right,rgba(0,200,255,.07) 0%,transparent 60%);pointer-events:none"></div>
@@ -312,7 +320,7 @@
   </div>
 
   <!-- ROW 2: 4 Asset Class Cards dengan bobot -->
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:11px">
+  <div class="dash-asset-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:11px">
     <!-- Saham IDX -->
     <div class="metric" style="border-color:rgba(0,229,160,.3);cursor:pointer" onclick="goPage('portofolio')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
@@ -388,7 +396,7 @@
   </div>
 
   <!-- ROW 3: Chart AUM allocation + IHSG chart + Top movers -->
-  <div style="display:grid;grid-template-columns:260px 1fr 240px;gap:11px;margin-bottom:11px">
+  <div class="dash-chart-row" style="display:grid;grid-template-columns:260px 1fr 240px;gap:11px;margin-bottom:11px">
     <!-- Donut alokasi AUM -->
     <div class="card">
       <div class="cheader"><span class="ctitle">Alokasi AUM</span><span class="badge b-gray" id="d-aum-total-badge">Rp 0</span></div>
@@ -438,7 +446,7 @@
   </div>
 
   <!-- ROW 4: Per-aset breakdown + Recent tx -->
-  <div style="display:grid;grid-template-columns:1fr 300px;gap:11px;margin-bottom:11px">
+  <div class="dash-table-row" style="display:grid;grid-template-columns:1fr 300px;gap:11px;margin-bottom:11px">
     <!-- Tabel ringkasan semua aset -->
     <div class="card">
       <div class="cheader"><span class="ctitle">Ringkasan Semua Aset</span><span class="badge b-gray" id="d-total-items">0 instrumen</span></div>
@@ -489,7 +497,7 @@
   </div>
 
   <!-- ROW 5: Sektoral + Dividen -->
-  <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:11px;margin-bottom:11px">
+  <div class="dash-bottom-row" style="display:grid;grid-template-columns:1.4fr 1fr;gap:11px;margin-bottom:11px">
     <div class="card">
       <div class="cheader"><span class="ctitle">Alokasi Sektoral Saham</span><span class="badge b-gray">IDX • Nilai Modal</span></div>
       <div id="d-sectoral-detail"></div>
@@ -2349,21 +2357,21 @@
   </div>
 </div>
 
-<script src="js/01-data.js?v=20260723p"></script>
-<script src="js/02-storage.js?v=20260723p"></script>
-<script src="js/03-engine.js?v=20260723p"></script>
-<script src="js/04-render.js?v=20260723p"></script>
-<script src="js/05-assets.js?v=20260723p"></script>
-<script src="js/06-analysis-router.js?v=20260723p"></script>
-<script src="js/07-flowscan.js?v=20260723p"></script>
-<script src="js/08-auth.js?v=20260723p"></script>
-<script src="js/09-divinvest.js?v=20260723p"></script>
-<script src="js/10-hargawajar.js?v=20260723p"></script>
-<script src="js/11-quant.js?v=20260723p"></script>
-<script src="js/12-clean.js?v=20260723p"></script>
-<script src="js/13-realdata.js?v=20260723p"></script>
-<script src="js/14-admin.js?v=20260723p"></script>
-<script src="js/15-txbulk.js?v=20260723p"></script>
-<script src="js/20-wealth.js?v=20260723p"></script>
+<script src="js/01-data.js?v=20260723t"></script>
+<script src="js/02-storage.js?v=20260723t"></script>
+<script src="js/03-engine.js?v=20260723t"></script>
+<script src="js/04-render.js?v=20260723t"></script>
+<script src="js/05-assets.js?v=20260723t"></script>
+<script src="js/06-analysis-router.js?v=20260723t"></script>
+<script src="js/07-flowscan.js?v=20260723t"></script>
+<script src="js/08-auth.js?v=20260723t"></script>
+<script src="js/09-divinvest.js?v=20260723t"></script>
+<script src="js/10-hargawajar.js?v=20260723t"></script>
+<script src="js/11-quant.js?v=20260723t"></script>
+<script src="js/12-clean.js?v=20260723t"></script>
+<script src="js/13-realdata.js?v=20260723t"></script>
+<script src="js/14-admin.js?v=20260723t"></script>
+<script src="js/15-txbulk.js?v=20260723t"></script>
+<script src="js/20-wealth.js?v=20260723t"></script>
 </body>
 </html>
