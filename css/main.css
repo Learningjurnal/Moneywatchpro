@@ -20,7 +20,7 @@ body{
     var(--bg);
 }
 body::before{content:'';position:fixed;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 0%,rgba(129,140,248,.5) 40%,rgba(192,132,252,.4) 60%,transparent 100%);z-index:9999;pointer-events:none;display:block}
-body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px);background-size:26px 26px}
+body::after{display:none} /* Structured Minimalism — pola titik dekoratif dihilangkan, latar dibiarkan bersih */
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:var(--bg2)}
 ::-webkit-scrollbar-thumb{background:rgba(129,140,248,.25);border-radius:2px}
@@ -81,20 +81,20 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;back
 .g2c{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px}
 
-/* METRIC — glass data card */
-.metric{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:14px;padding:12px 14px;position:relative;transition:all var(--spring)}
-.metric:hover{border-color:rgba(129,140,248,.3);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+/* METRIC — Structured Minimalism: tanpa kotak/border, cukup garis bawah tipis + spasi */
+.metric{background:none;border:none;border-bottom:1px solid var(--border);border-radius:0;padding:4px 4px 14px;position:relative;transition:border-color .18s ease}
+.metric:hover{border-bottom-color:rgba(129,140,248,.4)}
 .metric::before{display:none}
-.mlabel{font-size:11px;color:var(--text3);letter-spacing:0;font-family:'Inter',sans-serif;margin-bottom:6px;font-weight:400}
+.mlabel{font-size:11px;color:var(--text3);letter-spacing:0;font-family:'Inter',sans-serif;margin-bottom:7px;font-weight:400}
 .mval{font-size:18px;font-weight:600;font-family:'Share Tech Mono',monospace;line-height:1}
 .mval.lg{font-size:22px}
 .msub{font-size:11px;margin-top:5px;font-family:'Inter',sans-serif}
 .up{color:var(--green)}.dn{color:var(--red)}.neu{color:var(--text2)}.amb{color:var(--amber)}
 
-/* CARD — glass panel */
-.card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:14px;padding:14px;backdrop-filter:blur(8px)}
+/* CARD — Structured Minimalism: tanpa panel/kotak, pemisah lewat whitespace + garis tipis di bawah judul */
+.card{background:none;border:none;border-radius:0;padding:16px 4px;backdrop-filter:none}
 .ctitle{font-size:11px;color:var(--text3);letter-spacing:0;font-family:'Inter',sans-serif;font-weight:500}
-.cheader{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.cheader{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;padding-bottom:11px;border-bottom:1px solid var(--border)}
 
 /* BTN */
 .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border2);font-family:'Inter',sans-serif;letter-spacing:0;text-transform:none;transition:all var(--spring);background:rgba(255,255,255,.04);color:var(--text2)}
@@ -305,7 +305,7 @@ html,body{font-size:14px}
 .mval{font-size:22px}
 .mval.lg{font-size:27px}
 .msub{font-size:12px}
-.metric{padding:14px 16px}
+.metric{padding:6px 6px 16px}
 .ctitle{font-size:12.5px;font-weight:600;color:var(--text2)}
 .btn{font-size:13px;padding:8px 15px}
 .btn-sm{font-size:12px;padding:6px 12px}
@@ -361,8 +361,8 @@ html,body{font-size:14px}
 
   .ptitle{font-size:17px!important}
   .mval.lg{font-size:22px!important}
-  .card{padding:11px!important}
-  .metric{padding:11px 12px!important}
+  .card{padding:13px 2px!important}
+  .metric{padding:4px 2px 12px!important}
 }
 
 /* ══════════════════════════════════════════════
