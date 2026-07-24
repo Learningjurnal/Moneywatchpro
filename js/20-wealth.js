@@ -29,17 +29,27 @@ function wLoad(){
 }
 function wUid(){ return Date.now() + Math.floor(Math.random()*1000); }
 
-// ── Badge notifikasi sidebar — piutang jatuh tempo ≤7 hari (termasuk yang sudah lewat) ──
-function wUpdateDueBadge(){
-  var badge = el('piutang-due-badge');
-  if(!badge) return;
+// ── Badge notifikasi sidebar — piutang & hutang jatuh tempo ≤7 hari (termasuk yang sudah lewat) ──
+function wDueSoonCount(list, excludeStatus){
   var soon = new Date(); soon.setDate(soon.getDate()+7);
-  var dueCount = WEALTH.piutang.filter(function(p){
-    if(p.status==='Lunas' || !p.jatuhTempo) return false;
-    return new Date(p.jatuhTempo) <= soon;
+  return list.filter(function(x){
+    if((excludeStatus && x.status===excludeStatus) || !x.jatuhTempo) return false;
+    return new Date(x.jatuhTempo) <= soon;
   }).length;
-  badge.style.display = dueCount>0 ? 'inline-flex' : 'none';
-  badge.textContent = dueCount;
+}
+function wUpdateDueBadge(){
+  var piuBadge = el('piutang-due-badge');
+  if(piuBadge){
+    var piuCount = wDueSoonCount(WEALTH.piutang, 'Lunas');
+    piuBadge.style.display = piuCount>0 ? 'inline-flex' : 'none';
+    piuBadge.textContent = piuCount;
+  }
+  var debtBadge = el('debt-due-badge');
+  if(debtBadge){
+    var debtCount = wDueSoonCount(WEALTH.debt, null);
+    debtBadge.style.display = debtCount>0 ? 'inline-flex' : 'none';
+    debtBadge.textContent = debtCount;
+  }
 }
 
 // ── FORMAT ──
@@ -317,6 +327,15 @@ function wRenderBank(){
 // ══════════════════════════════════════════════
 // PAGE 3 — HUTANG (avalanche & snowball)
 // ══════════════════════════════════════════════
+// Format tanggal jatuh tempo dengan pewarnaan — merah (lewat), amber (≤7 hari), abu-abu normal
+function wFmtDueDate(dateStr){
+  if(!dateStr) return '<span style="color:var(--text3)">—</span>';
+  var d = new Date(dateStr);
+  var soon = new Date(); soon.setDate(soon.getDate()+7);
+  var cls = d < new Date() ? 'dn' : (d <= soon ? 'amb' : '');
+  var disp = d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+  return '<span'+(cls?' class="'+cls+'"':'')+'>'+disp+'</span>';
+}
 function wRenderDebt(){
   var a = wCalc();
   var dti = WEALTH.income>0 ? wPct(a.debt.c, WEALTH.income) : 0;
@@ -335,16 +354,18 @@ function wRenderDebt(){
     '<div class="metric"><div class="mlabel">Cicilan / bln</div><div class="mval">'+wRp(a.debt.c)+'</div></div>'+
   '</div>'+
   '<div class="card" style="margin-bottom:10px;padding:0;overflow:hidden">'+
-    '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Nama</th><th>Tipe</th><th>Outstanding</th><th>Bunga/thn</th><th>Cicilan/bln</th><th>Prioritas</th><th></th></tr></thead><tbody>'+
+    '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Nama</th><th>Tipe</th><th>Tanggal Hutang</th><th>Jatuh Tempo</th><th>Outstanding</th><th>Bunga/thn</th><th>Cicilan/bln</th><th>Prioritas</th><th></th></tr></thead><tbody>'+
     (byRate.length ? byRate.map(function(x,i){
       return '<tr><td><b>'+x.nama+'</b></td>'+
       '<td><span class="badge '+(i===0?'b-dn':'b-gray')+'">'+(x.tipe||'—')+'</span></td>'+
+      '<td class="mono" style="font-size:11px;color:var(--text2)">'+(x.tanggalHutang?new Date(x.tanggalHutang).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):'—')+'</td>'+
+      '<td class="mono" style="font-size:11px">'+wFmtDueDate(x.jatuhTempo)+'</td>'+
       '<td><b>'+wRp(x.outstanding)+'</b></td>'+
       '<td class="dn"><b>'+(x.bunga||0)+'%</b></td>'+
       '<td>'+wRp(x.cicilan)+'</td>'+
       '<td><span class="badge '+(i===0?'b-dn':i===1?'b-gray':'b-up')+'">'+(i===0?'Lunasi dulu':'P'+(i+1))+'</span></td>'+
       '<td style="white-space:nowrap"><button class="btn btn-blue btn-xs" onclick="wModalDebtPay('+x.id+')" title="Catat pembayaran">💰 Bayar</button> <button class="btn btn-ghost btn-xs" onclick="wModalDebt('+x.id+')" aria-label="Edit hutang '+(x.nama||'')+'">✎</button> <button class="btn btn-red btn-xs" onclick="wConfirmDelete(\'debt\','+x.id+',\''+(x.nama||'')+'\')" aria-label="Hapus hutang '+(x.nama||'')+'">🗑</button></td></tr>';
-    }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">Belum ada hutang tercatat 🎉</td></tr>')+
+    }).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">Belum ada hutang tercatat 🎉</td></tr>')+
     '</tbody></table></div>'+
   '</div>'+
   '<div class="g2c">'+
@@ -395,7 +416,7 @@ function wRenderPiutang(){
         '<div class="w-piu-av" style="background:'+c[0]+';color:'+c[1]+'">'+(x.nama||'?').charAt(0).toUpperCase()+'</div>'+
         '<div style="flex:1;min-width:0">'+
           '<div style="font-size:12px;font-weight:600">'+x.nama+'</div>'+
-          '<div style="font-size:10px;color:var(--text3)">'+(x.keperluan||'—')+(x.jatuhTempo?' · jatuh tempo '+new Date(x.jatuhTempo).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):'')+'</div>'+
+          '<div style="font-size:10px;color:var(--text3)">'+(x.keperluan||'—')+(x.tanggalPiutang?' · dipinjamkan '+new Date(x.tanggalPiutang).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):'')+(x.jatuhTempo?' · jatuh tempo '+wFmtDueDate(x.jatuhTempo):'')+'</div>'+
           '<div style="margin-top:5px"><div class="w-track" style="height:5px"><div class="w-fill '+(x.status==='Lunas'?'green':x.status==='Telat'||x.status==='Macet'?'red':'')+'" style="width:'+pct.toFixed(0)+'%"></div></div>'+
           '<div style="font-size:10px;color:var(--text3);margin-top:3px">'+pct.toFixed(0)+'% terbayar · '+wRp(x.terbayar)+' dari '+wRp(x.pokok)+'</div></div>'+
         '</div>'+
@@ -576,11 +597,12 @@ function wModalDebt(id){
     wField('Nama Hutang','wf-nama',it?it.nama:'','KPR Rumah BCA')+
     '<div class="w-frow">'+wSelect('Tipe','wf-tipe',['KPR','Kartu Kredit','Kendaraan','Pinjaman','Paylater','Lainnya'],it?it.tipe:'KPR')+wField('Bunga/thn (%)','wf-bunga',it?it.bunga:'','8.5','number')+'</div>'+
     '<div class="w-frow">'+wField('Outstanding (Rp)','wf-outstanding',it?it.outstanding:'','680000000','number')+wField('Cicilan/bln (Rp)','wf-cicilan',it?it.cicilan:'','7200000','number')+'</div>'+
+    '<div class="w-frow">'+wField('Tanggal Hutang','wf-tgl-hutang',it?it.tanggalHutang:'','','date')+wField('Jatuh Tempo','wf-jatuh-tempo',it?it.jatuhTempo:'','','date')+'</div>'+
     wFooter('wSaveDebt('+(it?it.id:'null')+')'));
 }
 function wSaveDebt(id){
   var old = id ? wFind('debt',id) : null;
-  var obj = {id:id||wUid(), nama:wVal('wf-nama'), tipe:wVal('wf-tipe'), bunga:wNum('wf-bunga'), outstanding:wNum('wf-outstanding'), cicilan:wNum('wf-cicilan'), payments:old?old.payments:[]};
+  var obj = {id:id||wUid(), nama:wVal('wf-nama'), tipe:wVal('wf-tipe'), bunga:wNum('wf-bunga'), outstanding:wNum('wf-outstanding'), cicilan:wNum('wf-cicilan'), tanggalHutang:wVal('wf-tgl-hutang'), jatuhTempo:wVal('wf-jatuh-tempo'), payments:old?old.payments:[]};
   if(!obj.nama){ alert('Nama hutang wajib diisi'); return; }
   if(id) WEALTH.debt = WEALTH.debt.map(function(x){return x.id==id?obj:x});
   else WEALTH.debt.push(obj);
@@ -627,12 +649,13 @@ function wModalPiutang(id){
   wOpenModal((it?'Edit':'Tambah')+' Piutang',
     '<div class="w-frow">'+wField('Nama Debitur','wf-nama',it?it.nama:'','Budi Santoso')+wField('Keperluan','wf-keperluan',it?it.keperluan:'','Modal usaha')+'</div>'+
     '<div class="w-frow">'+wField('Pokok (Rp)','wf-pokok',it?it.pokok:'','25000000','number')+wField('Sudah Terbayar (Rp)','wf-terbayar',it?it.terbayar:0,'0','number')+'</div>'+
-    '<div class="w-frow">'+wField('Jatuh Tempo','wf-tempo',it?it.jatuhTempo:'','','date')+wSelect('Status','wf-status',['Lancar','Telat','Lunas','Macet'],it?it.status:'Lancar')+'</div>'+
+    '<div class="w-frow">'+wField('Tanggal Piutang','wf-tgl-piutang',it?it.tanggalPiutang:'','','date')+wField('Jatuh Tempo','wf-tempo',it?it.jatuhTempo:'','','date')+'</div>'+
+    wSelect('Status','wf-status',['Lancar','Telat','Lunas','Macet'],it?it.status:'Lancar')+
     wFooter('wSavePiutang('+(it?it.id:'null')+')'));
 }
 function wSavePiutang(id){
   var old = id ? wFind('piutang',id) : null;
-  var obj = {id:id||wUid(), nama:wVal('wf-nama'), keperluan:wVal('wf-keperluan'), pokok:wNum('wf-pokok'), terbayar:wNum('wf-terbayar'), jatuhTempo:wVal('wf-tempo'), status:wVal('wf-status'), payments:old?old.payments:[]};
+  var obj = {id:id||wUid(), nama:wVal('wf-nama'), keperluan:wVal('wf-keperluan'), pokok:wNum('wf-pokok'), terbayar:wNum('wf-terbayar'), tanggalPiutang:wVal('wf-tgl-piutang'), jatuhTempo:wVal('wf-tempo'), status:wVal('wf-status'), payments:old?old.payments:[]};
   if(!obj.nama){ alert('Nama debitur wajib diisi'); return; }
   if(id) WEALTH.piutang = WEALTH.piutang.map(function(x){return x.id==id?obj:x});
   else WEALTH.piutang.push(obj);
