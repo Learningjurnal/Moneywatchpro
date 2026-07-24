@@ -10,8 +10,106 @@ var QT = {
   btCharts: {},
   scData: [],
   corrData: null,
-  mrData: {}
+  mrData: {},
+  xgb: {session:null, meta:null, loadPromise:null, lastRows:null, lastProbs:null}
 };
+
+// ============================================================
+// XGBoost Signal Model — inferensi ONNX asli di browser
+// (dilatih offline via ml/train_xgb_signal.py, lihat ml/README.md)
+// ============================================================
+var XGB_FEATURES = ['sma_ratio','rsi14','mom20','vol_ratio','volatility20','dist_high20'];
+
+function xgbEnsureLoaded(){
+  if(QT.xgb.loadPromise) return QT.xgb.loadPromise;
+  if(typeof ort === 'undefined'){
+    QT.xgb.loadPromise = Promise.resolve(false);
+    return QT.xgb.loadPromise;
+  }
+  QT.xgb.loadPromise = Promise.all([
+    fetch('models/xgb_signal_meta.json').then(function(r){ if(!r.ok) throw new Error('meta 404'); return r.json(); }),
+    ort.InferenceSession.create('models/xgb_signal.onnx')
+  ]).then(function(res){
+    QT.xgb.meta = res[0];
+    QT.xgb.session = res[1];
+    return true;
+  }).catch(function(e){
+    console.warn('Model XGBoost ONNX belum tersedia (jalankan ml/train_xgb_signal.py):', e.message||e);
+    QT.xgb.session = null; QT.xgb.meta = null;
+    return false;
+  });
+  return QT.xgb.loadPromise;
+}
+
+// Fitur teknikal — HARUS identik rumus & urutan dengan compute_features() di ml/train_xgb_signal.py
+function xgbSMA(arr, n, i){ var s=0; for(var k=i-n+1;k<=i;k++) s+=arr[k]; return s/n; }
+function xgbComputeFeatures(data){
+  var close = data.map(function(d){return d.close;});
+  var high = data.map(function(d){return d.high;});
+  var volume = data.map(function(d){return d.volume;});
+  var n = close.length, rows = [];
+  for(var i=30;i<n;i++){
+    var sma10=xgbSMA(close,10,i), sma30=xgbSMA(close,30,i);
+    if(!sma30) continue;
+    var smaRatio = sma10/sma30-1;
+
+    // RSI14 — rolling mean sederhana dari gain/loss (sama seperti pandas .rolling(14).mean(),
+    // BUKAN Wilder smoothing yang dipakai qtRSI() untuk strategi RSI backtest biasa).
+    var gainSum=0, lossSum=0;
+    for(var k=i-13;k<=i;k++){ var ch=close[k]-close[k-1]; if(ch>0) gainSum+=ch; else lossSum-=ch; }
+    var avgGain=gainSum/14, avgLoss=lossSum/14;
+    var rsi14 = (avgLoss===0 ? 100 : (100-100/(1+avgGain/avgLoss)))/100;
+
+    var mom20 = (close[i]-close[i-20])/close[i-20];
+
+    var volSma20 = xgbSMA(volume,20,i);
+    if(!volSma20) continue;
+    var volRatio = volume[i]/volSma20;
+
+    // volatility20 — sample stdev (ddof=1, sama seperti pandas .std()) dari return harian 20 hari
+    var rets=[];
+    for(var k2=i-19;k2<=i;k2++) rets.push((close[k2]-close[k2-1])/close[k2-1]);
+    var mean=0; for(var r=0;r<rets.length;r++) mean+=rets[r]; mean/=rets.length;
+    var sq=0; for(var r2=0;r2<rets.length;r2++) sq+=(rets[r2]-mean)*(rets[r2]-mean);
+    var volatility20 = Math.sqrt(sq/(rets.length-1));
+
+    var hh=-Infinity; for(var k3=i-19;k3<=i;k3++) if(high[k3]>hh) hh=high[k3];
+    var distHigh20 = (close[i]-hh)/hh;
+
+    var feat=[smaRatio, rsi14, mom20, volRatio, volatility20, distHigh20];
+    if(feat.some(function(v){return v==null||isNaN(v)||!isFinite(v);})) continue;
+    rows.push({i:i, feat:feat});
+  }
+  return rows;
+}
+
+function xgbPredictBatch(session, rows){
+  var n = rows.length;
+  var inputData = new Float32Array(n*XGB_FEATURES.length);
+  rows.forEach(function(r,idx){
+    for(var f=0; f<XGB_FEATURES.length; f++) inputData[idx*XGB_FEATURES.length+f] = r.feat[f];
+  });
+  var tensor = new ort.Tensor('float32', inputData, [n, XGB_FEATURES.length]);
+  return session.run({input: tensor}).then(function(out){
+    var probs = out.probabilities.data; // [p(kelas0), p(kelas1)] per baris
+    var result = new Array(n);
+    for(var i=0;i<n;i++) result[i] = probs[i*2+1];
+    return result;
+  });
+}
+
+function xgbUpdateStatusUI(){
+  var box = el('bt-xgb-status'); if(!box) return;
+  xgbEnsureLoaded().then(function(ok){
+    if(ok && QT.xgb.meta){
+      box.className = 'alert alert-ok';
+      box.textContent = '✓ Model XGBoost ONNX aktif — akurasi test '+(QT.xgb.meta.test_accuracy*100).toFixed(1)+'% (dilatih '+QT.xgb.meta.version+', '+QT.xgb.meta.tickers_used.length+' saham). Bukan rekomendasi investasi.';
+    } else {
+      box.className = 'alert alert-warn';
+      box.textContent = '⚠ Model ONNX belum ditemukan — pakai simulasi momentum sementara. Jalankan ml/train_xgb_signal.py (lihat ml/README.md) untuk model asli.';
+    }
+  });
+}
 
 var LQ45_STOCKS = [
   {t:'BBCA',n:'Bank Central Asia',s:'Perbankan'},
@@ -164,6 +262,7 @@ function btSetStrat(s, el2){
   ['ma','rsi','xgb'].forEach(function(x){ var b=el('bt-strat-'+x); if(b){b.className=b.className.replace(' on','').replace('on','').trim();} });
   var btn=el('bt-strat-'+s); if(btn) btn.className=(btn.className+' on').trim();
   ['ma','rsi','xgb'].forEach(function(x){ var p=el('bt-params-'+x); if(p) p.style.display = x===s?'block':'none'; });
+  if(s==='xgb') xgbUpdateStatusUI();
 }
 
 function btFetchLive(){
@@ -211,8 +310,18 @@ function runBacktest(){
           else if(inPos&&(rsi2[ii]<rob&&rsi2[ii-1]>=rob||close[ii]<entryP*(1-sl))){signals.push({i:ii,type:'SELL'});inPos=false;}
         }
       }
+    } else if(QT.xgb.lastProbs && QT.xgb.lastRows){
+      // XGBoost — prediksi model ONNX asli (dihitung di runBacktest sebelum doBacktest dipanggil)
+      var buyTh = (QT.xgb.meta && QT.xgb.meta.buy_threshold) || 0.6;
+      var sellTh = (QT.xgb.meta && QT.xgb.meta.sell_threshold) || 0.35;
+      var inPosX=false;
+      QT.xgb.lastRows.forEach(function(r,idx){
+        var p = QT.xgb.lastProbs[idx];
+        if(!inPosX && p>=buyTh){ signals.push({i:r.i,type:'BUY'}); inPosX=true; }
+        else if(inPosX && p<=sellTh){ signals.push({i:r.i,type:'SELL'}); inPosX=false; }
+      });
     } else {
-      // XGBoost sim: random ML-like signals based on momentum
+      // Fallback: model ONNX belum tersedia — simulasi momentum sederhana (BUKAN prediksi ML asli)
       var momentum = close.map(function(c,i){ return i<20?0:(c-close[i-20])/close[i-20]; });
       var inP=false;
       for(var iii=20;iii<close.length;iii++){
@@ -418,11 +527,34 @@ function runBacktest(){
     el('bt-results').style.display='block';
   }
 
+  // Untuk strategi XGBoost: pastikan model ONNX termuat & jalankan inferensi
+  // (async) SEBELUM memanggil doBacktest, supaya doBacktest sendiri tetap
+  // sinkron dan bisa memakai QT.xgb.lastRows/lastProbs langsung.
+  function proceedWithData(data){
+    if(QT.btStrat !== 'xgb'){ doBacktest(data); return; }
+    xgbUpdateStatusUI();
+    el('bt-data-status').textContent = '🤖 Memuat model XGBoost...';
+    xgbEnsureLoaded().then(function(ok){
+      if(!ok){ QT.xgb.lastRows=null; QT.xgb.lastProbs=null; doBacktest(data); return; }
+      var rows = xgbComputeFeatures(data);
+      if(!rows.length){ QT.xgb.lastRows=null; QT.xgb.lastProbs=null; doBacktest(data); return; }
+      el('bt-data-status').textContent = '🤖 Menjalankan inferensi model ('+rows.length+' bar)...';
+      xgbPredictBatch(QT.xgb.session, rows).then(function(probs){
+        QT.xgb.lastRows = rows; QT.xgb.lastProbs = probs;
+        doBacktest(data);
+      }).catch(function(e){
+        console.warn('Inferensi XGBoost gagal, pakai fallback simulasi:', e);
+        QT.xgb.lastRows=null; QT.xgb.lastProbs=null;
+        doBacktest(data);
+      });
+    });
+  }
+
   // Use live data if already fetched, otherwise fetch first
   if(QT.btData && QT.btData.length > 100){
-    doBacktest(QT.btData);
+    proceedWithData(QT.btData);
   } else {
-    qtFetchOHLCV(ticker, days, function(err, data){ doBacktest(data); });
+    qtFetchOHLCV(ticker, days, function(err, data){ proceedWithData(data); });
   }
 }
 

@@ -1,0 +1,50 @@
+{
+  "version": "20260724",
+  "trained_at": "2026-07-24T09:12:45.967458",
+  "feature_names": [
+    "sma_ratio",
+    "rsi14",
+    "mom20",
+    "vol_ratio",
+    "volatility20",
+    "dist_high20"
+  ],
+  "fwd_days": 10,
+  "target_return": 0.03,
+  "buy_threshold": 0.6,
+  "sell_threshold": 0.35,
+  "tickers_used": [
+    "BBCA.JK",
+    "BBRI.JK",
+    "BMRI.JK",
+    "BBNI.JK",
+    "TLKM.JK",
+    "ASII.JK",
+    "UNVR.JK",
+    "ICBP.JK",
+    "INDF.JK",
+    "KLBF.JK",
+    "ADRO.JK",
+    "ANTM.JK",
+    "SMGR.JK",
+    "GOTO.JK",
+    "MDKA.JK",
+    "INCO.JK",
+    "CPIN.JK",
+    "EXCL.JK",
+    "JSMR.JK"
+  ],
+  "n_train": 17661,
+  "n_test": 4420,
+  "test_accuracy": 0.7131221719457014,
+  "test_roc_auc": 0.5642657331032169,
+  "feature_importance": {
+    "sma_ratio": 0.1722370684146881,
+    "rsi14": 0.15313869714736938,
+    "mom20": 0.15498293936252594,
+    "vol_ratio": 0.13466870784759521,
+    "volatility20": 0.21579903364181519,
+    "dist_high20": 0.16917353868484497
+  },
+  "disclaimer": "Model statistik untuk edukasi/backtesting — bukan rekomendasi investasi."
+}
