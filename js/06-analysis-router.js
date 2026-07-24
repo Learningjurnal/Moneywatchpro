@@ -356,17 +356,94 @@ function renderDashRisk(){
   box.innerHTML=html;
 }
 
+// ══════════════════════════════════════════════════════════
+// METRIK GAYA HEDGE FUND — dihitung dari riwayat ekuitas harian
+// sungguhan (equityHistory), bukan estimasi statis per-saham.
+// Rumus: Sharpe/Sortino/Calmar/Max Drawdown standar industri,
+// HHI untuk konsentrasi (Herfindahl-Hirschman Index).
+// Minimal 10 titik data supaya statistik tidak menyesatkan —
+// di bawah itu, ditandai historyTooShort dan hanya isi dasar
+// (HHI, win rate) yang tetap dihitung dari data transaksi.
+// ══════════════════════════════════════════════════════════
+function computeHedgeFundMetrics(){
+  var porto=(typeof getPortfolio==='function')?getPortfolio():[];
+  var totalMV=porto.reduce(function(a,p){return a+p.mv},0);
+  var rf=0.065; // BI rate approx, dipakai juga di computeRiskMetrics()
+
+  // ── Konsentrasi (HHI) & N efektif — selalu bisa dihitung dari posisi saat ini ──
+  var hhi=0;
+  if(totalMV>0){ porto.forEach(function(p){ var w=p.mv/totalMV; hhi+=w*w; }); }
+  var effectiveN = hhi>0 ? (1/hhi) : 0;
+
+  // ── Win rate & profit factor dari transaksi SELL yang sudah direalisasi ──
+  var pos={}, grossProfit=0, grossLoss=0, wins=0, sells=0;
+  transactions.slice().sort(function(a,b){return a.date.localeCompare(b.date)}).forEach(function(tx){
+    if(!pos[tx.ticker]) pos[tx.ticker]={lot:0,cost:0};
+    var p=pos[tx.ticker];
+    if(tx.type==='BUY'){ p.lot+=tx.lot; p.cost+=tx.gross; }
+    else if(tx.type==='SELL' && p.lot>0){
+      var avg=p.cost/(p.lot*100), sold=tx.lot*100, pnl=tx.gross-avg*sold;
+      sells++;
+      if(pnl>0){ wins++; grossProfit+=pnl; } else { grossLoss+=Math.abs(pnl); }
+      p.lot-=tx.lot; p.cost=Math.max(0,p.cost-avg*sold);
+    }
+  });
+  var winRate = sells>0 ? (wins/sells*100) : null;
+  var profitFactor = grossLoss>0 ? (grossProfit/grossLoss) : (grossProfit>0 ? Infinity : null);
+
+  // ── Sharpe / Sortino / Calmar / Max Drawdown dari equityHistory sungguhan ──
+  var hist = (typeof equityHistoryLoad==='function') ? equityHistoryLoad() : [];
+  var result = {
+    hhi:hhi, effectiveN:effectiveN, winRate:winRate, profitFactor:profitFactor, sells:sells,
+    historyLen:hist.length, historyTooShort:true,
+    sharpe:null, sortino:null, calmar:null, maxDD:null, volAnnReal:null, cagr:null, bestDay:null, worstDay:null
+  };
+  if(hist.length>=10){
+    var eq=hist.map(function(h){return h.equity;});
+    var rets=[];
+    for(var i=1;i<eq.length;i++){ if(eq[i-1]>0) rets.push((eq[i]-eq[i-1])/eq[i-1]); }
+    if(rets.length>=5){
+      var mean=rets.reduce(function(a,b){return a+b;},0)/rets.length;
+      var variance=rets.reduce(function(a,b){return a+(b-mean)*(b-mean);},0)/rets.length;
+      var dailyVol=Math.sqrt(variance);
+      var volAnn=dailyVol*Math.sqrt(252);
+      var downside=rets.filter(function(r){return r<0;});
+      var downVar=downside.length? downside.reduce(function(a,b){return a+b*b;},0)/downside.length : 0;
+      var downDevAnn=Math.sqrt(downVar)*Math.sqrt(252);
+
+      var days=(new Date(hist[hist.length-1].date)-new Date(hist[0].date))/86400000||1;
+      var years=Math.max(days/365,1/365);
+      var cagr = eq[0]>0 ? (Math.pow(eq[eq.length-1]/eq[0], 1/years)-1) : 0;
+
+      var peak=eq[0], maxDD=0;
+      eq.forEach(function(v){ if(v>peak) peak=v; var dd=peak>0?(peak-v)/peak:0; if(dd>maxDD) maxDD=dd; });
+
+      result.historyTooShort=false;
+      result.volAnnReal=volAnn*100;
+      result.cagr=cagr*100;
+      result.maxDD=maxDD*100;
+      result.sharpe = volAnn>0 ? ((cagr-rf)/volAnn) : null;
+      result.sortino = downDevAnn>0 ? ((cagr-rf)/downDevAnn) : null;
+      result.calmar = maxDD>0 ? (cagr/maxDD) : null;
+      var bestR=Math.max.apply(null,rets), worstR=Math.min.apply(null,rets);
+      result.bestDay=bestR*100; result.worstDay=worstR*100;
+    }
+  }
+  return result;
+}
+
 // ── Saran AI portofolio (offline heuristik + opsi live Claude) ──
 function aiNum(s){ return parseFloat(String(s||'').replace(/[^0-9.\-]/g,''))||0; }
 function aiBuildContext(){
   var m=computeRiskMetrics();
+  var hf=computeHedgeFundMetrics();
   var ihsg=aiNum(el('tb-ihsg')&&el('tb-ihsg').textContent);
   var ihsgChg=(el('tb-chg')&&el('tb-chg').textContent||'').trim();
   var byU=m.porto.slice().sort(function(a,b){return b.unreal-a.unreal});
   var best=byU[0]||null, worst=byU.length?byU[byU.length-1]:null;
   var cash=(typeof calcRdnBalance==='function')?calcRdnBalance():0;
   var cashPct=(cash/((m.totalMV+cash)||1))*100;
-  return {m:m,ihsg:ihsg,ihsgChg:ihsgChg,best:best,worst:worst,cash:cash,cashPct:cashPct};
+  return {m:m,hf:hf,ihsg:ihsg,ihsgChg:ihsgChg,best:best,worst:worst,cash:cash,cashPct:cashPct};
 }
 function aiMacroWatch(bySec){
   var w=[];
@@ -381,36 +458,91 @@ function aiMacroWatch(bySec){
   w.push('Global umum: arah The Fed (suku bunga AS), USD/IDR, harga komoditas, aliran dana asing (foreign flow) di IHSG');
   return w;
 }
+function aiFmtRatio(v, goodMin, okMin){
+  if(v===null||v===undefined||!isFinite(v)) return '<span style="color:var(--text3)">—</span>';
+  var cls = v>=goodMin?'#00e5a0':(v>=okMin?'#ffc107':'#ff3d5a');
+  return '<b style="color:'+cls+'">'+v.toFixed(2)+'</b>';
+}
 function aiHeuristicHtml(ctx){
-  var m=ctx.m;
+  var m=ctx.m, hf=ctx.hf;
   var retPct=(m.totalReturn*100);
   var c=retPct>=0?'#00e5a0':'#ff3d5a';
   var sec=function(t,b){return '<div style="margin-bottom:11px;padding-bottom:11px;border-bottom:1px solid rgba(255,255,255,.05)"><div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">'+t+'</div><div style="font-size:12px;color:#c8d8ea;line-height:1.7">'+b+'</div></div>';};
-  var perf='Total return portofolio <b style="color:'+c+'">'+(retPct>=0?'+':'')+retPct.toFixed(1)+'%</b> dari modal Rp '+fmtK(m.totalCost)+' (realized <b>'+(m.real>=0?'+':'')+'Rp '+fmtK(m.real)+'</b>, unrealized <b style="color:'+(m.unreal>=0?'#00e5a0':'#ff3d5a')+'">'+(m.unreal>=0?'+':'')+'Rp '+fmtK(m.unreal)+'</b>). Beta '+m.beta.toFixed(2)+' berarti portofolio bergerak '+(m.beta>1?'lebih agresif ('+((m.beta-1)*100).toFixed(0)+'% lebih kuat)':'lebih defensif')+' dibanding IHSG'+(ctx.ihsg?' (kini ~'+fmt(ctx.ihsg)+(ctx.ihsgChg?', '+ctx.ihsgChg:'')+')':'')+'. <i style="color:var(--text3)">Perbandingan return periode yang setara dengan IHSG perlu data return indeks — gunakan Konsultasi Claude (live) untuk angka terkini.</i>';
-  var contrib='';
-  if(ctx.best&&ctx.worst){
-    contrib='Penyumbang terbaik: <b style="color:#00e5a0">'+ctx.best.ticker+'</b> ('+(ctx.best.unreal>=0?'+':'')+'Rp '+fmtK(ctx.best.unreal)+', '+ctx.best.ret.toFixed(1)+'%). Beban terberat: <b style="color:#ff3d5a">'+ctx.worst.ticker+'</b> ('+(ctx.worst.unreal>=0?'+':'')+'Rp '+fmtK(ctx.worst.unreal)+', '+ctx.worst.ret.toFixed(1)+'%).';
+
+  // 01 — Ringkasan Eksekutif
+  var verdict;
+  if(!hf.historyTooShort && hf.sharpe!==null){
+    verdict = hf.sharpe>=1 ? 'Kinerja tersesuaikan risiko <b style="color:#00e5a0">baik</b> — return yang dihasilkan sepadan dengan risiko yang diambil.' :
+              hf.sharpe>=0 ? 'Kinerja tersesuaikan risiko <b style="color:#ffc107">cukup</b> — return positif tapi belum optimal relatif terhadap volatilitas.' :
+              'Kinerja tersesuaikan risiko <b style="color:#ff3d5a">kurang baik</b> — volatilitas yang ditanggung belum terbayar oleh return.';
+  } else {
+    verdict = 'Riwayat ekuitas harian baru <b>'+hf.historyLen+' hari</b> — belum cukup untuk menghitung Sharpe/Sortino/Calmar yang andal (idealnya ≥30 hari, tercatat otomatis tiap Anda buka aplikasi). Metrik ini akan makin akurat seiring waktu; sementara memakai estimasi berbasis beta di bawah.';
   }
-  var risk='Skor risiko <b>'+m.score+'/100</b>, volatilitas ~'+m.volAnn.toFixed(0)+'%/th, VaR 95% harian ~ -Rp '+fmtK(m.var95)+'. ';
-  if(m.topSecPct>50) risk+='<b style="color:#ff3d5a">Konsentrasi tinggi</b>: sektor '+m.topSec+' '+m.topSecPct.toFixed(0)+'% — sangat rentan terhadap guncangan sektor itu. ';
-  else if(m.topSecPct>35) risk+='Sektor '+m.topSec+' dominan ('+m.topSecPct.toFixed(0)+'%). ';
-  if(m.n<8) risk+='Hanya '+m.n+' emiten — diversifikasi masih tipis (ideal 8–12). ';
-  risk+='Kas '+ctx.cashPct.toFixed(0)+'% dari aset '+(ctx.cashPct<5?'(amat kering — ruang manuver kecil)':ctx.cashPct>30?'(menumpuk — pertimbangkan deploy bertahap)':'(wajar)')+'.';
+  var ringkasan='Total return portofolio <b style="color:'+c+'">'+(retPct>=0?'+':'')+retPct.toFixed(1)+'%</b> dari modal Rp '+fmtK(m.totalCost)+' ('+m.n+' emiten, realized <b>'+(m.real>=0?'+':'')+'Rp '+fmtK(m.real)+'</b>, unrealized <b style="color:'+(m.unreal>=0?'#00e5a0':'#ff3d5a')+'">'+(m.unreal>=0?'+':'')+'Rp '+fmtK(m.unreal)+'</b>). '+verdict;
+
+  // 02 — Return & Kinerja Tersesuaikan Risiko
+  var perf;
+  if(!hf.historyTooShort){
+    perf='CAGR (return tahunan majemuk, dari data ekuitas riil) <b>'+(hf.cagr>=0?'+':'')+hf.cagr.toFixed(1)+'%</b>. '+
+      'Sharpe Ratio '+aiFmtRatio(hf.sharpe,1,0)+' — return per unit risiko total, &gt;1 tergolong baik. '+
+      'Sortino Ratio '+aiFmtRatio(hf.sortino,1.5,0)+' — seperti Sharpe tapi hanya menghukum volatilitas ke bawah, lebih adil untuk return asimetris. '+
+      'Volatilitas tahunan riil ~'+hf.volAnnReal.toFixed(1)+'%.';
+  } else {
+    perf='Beta portofolio '+m.beta.toFixed(2)+' ('+(m.beta>1?'lebih agresif':'lebih defensif')+' dibanding IHSG'+(ctx.ihsg?', kini ~'+fmt(ctx.ihsg)+(ctx.ihsgChg?', '+ctx.ihsgChg:''):'')+'), volatilitas estimasi ~'+m.volAnn.toFixed(1)+'%/th (dari beta rata-rata per saham, bukan data riil — lihat catatan di Ringkasan Eksekutif).';
+  }
+
+  // 03 — Drawdown & Risiko Penurunan
+  var dd;
+  if(!hf.historyTooShort){
+    dd='Max Drawdown (penurunan puncak-ke-lembah terburuk) <b style="color:'+(hf.maxDD>20?'#ff3d5a':hf.maxDD>10?'#ffc107':'#00e5a0')+'">-'+hf.maxDD.toFixed(1)+'%</b>. '+
+      'Calmar Ratio '+aiFmtRatio(hf.calmar,3,1)+' — CAGR dibagi Max Drawdown, ukuran favorit alokator yang mengutamakan pelestarian modal (konvensi rolling 3 tahun; di sini memakai seluruh riwayat yang tercatat). '+
+      'Hari terbaik <b style="color:#00e5a0">+'+hf.bestDay.toFixed(1)+'%</b>, hari terburuk <b style="color:#ff3d5a">'+hf.worstDay.toFixed(1)+'%</b>.';
+  } else {
+    dd='VaR 95% harian ~ <b style="color:#ff3d5a">-Rp '+fmtK(m.var95)+'</b> (estimasi dari beta — potensi rugi dalam 1 hari pada kondisi pasar normal, 95% dari waktu).';
+  }
+
+  // 04 — Konsentrasi & Diversifikasi
+  var conc='Herfindahl-Hirschman Index (HHI) <b>'+hf.hhi.toFixed(3)+'</b> → setara <b>'+hf.effectiveN.toFixed(1)+' posisi efektif</b> dari '+m.n+' emiten yang dimiliki secara nominal';
+  conc += (hf.effectiveN < m.n*0.6 && m.n>0) ? ' — <b style="color:#ff3d5a">jauh lebih terkonsentrasi</b> dari yang terlihat sekilas; sebagian kecil posisi mendominasi bobot portofolio.' : ' — bobot relatif merata antar posisi.';
+  if(m.topSecPct>50) conc+=' Sektor '+m.topSec+' sendiri '+m.topSecPct.toFixed(0)+'% dari nilai pasar — risiko konsentrasi sektoral tinggi.';
+  else if(m.topSecPct>35) conc+=' Sektor '+m.topSec+' dominan ('+m.topSecPct.toFixed(0)+'%).';
+  conc+=' Kas '+ctx.cashPct.toFixed(0)+'% dari aset '+(ctx.cashPct<5?'(amat kering — ruang manuver kecil)':ctx.cashPct>30?'(menumpuk — pertimbangkan deploy bertahap)':'(wajar)')+'.';
+
+  // 05 — Atribusi Kinerja & Kualitas Trading
+  var attrib='';
+  if(m.porto.length){
+    var byContrib=m.porto.slice().sort(function(a,b){return (b.unreal/m.totalCost)-(a.unreal/m.totalCost);});
+    var topC=byContrib[0], botC=byContrib[byContrib.length-1];
+    attrib='Kontributor terbesar ke <i>return portofolio</i> (bukan sekadar return sendiri): <b style="color:#00e5a0">'+topC.ticker+'</b> menyumbang <b>'+((topC.unreal/m.totalCost)*100>=0?'+':'')+((topC.unreal/m.totalCost)*100).toFixed(1)+' poin%</b> dari total return (posisi ini sendiri '+(topC.ret>=0?'+':'')+topC.ret.toFixed(0)+'%). Penekan terbesar: <b style="color:#ff3d5a">'+botC.ticker+'</b> ('+((botC.unreal/m.totalCost)*100).toFixed(1)+' poin%).';
+  }
+  if(hf.sells>0){
+    attrib+=' Dari <b>'+hf.sells+' transaksi jual</b> yang sudah direalisasikan: win rate <b>'+hf.winRate.toFixed(0)+'%</b>, profit factor <b>'+(hf.profitFactor===Infinity?'∞':hf.profitFactor.toFixed(2))+'</b> (total untung ÷ total rugi — &gt;1 berarti disiplin exit sudah menguntungkan secara agregat).';
+  }
+
   var macro=aiMacroWatch(m.bySec).map(function(x){return '• '+x;}).join('<br>');
+
+  // 07 — Rekomendasi Aksi
   var saran=[];
   if(m.topSecPct>50) saran.push('Kurangi bobot sektor '+m.topSec+' atau tambah sektor non-korelasi.');
+  if(hf.effectiveN < m.n*0.5 && m.n>=4) saran.push('N efektif ('+hf.effectiveN.toFixed(1)+') jauh di bawah jumlah emiten ('+m.n+') — sebagian posisi kecil cuma "hiasan" diversifikasi. Pertimbangkan rebalancing supaya bobot lebih merata.');
   if(m.n<8) saran.push('Tambah 2–4 emiten lintas sektor untuk menurunkan risiko spesifik.');
   if(m.beta>1.2) saran.push('Beta '+m.beta.toFixed(2)+' tinggi — tambah saham defensif (konsumer primer/kesehatan) bila ingin meredam volatilitas.');
+  if(!hf.historyTooShort && hf.sharpe!==null && hf.sharpe<0) saran.push('Sharpe negatif — volatilitas yang ditanggung belum terbayar; evaluasi ulang tesis di posisi-posisi bervolatilitas tinggi.');
+  if(!hf.historyTooShort && hf.maxDD>25) saran.push('Max Drawdown di atas 25% — pertimbangkan position sizing lebih kecil atau stop-loss disiplin untuk membatasi kerugian puncak-ke-lembah berikutnya.');
+  if(hf.winRate!==null && hf.winRate<40 && hf.sells>=5) saran.push('Win rate '+hf.winRate.toFixed(0)+'% dari '+hf.sells+' transaksi jual — evaluasi apakah kriteria entry/exit sudah konsisten.');
   if(ctx.worst&&ctx.worst.ret<-25) saran.push('Tinjau '+ctx.worst.ticker+' ('+ctx.worst.ret.toFixed(0)+'%): cut-loss atau averaging harus punya tesis jelas, bukan harapan.');
   if(ctx.cashPct<5) saran.push('Sisihkan kas darurat agar bisa menyerap koreksi/peluang.');
   if(!saran.length) saran.push('Profil seimbang — pertahankan disiplin & pantau makro di bawah.');
   var saranHtml=saran.map(function(s){return '• '+s;}).join('<br>');
-  return sec('01 — Performa vs Indeks',perf)
-    +(contrib?sec('02 — Kontributor & Beban',contrib):'')
-    +sec('03 — Risiko & Konsentrasi',risk)
-    +sec('04 — Faktor Ekonomi & Global yang Relevan',macro)
-    +sec('05 — Saran Tindakan',saranHtml)
-    +aiDisclaimer('Analisa otomatis berbasis aturan (offline). Faktor makro adalah daftar pantauan, bukan data live.');
+
+  return sec('01 — Ringkasan Eksekutif',ringkasan)
+    +sec('02 — Return &amp; Kinerja Tersesuaikan Risiko',perf)
+    +sec('03 — Drawdown &amp; Risiko Penurunan',dd)
+    +sec('04 — Konsentrasi &amp; Diversifikasi',conc)
+    +(attrib?sec('05 — Atribusi Kinerja &amp; Kualitas Trading',attrib):'')
+    +sec('06 — Faktor Ekonomi &amp; Global yang Relevan',macro)
+    +sec('07 — Rekomendasi Aksi',saranHtml)
+    +aiDisclaimer((hf.historyTooShort?'Sebagian metrik berbasis estimasi (riwayat ekuitas belum cukup panjang). ':'Sharpe/Sortino/Calmar/Max Drawdown dihitung dari riwayat ekuitas harian sungguhan, bukan estimasi. ')+'Analisa otomatis berbasis aturan (offline). Faktor makro adalah daftar pantauan, bukan data live.');
 }
 function aiDisclaimer(src){
   return '<div style="font-size:10px;color:var(--text3);padding:8px 11px;background:var(--bg);border-radius:6px;border-left:2px solid var(--border2);margin-top:4px;line-height:1.6"><i class="ti ti-alert-circle"></i> Sumber: '+src+'. Bukan rekomendasi investasi — selalu riset mandiri.</div>';
@@ -447,7 +579,12 @@ function aiRunClaude(){
   var workerUrl=aiGetWorkerUrl();
   var hold=ctx.m.porto.slice().sort(function(a,b){return b.mv-a.mv}).slice(0,15).map(function(p){return p.ticker+' '+(p.mv/ctx.m.totalMV*100).toFixed(1)+'% (unreal '+p.ret.toFixed(0)+'%)';}).join(', ');
   var sektor=Object.keys(ctx.m.bySec).map(function(s){return s+' '+(ctx.m.bySec[s]/ctx.m.totalMV*100).toFixed(0)+'%';}).join(', ');
-  var prompt='Anda penasihat investasi saham Indonesia yang tajam dan jujur. Data portofolio (Rupiah): nilai pasar '+Math.round(ctx.m.totalMV)+', modal '+Math.round(ctx.m.totalCost)+', total return '+(ctx.m.totalReturn*100).toFixed(1)+'%, realized '+Math.round(ctx.m.real)+', unrealized '+Math.round(ctx.m.unreal)+', beta '+ctx.m.beta.toFixed(2)+', '+ctx.m.n+' emiten, sektor: '+sektor+', kas '+ctx.cashPct.toFixed(0)+'%. Holdings teratas: '+hold+'. IHSG acuan ~'+ctx.ihsg+'. Cari data TERKINI: level & arah IHSG, BI rate, USD/IDR, suku bunga The Fed, harga komoditas relevan, sentimen pasar global. Lalu beri analisis ringkas berpoin (Bahasa Indonesia, tegas, sebut angka): (1) performa portofolio vs IHSG, (2) kondisi ekonomi domestik & global yang memengaruhi holdings ini, (3) risiko utama & konsentrasi, (4) 3-4 saran rebalancing konkret. Maksimal ~350 kata. Tutup dengan: bukan rekomendasi investasi.';
+  var hf=ctx.hf;
+  var metrikLanjutan = hf.historyTooShort
+    ? 'Riwayat ekuitas harian baru '+hf.historyLen+' hari (belum cukup untuk Sharpe/Sortino/Calmar/Max Drawdown riil).'
+    : 'CAGR '+hf.cagr.toFixed(1)+'%, Sharpe Ratio '+(hf.sharpe!==null?hf.sharpe.toFixed(2):'n/a')+', Sortino Ratio '+(hf.sortino!==null?hf.sortino.toFixed(2):'n/a')+', Calmar Ratio '+(hf.calmar!==null?hf.calmar.toFixed(2):'n/a')+', Max Drawdown -'+hf.maxDD.toFixed(1)+'%, volatilitas tahunan riil '+hf.volAnnReal.toFixed(1)+'% (dihitung dari '+hf.historyLen+' hari data ekuitas riil, bukan estimasi).';
+  var kualitasTrading = hf.sells>0 ? ' Dari '+hf.sells+' transaksi jual: win rate '+hf.winRate.toFixed(0)+'%, profit factor '+(hf.profitFactor===Infinity?'tak hingga':hf.profitFactor.toFixed(2))+'.' : '';
+  var prompt='Anda seorang portfolio analyst hedge fund yang tajam dan jujur, mengevaluasi portofolio ritel Indonesia selayaknya tearsheet institusional. Data portofolio (Rupiah): nilai pasar '+Math.round(ctx.m.totalMV)+', modal '+Math.round(ctx.m.totalCost)+', total return '+(ctx.m.totalReturn*100).toFixed(1)+'%, realized '+Math.round(ctx.m.real)+', unrealized '+Math.round(ctx.m.unreal)+', beta '+ctx.m.beta.toFixed(2)+', '+ctx.m.n+' emiten, sektor: '+sektor+', kas '+ctx.cashPct.toFixed(0)+'%. Konsentrasi: HHI '+hf.hhi.toFixed(3)+' setara '+hf.effectiveN.toFixed(1)+' posisi efektif dari '+ctx.m.n+' emiten nominal. Metrik risiko-disesuaikan: '+metrikLanjutan+kualitasTrading+' Holdings teratas: '+hold+'. IHSG acuan ~'+ctx.ihsg+'. Cari data TERKINI: level & arah IHSG, BI rate, USD/IDR, suku bunga The Fed, harga komoditas relevan, sentimen pasar global. Lalu beri analisis ringkas berpoin ala tearsheet hedge fund (Bahasa Indonesia, tegas, sebut angka termasuk metrik risiko-disesuaikan di atas): (1) performa & kinerja tersesuaikan risiko vs IHSG, (2) kondisi ekonomi domestik & global yang memengaruhi holdings ini, (3) risiko konsentrasi & drawdown, (4) 3-4 saran rebalancing konkret berbasis data di atas (bukan generik). Maksimal ~400 kata. Tutup dengan: bukan rekomendasi investasi.';
 
   var fetchUrl, fetchOpts;
   if(workerUrl){
@@ -494,17 +631,20 @@ function aiRenderPerHoldingReco(){
   var box=el('ai-holding-reco'); if(!box) return;
   var porto=getPortfolio();
   var totalMV=porto.reduce(function(a,p){return a+p.mv},0);
+  var totalCost=porto.reduce(function(a,p){return a+p.cost},0)||1;
   if(!porto.length){ box.innerHTML='<div style="color:var(--text3);font-size:11px;text-align:center;padding:16px">Belum ada posisi saham untuk dianalisis.</div>'; return; }
-  var rows=porto.slice().sort(function(a,b){return b.mv-a.mv}).map(function(p){
+  var rows=porto.slice().sort(function(a,b){return (b.unreal/totalCost)-(a.unreal/totalCost);}).map(function(p){
     var r=aiPerHoldingAction(p,totalMV);
+    var contrib=(p.unreal/totalCost)*100;
     return '<tr><td><span class="tp">'+p.ticker+'</span></td>'
       +'<td class="mono">'+(totalMV>0?(p.mv/totalMV*100).toFixed(1):'0.0')+'%</td>'
       +'<td class="mono '+(p.ret>=0?'up':'dn')+'">'+(p.ret>=0?'+':'')+p.ret.toFixed(1)+'%</td>'
+      +'<td class="mono '+(contrib>=0?'up':'dn')+'" title="Kontribusi posisi ini terhadap total return portofolio">'+(contrib>=0?'+':'')+contrib.toFixed(2)+' poin%</td>'
       +'<td><span class="badge '+r.cls+'">'+r.action+'</span></td>'
       +'<td style="font-size:11px;color:var(--text2)">'+r.note+'</td></tr>';
   }).join('');
-  box.innerHTML='<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Saham</th><th>Bobot</th><th>Return</th><th>Aksi</th><th>Catatan</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
-    +'<div style="font-size:10px;color:var(--text3);padding:8px 2px 0;line-height:1.6">Aksi di atas adalah heuristik aturan otomatis berbasis return &amp; bobot posisi — bukan rekomendasi investasi, selalu riset mandiri.</div>';
+  box.innerHTML='<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Saham</th><th>Bobot</th><th>Return</th><th>Kontribusi</th><th>Aksi</th><th>Catatan</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +'<div style="font-size:10px;color:var(--text3);padding:8px 2px 0;line-height:1.6">"Kontribusi" = seberapa besar posisi ini menggerakkan return TOTAL portofolio (unrealized ÷ modal total) — beda dari "Return" yang cuma performa posisi itu sendiri; posisi kecil dengan return tinggi bisa tetap berkontribusi kecil ke portofolio. Aksi di atas adalah heuristik aturan otomatis — bukan rekomendasi investasi, selalu riset mandiri.</div>';
 }
 
 // ── Probabilitas kesimpulan FlowScan ──
