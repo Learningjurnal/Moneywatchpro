@@ -298,10 +298,10 @@ function adminRenderPage(){
         '<td style="font-size:10.5px;color:var(--text3)">'+(srcLbl[x.src]||x.src)+'</td>'+
         '<td><span class="badge '+st.cls+'" style="font-size:10px">'+st.label+'</span></td>'+
         '<td style="white-space:nowrap"><div style="display:flex;gap:4px">'+
-          '<button class="btn btn-ghost btn-xs" onclick="adminSaveRow(\''+code+'\')" title="Simpan nama/sektor">💾</button>'+
-          '<button class="btn btn-ghost btn-xs" onclick="adminRefreshRow(\''+code+'\')" title="Muat ulang data riil dari Yahoo">↻</button>'+
+          '<button class="btn btn-ghost btn-xs" onclick="adminSaveRow(\''+code+'\')" title="Simpan nama/sektor" aria-label="Simpan nama/sektor '+code+'">💾</button>'+
+          '<button class="btn btn-ghost btn-xs" onclick="adminRefreshRow(\''+code+'\')" title="Muat ulang data riil dari Yahoo" aria-label="Muat ulang data '+code+' dari Yahoo Finance">↻</button>'+
           '<button class="btn '+(excluded?'btn-green':'btn-amber')+' btn-xs" onclick="adminToggleExclude(\''+code+'\')" title="'+(excluded?'Sertakan kembali ke analisa':'Kecualikan dari semua analisa')+'">'+(excluded?'✓ Sertakan':'⛔ Kecualikan')+'</button>'+
-          (x.src==='custom' ? '<button class="btn btn-red btn-xs" onclick="adminDeleteCustom(\''+code+'\')" title="Hapus dari daftar">🗑</button>' : '')+
+          (x.src==='custom' ? '<button class="btn btn-red btn-xs" onclick="adminDeleteCustom(\''+code+'\')" title="Hapus dari daftar" aria-label="Hapus '+code+' dari daftar">🗑</button>' : '')+
         '</div></td>'+
       '</tr>';
     }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Tidak ada saham cocok pencarian.</td></tr>')+

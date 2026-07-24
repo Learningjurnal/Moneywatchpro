@@ -38,6 +38,48 @@ function resetPortoFilter(){
   renderPortofolio();
 }
 
+// ── SORT & FILTER STATE untuk tabel Crypto ──
+var _crSort = {key:'mv', asc:false};
+function sortCr(key){
+  if(_crSort.key===key) _crSort.asc=!_crSort.asc;
+  else { _crSort.key=key; _crSort.asc=(key==='coin'||key==='category'); }
+  renderCrypto();
+}
+function resetCrFilter(){
+  ['cr-filter-search','cr-filter-cat','cr-filter-signal','cr-filter-pnl'].forEach(function(id){
+    var e=document.getElementById(id); if(e) e.value='';
+  });
+  renderCrypto();
+}
+
+// ── SORT & FILTER STATE untuk tabel ETF AS ──
+var _etfSort = {key:'mvIdr', asc:false};
+function sortEtf(key){
+  if(_etfSort.key===key) _etfSort.asc=!_etfSort.asc;
+  else { _etfSort.key=key; _etfSort.asc=(key==='ticker'||key==='category'); }
+  renderEtf();
+}
+function resetEtfFilter(){
+  ['etf-filter-search','etf-filter-cat','etf-filter-signal','etf-filter-pnl'].forEach(function(id){
+    var e=document.getElementById(id); if(e) e.value='';
+  });
+  renderEtf();
+}
+
+// ── SORT & FILTER STATE untuk tabel Reksa Dana ──
+var _rdSort = {key:'mv', asc:false};
+function sortRd(key){
+  if(_rdSort.key===key) _rdSort.asc=!_rdSort.asc;
+  else { _rdSort.key=key; _rdSort.asc=(key==='code'||key==='type'); }
+  renderReksaDana();
+}
+function resetRdFilter(){
+  ['rd-filter-search','rd-filter-type','rd-filter-pnl'].forEach(function(id){
+    var e=document.getElementById(id); if(e) e.value='';
+  });
+  renderReksaDana();
+}
+
 // ── TARIF PAJAK GLOBAL — sesuai regulasi BEI & DJP ──
 // Ref: PMK 131/2024 (PPN 12%), PP 14/1997 (PPh Final 0.1%), IDX Regulation
 var TAX_SETTINGS = {

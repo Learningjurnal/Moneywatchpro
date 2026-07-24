@@ -485,7 +485,7 @@ function renderDivInvest(){
                   : d._src==='manual'?'<span style="font-size:8px;background:rgba(255,193,7,.12);color:var(--amber);padding:1px 4px;border-radius:3px">manual</span>'
                   : '<span style="font-size:8px;background:rgba(0,229,160,.1);color:var(--green);padding:1px 4px;border-radius:3px">porto</span>';
       var deleteBtn = d._src==='manual'
-        ? '<button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="delDivInvestEntry('+d.id+')" title="Hapus">✕</button>'
+        ? '<button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="delDivInvestEntry('+d.id+')" title="Hapus" aria-label="Hapus entri dividen '+d.ticker+' '+d.date+'">✕</button>'
         : '<span style="font-size:10px;color:var(--text3)" title="Hapus dari tab Dividen">—</span>';
       return '<tr>'
         +'<td class="mono" style="color:var(--text2);font-size:11px">'+d.date+'</td>'

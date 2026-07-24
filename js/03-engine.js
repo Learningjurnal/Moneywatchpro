@@ -325,6 +325,7 @@ function yfFetch(symbol, cb, proxyIdx){
 // ── Update badge UI ──
 function fhSetBadge(status, text){
   FH.status = status;
+  fhUpdateLoadBanners(status);
   var dot = el('fh-dot'), lbl = el('fh-label'), badge = el('fh-badge');
   if(!dot||!lbl) return;
   var colors = { live:'#00e5a0', error:'#ff3d5a', off:'#4a5e82', loading:'#ffc107', limit:'#ffc107' };
@@ -335,6 +336,23 @@ function fhSetBadge(status, text){
                               status==='error'  ? 'rgba(255,61,90,.3)' :
                               status==='limit'  ? 'rgba(255,193,7,.3)' : 'var(--border)';
   }
+}
+
+// ── Banner loading ringan di Dashboard & Portofolio Saham — status pengambilan harga live ──
+function fhUpdateLoadBanners(status){
+  var msg = status==='loading' ? '⏳ Memuat harga live dari Yahoo Finance...'
+          : (status==='error'||status==='limit') ? '⚠ Gagal terhubung ke sumber harga — menampilkan data tersimpan terakhir'
+          : null;
+  [['dash-load-banner','dash-load-text'],['porto-load-banner','porto-load-text']].forEach(function(pair){
+    var banner=el(pair[0]), text=el(pair[1]);
+    if(!banner||!text) return;
+    if(msg){
+      banner.className='load-banner on '+(status==='loading'?'st-loading':'st-error');
+      text.textContent=msg;
+    } else {
+      banner.className='load-banner';
+    }
+  });
 }
 
 // ── Fetch IHSG via Yahoo Finance ──

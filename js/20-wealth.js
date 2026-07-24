@@ -330,7 +330,7 @@ function wRenderDebt(){
       '<td class="dn"><b>'+(x.bunga||0)+'%</b></td>'+
       '<td>'+wRp(x.cicilan)+'</td>'+
       '<td><span class="badge '+(i===0?'b-dn':i===1?'b-gray':'b-up')+'">'+(i===0?'Lunasi dulu':'P'+(i+1))+'</span></td>'+
-      '<td style="white-space:nowrap"><button class="btn btn-blue btn-xs" onclick="wModalDebtPay('+x.id+')" title="Catat pembayaran">💰 Bayar</button> <button class="btn btn-ghost btn-xs" onclick="wModalDebt('+x.id+')">✎</button> <button class="btn btn-red btn-xs" onclick="wConfirmDelete(\'debt\','+x.id+',\''+(x.nama||'')+'\')">🗑</button></td></tr>';
+      '<td style="white-space:nowrap"><button class="btn btn-blue btn-xs" onclick="wModalDebtPay('+x.id+')" title="Catat pembayaran">💰 Bayar</button> <button class="btn btn-ghost btn-xs" onclick="wModalDebt('+x.id+')" aria-label="Edit hutang '+(x.nama||'')+'">✎</button> <button class="btn btn-red btn-xs" onclick="wConfirmDelete(\'debt\','+x.id+',\''+(x.nama||'')+'\')" aria-label="Hapus hutang '+(x.nama||'')+'">🗑</button></td></tr>';
     }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">Belum ada hutang tercatat 🎉</td></tr>')+
     '</tbody></table></div>'+
   '</div>'+
@@ -392,8 +392,8 @@ function wRenderPiutang(){
           '<span class="badge '+badgeCls+'" style="margin-top:4px;display:inline-block">'+x.status+'</span>'+
           '<div style="display:flex;gap:4px;margin-top:6px;justify-content:flex-end">'+
             (x.status!=='Lunas' ? '<button class="btn btn-blue btn-xs" onclick="wModalPiutangPay('+x.id+')" title="Catat pembayaran diterima">💰 Terima</button>' : '')+
-            '<button class="btn btn-ghost btn-xs" onclick="wModalPiutang('+x.id+')">✎</button>'+
-            '<button class="btn btn-red btn-xs" onclick="wConfirmDelete(\'piutang\','+x.id+',\''+(x.nama||'')+'\')">🗑</button>'+
+            '<button class="btn btn-ghost btn-xs" onclick="wModalPiutang('+x.id+')" aria-label="Edit piutang '+(x.nama||'')+'">✎</button>'+
+            '<button class="btn btn-red btn-xs" onclick="wConfirmDelete(\'piutang\','+x.id+',\''+(x.nama||'')+'\')" aria-label="Hapus piutang '+(x.nama||'')+'">🗑</button>'+
           '</div>'+
         '</div>'+
       '</div>';

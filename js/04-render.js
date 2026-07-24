@@ -421,7 +421,7 @@ function renderRdn(){
     var canDel = (r.type==='SETOR'||r.type==='TARIK'||r.type==='FEE'||
       ['DATA_FEE','MATERAI','MIGRASI','ADMIN','TRANSFER','PENALTY','LAINNYA'].indexOf(r.type)>=0);
     var delBtn = canDel
-      ? '<button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="delRdnManual('+r.id+')" title="Hapus mutasi ini">✕</button>'
+      ? '<button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="delRdnManual('+r.id+')" title="Hapus mutasi ini" aria-label="Hapus mutasi RDN '+r.date+'">✕</button>'
       : '<span class="badge b-gray" style="font-size:9px;cursor:default" title="Hapus via tab '+r.type+'">auto</span>';
     return '<tr>'
       +'<td class="mono" style="color:var(--text2);font-size:11px">'+r.date+'</td>'
@@ -488,8 +488,8 @@ function renderTransaksi(){
       +'<td class="mono" style="font-weight:600">Rp '+fmtK(tx.net)+'</td>'
       +'<td>'+pnlHtml+'</td>'
       +'<td style="display:flex;gap:4px;align-items:center">'
-        +'<button class="btn btn-ghost btn-xs" style="color:var(--accent)" onclick="editTx('+tx.id+')" title="Edit transaksi">✎</button>'
-        +'<button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="delTx('+tx.id+')" title="Hapus transaksi">✕</button>'
+        +'<button class="btn btn-ghost btn-xs" style="color:var(--accent)" onclick="editTx('+tx.id+')" title="Edit transaksi" aria-label="Edit transaksi '+tx.type+' '+tx.ticker+' '+tx.date+'">✎</button>'
+        +'<button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="delTx('+tx.id+')" title="Hapus transaksi" aria-label="Hapus transaksi '+tx.type+' '+tx.ticker+' '+tx.date+'">✕</button>'
       +'</td>'
       +'</tr>';
   }).join('')||'<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:16px;font-family:\'IBM Plex Mono\',monospace">Belum ada transaksi</td></tr>';
@@ -671,8 +671,8 @@ function renderDividen(){
       +'<td class="mono up">Rp '+fmtK(d.net||0)+'</td>'
       +'<td><span class="badge b-amb">'+yld+'</span></td>'
       +'<td style="display:flex;gap:4px">'
-        +'<button class="btn btn-ghost btn-xs" style="color:var(--accent)" onclick="editDiv('+d.id+')" title="Edit">✎</button>'
-        +'<button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="delDiv('+d.id+')" title="Hapus">✕</button>'
+        +'<button class="btn btn-ghost btn-xs" style="color:var(--accent)" onclick="editDiv('+d.id+')" title="Edit" aria-label="Edit dividen '+d.ticker+'">✎</button>'
+        +'<button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="delDiv('+d.id+')" title="Hapus" aria-label="Hapus dividen '+d.ticker+'">✕</button>'
       +'</td>'
       +'</tr>';
   }).join('')||'<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:16px">Belum ada data dividen. Klik "+ Catat Dividen" untuk mulai.</td></tr>';

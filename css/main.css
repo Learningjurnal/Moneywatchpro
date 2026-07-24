@@ -183,6 +183,17 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;back
 .alert-warn{background:rgba(247,166,0,.06);border-color:rgba(247,166,0,.2);color:var(--amber)}
 .alert-ok{background:rgba(8,153,129,.06);border-color:rgba(8,153,129,.2);color:var(--green)}
 
+/* LOADING BANNER — status pengambilan harga live (dipakai Dashboard & Portofolio) */
+.load-banner{display:none;align-items:center;gap:9px;padding:8px 14px;border-radius:7px;font-size:11.5px;margin-bottom:11px;border:1px solid}
+.load-banner.on{display:flex}
+.load-banner.st-loading{background:rgba(255,193,7,.07);border-color:rgba(255,193,7,.22);color:var(--amber)}
+.load-banner.st-error{background:rgba(255,61,90,.07);border-color:rgba(255,61,90,.22);color:var(--red)}
+.load-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;animation:load-pulse 1.1s ease-in-out infinite}
+@keyframes load-pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){
+  .load-dot{animation:none}
+}
+
 /* RISK GAUGE */
 .gauge-wrap{display:flex;flex-direction:column;align-items:center;padding:8px 0}
 .gauge-label{font-size:10px;font-family:'IBM Plex Mono',monospace;margin-top:6px;font-weight:700}

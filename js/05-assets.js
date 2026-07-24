@@ -343,15 +343,55 @@ function renderCrypto(){
     charts['cryptoPrice'] = new Chart(cvP,{type:'line',data:{labels:labels,datasets:[{label:'BTC (jt)',data:btcData,borderColor:'#f7931a',borderWidth:2,fill:false,tension:.4,pointRadius:0},{label:'ETH (jt)',data:ethData,borderColor:'#627eea',borderWidth:2,fill:false,tension:.4,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#8fa3c8',font:{size:9}}},tooltip:Object.assign({},TT)},scales:{x:{grid:{color:GC},ticks:Object.assign({},TC,{maxTicksLimit:8})},y:{grid:{color:GC},ticks:Object.assign({},TC,{callback:function(v){return 'Rp '+fmtK(v*1e6)}}),position:'right'}}}});
   }
 
+  // ── Isi dropdown filter kategori (pertahankan pilihan aktif) ──
+  var crCatSel=el('cr-filter-cat');
+  if(crCatSel){
+    var curCrCat=crCatSel.value;
+    var crCatList=Array.from(new Set(porto.map(function(p){return p.info.category;}))).sort();
+    crCatSel.innerHTML='<option value="">Semua Kategori</option>'+crCatList.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
+    if(crCatList.indexOf(curCrCat)>-1) crCatSel.value=curCrCat;
+  }
+
+  // ── Terapkan filter ──
+  var crQ=(el('cr-filter-search')&&el('cr-filter-search').value||'').trim().toUpperCase();
+  var crQCat=(el('cr-filter-cat')&&el('cr-filter-cat').value)||'';
+  var crQSig=(el('cr-filter-signal')&&el('cr-filter-signal').value)||'';
+  var crQPnl=(el('cr-filter-pnl')&&el('cr-filter-pnl').value)||'';
+  var crRows=porto.map(function(p){
+    var alloc=totalMV>0?(p.mv/totalMV*100):0;
+    var sig=p.ret>10?'BUY':p.ret<-10?'SELL':'HOLD';
+    return Object.assign({},p,{alloc:alloc,sig:sig});
+  });
+  if(crQ) crRows=crRows.filter(function(p){return p.coin.toUpperCase().indexOf(crQ)>-1||(p.info.name||'').toUpperCase().indexOf(crQ)>-1;});
+  if(crQCat) crRows=crRows.filter(function(p){return p.info.category===crQCat;});
+  if(crQSig) crRows=crRows.filter(function(p){return p.sig===crQSig;});
+  if(crQPnl==='profit') crRows=crRows.filter(function(p){return p.unreal>=0;});
+  else if(crQPnl==='loss') crRows=crRows.filter(function(p){return p.unreal<0;});
+
+  // ── Terapkan sort ──
+  var crSk=_crSort.key, crAsc=_crSort.asc;
+  crRows.sort(function(a,b){
+    var va,vb;
+    if(crSk==='coin'){ va=a.coin; vb=b.coin; return crAsc?va.localeCompare(vb):vb.localeCompare(va); }
+    if(crSk==='category'){ va=a.info.category; vb=b.info.category; return crAsc?va.localeCompare(vb):vb.localeCompare(va); }
+    va=a[crSk]; vb=b[crSk];
+    return crAsc?va-vb:vb-va;
+  });
+  ['coin','category','qty','mv','cost','unreal','ret','alloc'].forEach(function(k){
+    var ico=el('cr-sort-ico-'+k);
+    if(ico) ico.textContent=k===crSk?(crAsc?'↑':'↓'):'↕';
+  });
+  var crCntEl=el('cr-filter-count');
+  if(crCntEl) crCntEl.textContent=(crQ||crQCat||crQSig||crQPnl)?crRows.length+' dari '+porto.length+' aset':porto.length+' aset';
+
   // Table
-  el('crypto-tbody').innerHTML = porto.map(function(p){
-    var alloc = totalMV>0 ? (p.mv/totalMV*100) : 0;
-    var sig = p.ret>10?'BUY':p.ret<-10?'SELL':'HOLD';
+  el('crypto-tbody').innerHTML = crRows.map(function(p){
+    var alloc = p.alloc, sig = p.sig;
     var sigCls = sig==='BUY'?'sig-buy':sig==='SELL'?'sig-sell':'sig-hold';
     var catColor = CRYPTO_CATEGORIES[p.info.category]||'#4a5e82';
     var qtyDisp = p.qty < 0.001 ? p.qty.toFixed(6) : p.qty < 1 ? p.qty.toFixed(4) : p.qty.toFixed(2);
     return '<tr><td><span class="tp" style="border-color:'+(p.info.color||'#4a5e82')+'">'+p.coin+'</span></td><td style="font-size:11px;color:var(--text2)">'+p.info.name+'</td><td><span class="badge" style="background:rgba(255,255,255,.06);color:'+catColor+'">'+p.info.category+'</span></td><td class="mono">'+qtyDisp+'</td><td class="mono">Rp '+fmt(Math.round(p.avg))+'</td><td class="mono" style="color:var(--accent)">Rp '+fmt(Math.round(p.priceIdr))+'</td><td class="mono" style="color:var(--text2)">$'+p.priceUSD.toFixed(2)+'</td><td class="mono">Rp '+fmtK(p.mv)+'</td><td class="mono" style="color:var(--text2)">Rp '+fmtK(p.cost)+'</td><td class="mono '+(p.unreal>=0?'up':'dn')+'">'+(p.unreal>=0?'+':'')+'Rp '+fmtK(p.unreal)+'</td><td class="mono '+(p.ret>=0?'up':'dn')+'">'+(p.ret>=0?'+':'')+p.ret.toFixed(2)+'%</td><td><div class="prog" style="width:70px"><div class="progf" style="width:'+Math.min(alloc,100).toFixed(1)+'%;background:'+(p.info.color||'#4a5e82')+'"></div></div><div style="font-size:9px;color:var(--text3);font-family:\'IBM Plex Mono\',monospace;margin-top:2px">'+alloc.toFixed(1)+'%</div></td><td><span class="sig '+sigCls+'">'+sig+'</span></td></tr>';
-  }).join('')||'<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:16px">Belum ada posisi crypto</td></tr>';
+  }).join('')||'<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:16px">'+(porto.length?'Tidak ada aset yang cocok dengan filter':'Belum ada posisi crypto')+'</td></tr>';
 
   // Tx history
   var pos3 = {};
@@ -366,7 +406,7 @@ function renderCrypto(){
     }
     if(isBuy){pos3[tx.coin].qty+=tx.qty;pos3[tx.coin].cost+=tx.total;}
     var qtyDisp2 = tx.qty<0.001?tx.qty.toFixed(6):tx.qty<1?tx.qty.toFixed(4):tx.qty.toFixed(2);
-    return '<tr><td class="mono" style="color:var(--text2);font-size:11px">'+tx.date+'</td><td><span class="badge '+(isBuy?'b-up':'b-dn')+'">'+tx.type+'</span></td><td><span class="tp">'+ tx.coin+'</span></td><td class="mono">'+qtyDisp2+'</td><td class="mono">Rp '+fmt(Math.round(tx.priceIdr))+'</td><td class="mono">Rp '+fmtK(tx.total)+'</td><td>'+pnlHtml+'</td><td><button class="btn btn-ghost btn-xs" style="color:var(--accent)" onclick="editCryptoTx('+tx.id+')" title="Edit transaksi">✎</button> <button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="delCryptoTx('+tx.id+')" title="Hapus transaksi">✕</button></td></tr>';
+    return '<tr><td class="mono" style="color:var(--text2);font-size:11px">'+tx.date+'</td><td><span class="badge '+(isBuy?'b-up':'b-dn')+'">'+tx.type+'</span></td><td><span class="tp">'+ tx.coin+'</span></td><td class="mono">'+qtyDisp2+'</td><td class="mono">Rp '+fmt(Math.round(tx.priceIdr))+'</td><td class="mono">Rp '+fmtK(tx.total)+'</td><td>'+pnlHtml+'</td><td><button class="btn btn-ghost btn-xs" style="color:var(--accent)" onclick="editCryptoTx('+tx.id+')" title="Edit transaksi" aria-label="Edit transaksi '+tx.type+' '+tx.coin+' '+tx.date+'">✎</button> <button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="delCryptoTx('+tx.id+')" title="Hapus transaksi" aria-label="Hapus transaksi '+tx.type+' '+tx.coin+' '+tx.date+'">✕</button></td></tr>';
   }).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:14px">Belum ada transaksi</td></tr>';
 }
 
@@ -541,14 +581,54 @@ function renderEtf(){
     return '<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><div style="display:flex;align-items:center;gap:6px"><span class="sec-dot" style="background:'+col+'"></span><span style="font-size:11px;font-weight:600">'+cat+'</span></div><span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px">'+pctCat.toFixed(1)+'%</span></div><div class="prog"><div class="progf" style="width:'+pctCat.toFixed(1)+'%;background:'+col+'"></div></div><div style="font-size:9px;color:var(--text3);margin-top:2px">'+d.cnt+' ETF · Rp '+fmtK(d.mv)+'</div></div>';
   }).join('')||'<div style="color:var(--text3);text-align:center;padding:16px">Belum ada ETF</div>';
 
-  // Table
-  el('etf-tbody').innerHTML=porto.map(function(p){
+  // ── Isi dropdown filter kategori (pertahankan pilihan aktif) ──
+  var etfCatSel=el('etf-filter-cat');
+  if(etfCatSel){
+    var curEtfCat=etfCatSel.value;
+    var etfCatList=Array.from(new Set(porto.map(function(p){return p.info.category;}))).sort();
+    etfCatSel.innerHTML='<option value="">Semua Kategori</option>'+etfCatList.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
+    if(etfCatList.indexOf(curEtfCat)>-1) etfCatSel.value=curEtfCat;
+  }
+
+  // ── Terapkan filter ──
+  var etfQ=(el('etf-filter-search')&&el('etf-filter-search').value||'').trim().toUpperCase();
+  var etfQCat=(el('etf-filter-cat')&&el('etf-filter-cat').value)||'';
+  var etfQSig=(el('etf-filter-signal')&&el('etf-filter-signal').value)||'';
+  var etfQPnl=(el('etf-filter-pnl')&&el('etf-filter-pnl').value)||'';
+  var etfRows=porto.map(function(p){
     var alloc=totalMVIdr>0?(p.mvIdr/totalMVIdr*100):0;
     var sig=p.ret>8?'BUY':p.ret<-8?'SELL':'HOLD';
+    return Object.assign({},p,{alloc:alloc,sig:sig});
+  });
+  if(etfQ) etfRows=etfRows.filter(function(p){return p.ticker.toUpperCase().indexOf(etfQ)>-1||(p.info.name||'').toUpperCase().indexOf(etfQ)>-1;});
+  if(etfQCat) etfRows=etfRows.filter(function(p){return p.info.category===etfQCat;});
+  if(etfQSig) etfRows=etfRows.filter(function(p){return p.sig===etfQSig;});
+  if(etfQPnl==='profit') etfRows=etfRows.filter(function(p){return p.unrIdr>=0;});
+  else if(etfQPnl==='loss') etfRows=etfRows.filter(function(p){return p.unrIdr<0;});
+
+  // ── Terapkan sort ──
+  var etfSk=_etfSort.key, etfAsc=_etfSort.asc;
+  etfRows.sort(function(a,b){
+    var va,vb;
+    if(etfSk==='ticker'){ va=a.ticker; vb=b.ticker; return etfAsc?va.localeCompare(vb):vb.localeCompare(va); }
+    if(etfSk==='category'){ va=a.info.category; vb=b.info.category; return etfAsc?va.localeCompare(vb):vb.localeCompare(va); }
+    va=a[etfSk]; vb=b[etfSk];
+    return etfAsc?va-vb:vb-va;
+  });
+  ['ticker','category','shares','mvIdr','costIdr','unrIdr','ret','alloc'].forEach(function(k){
+    var ico=el('etf-sort-ico-'+k);
+    if(ico) ico.textContent=k===etfSk?(etfAsc?'↑':'↓'):'↕';
+  });
+  var etfCntEl=el('etf-filter-count');
+  if(etfCntEl) etfCntEl.textContent=(etfQ||etfQCat||etfQSig||etfQPnl)?etfRows.length+' dari '+porto.length+' ETF':porto.length+' ETF';
+
+  // Table
+  el('etf-tbody').innerHTML=etfRows.map(function(p){
+    var alloc=p.alloc, sig=p.sig;
     var sigCls=sig==='BUY'?'sig-buy':sig==='SELL'?'sig-sell':'sig-hold';
     var catCol=ETF_CATEGORIES[p.info.category]||'#4a5e82';
     return '<tr><td><span class="tp" style="border-color:'+(p.info.color||'#4a5e82')+'">'+p.ticker+'</span></td><td style="font-size:11px;color:var(--text2)">'+p.info.name+'</td><td><span class="badge" style="background:rgba(255,255,255,.06);color:'+catCol+'">'+p.info.category+'</span></td><td class="mono">'+p.shares+'</td><td class="mono">$'+p.avgUSD.toFixed(2)+'</td><td class="mono" style="color:var(--accent)">$'+p.priceUSD.toFixed(2)+'</td><td class="mono">Rp '+fmtK(p.mvIdr)+'</td><td class="mono" style="color:var(--text2)">Rp '+fmtK(p.costIdr)+'</td><td class="mono '+(p.unrIdr>=0?'up':'dn')+'">'+(p.unrIdr>=0?'+':'')+'Rp '+fmtK(p.unrIdr)+'</td><td class="mono '+(p.unrUSD>=0?'up':'dn')+'">'+(p.unrUSD>=0?'+':'')+'$'+Math.abs(p.unrUSD).toFixed(2)+'</td><td class="mono '+(p.ret>=0?'up':'dn')+'">'+(p.ret>=0?'+':'')+p.ret.toFixed(2)+'%</td><td><div class="prog" style="width:70px"><div class="progf" style="width:'+Math.min(alloc,100).toFixed(1)+'%;background:'+(p.info.color||'#4a5e82')+'"></div></div><div style="font-size:9px;color:var(--text3);font-family:\'IBM Plex Mono\',monospace;margin-top:2px">'+alloc.toFixed(1)+'%</div></td><td><span class="sig '+sigCls+'">'+sig+'</span></td></tr>';
-  }).join('')||'<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:16px">Belum ada posisi ETF</td></tr>';
+  }).join('')||'<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:16px">'+(porto.length?'Tidak ada ETF yang cocok dengan filter':'Belum ada posisi ETF')+'</td></tr>';
 
   // Tx history
   var posE={};
@@ -729,11 +809,51 @@ function renderReksaDana(){
       +'</div>';
   }).join('');
 
+  // ── Isi dropdown filter jenis (pertahankan pilihan aktif) ──
+  var rdTypeSel=el('rd-filter-type');
+  if(rdTypeSel){
+    var curRdType=rdTypeSel.value;
+    var rdTypeList=Array.from(new Set(porto.map(function(p){return (RD_DB[p.code]||{type:'?'}).type;}))).sort();
+    rdTypeSel.innerHTML='<option value="">Semua Jenis</option>'+rdTypeList.map(function(t){return '<option value="'+t+'">'+t+'</option>';}).join('');
+    if(rdTypeList.indexOf(curRdType)>-1) rdTypeSel.value=curRdType;
+  }
+
+  // ── Terapkan filter ──
+  var rdQ=(el('rd-filter-search')&&el('rd-filter-search').value||'').trim().toUpperCase();
+  var rdQType=(el('rd-filter-type')&&el('rd-filter-type').value)||'';
+  var rdQPnl=(el('rd-filter-pnl')&&el('rd-filter-pnl').value)||'';
+  var rdRows=porto.map(function(p){
+    var info=RD_DB[p.code]||{name:p.code,type:'?',mi:'',color:'#4a5e82',risk:'?'};
+    return Object.assign({},p,{info:info});
+  });
+  if(rdQ) rdRows=rdRows.filter(function(p){return (p.info.name||'').toUpperCase().indexOf(rdQ)>-1||p.code.toUpperCase().indexOf(rdQ)>-1;});
+  if(rdQType) rdRows=rdRows.filter(function(p){return p.info.type===rdQType;});
+  if(rdQPnl==='profit') rdRows=rdRows.filter(function(p){return p.unreal>=0;});
+  else if(rdQPnl==='loss') rdRows=rdRows.filter(function(p){return p.unreal<0;});
+
+  // ── Terapkan sort ──
+  var rdSk=_rdSort.key, rdAsc=_rdSort.asc;
+  rdRows.sort(function(a,b){
+    var va,vb;
+    if(rdSk==='name'){ va=a.info.name; vb=b.info.name; return rdAsc?va.localeCompare(vb):vb.localeCompare(va); }
+    if(rdSk==='type'){ va=a.info.type; vb=b.info.type; return rdAsc?va.localeCompare(vb):vb.localeCompare(va); }
+    va=a[rdSk]; vb=b[rdSk];
+    return rdAsc?va-vb:vb-va;
+  });
+  ['name','type','units','mv','unreal','ret'].forEach(function(k){
+    var ico=el('rd-sort-ico-'+k);
+    if(ico) ico.textContent=k===rdSk?(rdAsc?'↑':'↓'):'↕';
+  });
+  var rdCntEl=el('rd-filter-count');
+  if(rdCntEl) rdCntEl.textContent=(rdQ||rdQType||rdQPnl)?rdRows.length+' dari '+porto.length+' produk':porto.length+' produk';
+
   // ── Tabel posisi aktif (rdTx) ──
   el('rd-tbody').innerHTML = porto.length===0
-    ? '<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:16px">Belum ada posisi aktif — gunakan + Beli RD untuk menambahkan</td></tr>'
-    : porto.map(function(p){
-        var info = RD_DB[p.code]||{name:p.code,type:'?',mi:'',color:'#4a5e82',risk:'?'};
+    ? '<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:16px">Belum ada posisi aktif — gunakan + Beli RD untuk menambahkan</td></tr>'
+    : (rdRows.length===0
+      ? '<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:16px">Tidak ada produk yang cocok dengan filter</td></tr>'
+      : rdRows.map(function(p){
+        var info = p.info;
         var col  = (RD_TYPES[info.type]||{color:'#4a5e82'}).color;
         var riskCls = info.risk==='Tinggi'?'b-dn':info.risk==='Sedang'?'b-amb':'b-up';
         return '<tr>'
@@ -749,7 +869,7 @@ function renderReksaDana(){
           +'<td><span class="badge '+riskCls+'">'+info.risk+'</span></td>'
           +'<td><button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="openRdModal(\'jual\')" title="Jual posisi">− Jual</button></td>'
           +'</tr>';
-    }).join('');
+    }).join(''));
 
   // ── History table dari XLSX ──
   var filtered = _rdHistoryFilter==='all' ? funds : funds.filter(function(f){return f.account===_rdHistoryFilter});
@@ -791,7 +911,7 @@ function renderReksaDana(){
       +'<td class="mono">Rp '+fmt(Math.round(tx.nab))+'</td>'
       +'<td class="mono">Rp '+fmtK(tx.amount)+'</td>'
       +'<td>'+pnlHtml+'</td>'
-      +'<td><button class="btn btn-ghost btn-xs" style="color:var(--amber)" onclick="editRdTx('+tx.id+')" title="Edit transaksi">✎</button> <button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="delRdTx('+tx.id+')">✕</button></td>'
+      +'<td><button class="btn btn-ghost btn-xs" style="color:var(--amber)" onclick="editRdTx('+tx.id+')" title="Edit transaksi" aria-label="Edit transaksi '+tx.type+' '+rdInfo.name+'">✎</button> <button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="delRdTx('+tx.id+')" aria-label="Hapus transaksi '+tx.type+' '+rdInfo.name+'">✕</button></td>'
       +'</tr>';
   }).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:14px">Belum ada transaksi manual</td></tr>';
 }

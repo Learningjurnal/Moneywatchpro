@@ -6,14 +6,14 @@
 <title>Money Watch Pro — Portofolio, Wealth & Analisa Quant</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23131324'/><path d='M7 21 L13 13 L18 17 L25 8' stroke='%2334d399' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/><circle cx='25' cy='8' r='2' fill='%2334d399'/></svg>">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/00-config.js?v=20260723n"></script>
+<script src="js/00-config.js?v=20260723p"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.0/dist/ort.min.js"></script>
-<link rel="stylesheet" href="css/main.css?v=20260723n">
-<link rel="stylesheet" href="css/wealth.css?v=20260723n">
+<link rel="stylesheet" href="css/main.css?v=20260723p">
+<link rel="stylesheet" href="css/wealth.css?v=20260723p">
 </head>
 <body>
 <body>
@@ -117,12 +117,12 @@
   </div>
   <div class="topbar-right">
     <div class="zoom-ctl" title="Ukuran tampilan">
-      <button onclick="mwZoom(-0.05)" title="Perkecil tampilan">A−</button>
-      <button onclick="mwZoom(0)" title="Kembali ke ukuran standar">A</button>
-      <button onclick="mwZoom(0.05)" title="Perbesar tampilan">A+</button>
+      <button onclick="mwZoom(-0.05)" title="Perkecil tampilan" aria-label="Perkecil tampilan">A−</button>
+      <button onclick="mwZoom(0)" title="Kembali ke ukuran standar" aria-label="Kembali ke ukuran tampilan standar">A</button>
+      <button onclick="mwZoom(0.05)" title="Perbesar tampilan" aria-label="Perbesar tampilan">A+</button>
     </div>
     <div style="display:flex;align-items:center;gap:6px">
-      <span id="save-status-bar" style="font-size:9px;font-family:'IBM Plex Mono',monospace;transition:opacity .5s;opacity:0;color:var(--green);letter-spacing:.5px;text-transform:uppercase"></span>
+      <span id="save-status-bar" role="status" aria-live="polite" style="font-size:9px;font-family:'IBM Plex Mono',monospace;transition:opacity .5s;opacity:0;color:var(--green);letter-spacing:.5px;text-transform:uppercase"></span>
       <button class="btn btn-ghost btn-xs" onclick="openBackupModal()" style="font-size:11px;gap:4px;display:flex;align-items:center;border-color:var(--border2);color:var(--text2);letter-spacing:0">
         💾 Backup
       </button>
@@ -238,6 +238,8 @@
 <!-- ===== DASHBOARD ===== -->
 <div id="page-dashboard" class="page on">
 
+  <div class="load-banner" id="dash-load-banner"><span class="load-dot"></span><span id="dash-load-text"></span></div>
+
   <!-- ROW 1: Total AUM hero + 4 P&L cards -->
   <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1fr;gap:9px;margin-bottom:11px">
     <!-- Hero: Total AUM -->
@@ -245,7 +247,7 @@
       <div style="position:absolute;inset:0;background:radial-gradient(ellipse at top right,rgba(0,200,255,.07) 0%,transparent 60%);pointer-events:none"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
         <div class="mlabel" style="color:var(--accent);letter-spacing:1.5px">💼 TOTAL AUM DIKELOLA</div>
-        <button onclick="toggleMetric('aum')" id="eye-aum" title="Sembunyikan nilai"
+        <button onclick="toggleMetric('aum')" id="eye-aum" title="Sembunyikan nilai" aria-label="Sembunyikan/tampilkan nilai Total AUM"
           style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 5px;line-height:1;border-radius:4px;transition:color .15s"
           onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">👁</button>
       </div>
@@ -256,7 +258,7 @@
     <div class="metric">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
         <div class="mlabel">Unrealized P&amp;L</div>
-        <button onclick="toggleMetric('unreal')" id="eye-unreal" title="Sembunyikan nilai"
+        <button onclick="toggleMetric('unreal')" id="eye-unreal" title="Sembunyikan nilai" aria-label="Sembunyikan/tampilkan nilai Unrealized P&amp;L"
           style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 5px;line-height:1;border-radius:4px;transition:color .15s"
           onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">👁</button>
       </div>
@@ -266,7 +268,7 @@
     <div class="metric">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
         <div class="mlabel">Realized P&amp;L</div>
-        <button onclick="toggleMetric('real')" id="eye-real" title="Sembunyikan nilai"
+        <button onclick="toggleMetric('real')" id="eye-real" title="Sembunyikan nilai" aria-label="Sembunyikan/tampilkan nilai Realized P&amp;L"
           style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 5px;line-height:1;border-radius:4px;transition:color .15s"
           onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">👁</button>
       </div>
@@ -276,7 +278,7 @@
     <div class="metric">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
         <div class="mlabel">Saldo RDN</div>
-        <button onclick="toggleMetric('rdn')" id="eye-rdn" title="Sembunyikan nilai"
+        <button onclick="toggleMetric('rdn')" id="eye-rdn" title="Sembunyikan nilai" aria-label="Sembunyikan/tampilkan nilai Saldo RDN"
           style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 5px;line-height:1;border-radius:4px;transition:color .15s"
           onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">👁</button>
       </div>
@@ -286,7 +288,7 @@
     <div class="metric">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
         <div class="mlabel">Total Dividen YTD</div>
-        <button onclick="toggleMetric('div')" id="eye-div" title="Sembunyikan nilai"
+        <button onclick="toggleMetric('div')" id="eye-div" title="Sembunyikan nilai" aria-label="Sembunyikan/tampilkan nilai Total Dividen YTD"
           style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 5px;line-height:1;border-radius:4px;transition:color .15s"
           onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">👁</button>
       </div>
@@ -749,6 +751,7 @@
 
 <!-- ===== PORTOFOLIO ===== -->
 <div id="page-portofolio" class="page">
+  <div class="load-banner" id="porto-load-banner"><span class="load-dot"></span><span id="porto-load-text"></span></div>
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
     <div>
       <div class="ptitle">Portofolio Saham</div>
@@ -1220,12 +1223,33 @@
   </div>
   <div class="card">
     <div class="cheader"><span class="ctitle">Posisi Crypto Aktif</span></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+      <input id="cr-filter-search" placeholder="Cari koin / nama..." class="finput" style="padding:5px 10px;font-size:11px;width:160px" oninput="renderCrypto()"/>
+      <select class="finput fsel" id="cr-filter-cat" onchange="renderCrypto()" style="padding:5px 8px;font-size:11px"><option value="">Semua Kategori</option></select>
+      <select class="finput fsel" id="cr-filter-signal" onchange="renderCrypto()" style="padding:5px 8px;font-size:11px">
+        <option value="">Semua Sinyal</option><option value="BUY">BUY</option><option value="HOLD">HOLD</option><option value="SELL">SELL</option>
+      </select>
+      <select class="finput fsel" id="cr-filter-pnl" onchange="renderCrypto()" style="padding:5px 8px;font-size:11px">
+        <option value="">Semua P&amp;L</option><option value="profit">Profit saja</option><option value="loss">Rugi saja</option>
+      </select>
+      <button class="btn btn-ghost btn-xs" onclick="resetCrFilter()">↺ Reset</button>
+      <span style="font-size:10px;color:var(--text3);margin-left:auto" id="cr-filter-count"></span>
+    </div>
     <div style="overflow-x:auto">
       <table class="tbl">
         <thead><tr>
-          <th>Koin</th><th>Nama</th><th>Kategori</th><th>Jumlah</th><th>Avg Beli (IDR)</th>
-          <th>Harga Pasar (IDR)</th><th>Harga (USD)</th><th>Nilai (IDR)</th>
-          <th>Modal (IDR)</th><th>P&amp;L (IDR)</th><th>Return %</th><th>Alokasi</th><th>Signal</th>
+          <th onclick="sortCr('coin')" style="cursor:pointer;user-select:none">Koin <span id="cr-sort-ico-coin" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th>Nama</th>
+          <th onclick="sortCr('category')" style="cursor:pointer;user-select:none">Kategori <span id="cr-sort-ico-category" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th onclick="sortCr('qty')" style="cursor:pointer;user-select:none">Jumlah <span id="cr-sort-ico-qty" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th>Avg Beli (IDR)</th>
+          <th>Harga Pasar (IDR)</th><th>Harga (USD)</th>
+          <th onclick="sortCr('mv')" style="cursor:pointer;user-select:none">Nilai (IDR) <span id="cr-sort-ico-mv" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th onclick="sortCr('cost')" style="cursor:pointer;user-select:none">Modal (IDR) <span id="cr-sort-ico-cost" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th onclick="sortCr('unreal')" style="cursor:pointer;user-select:none">P&amp;L (IDR) <span id="cr-sort-ico-unreal" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th onclick="sortCr('ret')" style="cursor:pointer;user-select:none">Return % <span id="cr-sort-ico-ret" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th onclick="sortCr('alloc')" style="cursor:pointer;user-select:none">Alokasi <span id="cr-sort-ico-alloc" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th>Signal</th>
         </tr></thead>
         <tbody id="crypto-tbody"></tbody>
       </table>
@@ -1284,12 +1308,34 @@
   </div>
   <div class="card">
     <div class="cheader"><span class="ctitle">Posisi ETF Aktif</span></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+      <input id="etf-filter-search" placeholder="Cari ticker / nama..." class="finput" style="padding:5px 10px;font-size:11px;width:160px" oninput="renderEtf()"/>
+      <select class="finput fsel" id="etf-filter-cat" onchange="renderEtf()" style="padding:5px 8px;font-size:11px"><option value="">Semua Kategori</option></select>
+      <select class="finput fsel" id="etf-filter-signal" onchange="renderEtf()" style="padding:5px 8px;font-size:11px">
+        <option value="">Semua Sinyal</option><option value="BUY">BUY</option><option value="HOLD">HOLD</option><option value="SELL">SELL</option>
+      </select>
+      <select class="finput fsel" id="etf-filter-pnl" onchange="renderEtf()" style="padding:5px 8px;font-size:11px">
+        <option value="">Semua P&amp;L</option><option value="profit">Profit saja</option><option value="loss">Rugi saja</option>
+      </select>
+      <button class="btn btn-ghost btn-xs" onclick="resetEtfFilter()">↺ Reset</button>
+      <span style="font-size:10px;color:var(--text3);margin-left:auto" id="etf-filter-count"></span>
+    </div>
     <div style="overflow-x:auto">
       <table class="tbl">
         <thead><tr>
-          <th>Ticker</th><th>Nama</th><th>Kategori</th><th>Lembar</th><th>Avg Beli (USD)</th>
-          <th>Harga (USD)</th><th>Nilai (IDR)</th><th>Modal (IDR)</th>
-          <th>P&amp;L (IDR)</th><th>P&amp;L (USD)</th><th>Return %</th><th>Alokasi</th><th>Signal</th>
+          <th onclick="sortEtf('ticker')" style="cursor:pointer;user-select:none">Ticker <span id="etf-sort-ico-ticker" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th>Nama</th>
+          <th onclick="sortEtf('category')" style="cursor:pointer;user-select:none">Kategori <span id="etf-sort-ico-category" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th onclick="sortEtf('shares')" style="cursor:pointer;user-select:none">Lembar <span id="etf-sort-ico-shares" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th>Avg Beli (USD)</th>
+          <th>Harga (USD)</th>
+          <th onclick="sortEtf('mvIdr')" style="cursor:pointer;user-select:none">Nilai (IDR) <span id="etf-sort-ico-mvIdr" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th onclick="sortEtf('costIdr')" style="cursor:pointer;user-select:none">Modal (IDR) <span id="etf-sort-ico-costIdr" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th onclick="sortEtf('unrIdr')" style="cursor:pointer;user-select:none">P&amp;L (IDR) <span id="etf-sort-ico-unrIdr" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th>P&amp;L (USD)</th>
+          <th onclick="sortEtf('ret')" style="cursor:pointer;user-select:none">Return % <span id="etf-sort-ico-ret" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th onclick="sortEtf('alloc')" style="cursor:pointer;user-select:none">Alokasi <span id="etf-sort-ico-alloc" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th>Signal</th>
         </tr></thead>
         <tbody id="etf-tbody"></tbody>
       </table>
@@ -1390,9 +1436,28 @@
         <button class="btn btn-red btn-xs" onclick="openRdModal('jual')">− Jual</button>
       </div>
     </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+      <input id="rd-filter-search" placeholder="Cari nama RD..." class="finput" style="padding:5px 10px;font-size:11px;width:160px" oninput="renderReksaDana()"/>
+      <select class="finput fsel" id="rd-filter-type" onchange="renderReksaDana()" style="padding:5px 8px;font-size:11px"><option value="">Semua Jenis</option></select>
+      <select class="finput fsel" id="rd-filter-pnl" onchange="renderReksaDana()" style="padding:5px 8px;font-size:11px">
+        <option value="">Semua P&amp;L</option><option value="profit">Profit saja</option><option value="loss">Rugi saja</option>
+      </select>
+      <button class="btn btn-ghost btn-xs" onclick="resetRdFilter()">↺ Reset</button>
+      <span style="font-size:10px;color:var(--text3);margin-left:auto" id="rd-filter-count"></span>
+    </div>
     <div style="overflow-x:auto">
       <table class="tbl">
-        <thead><tr><th>Nama RD</th><th>Jenis</th><th>Platform</th><th>Unit</th><th>NAB Beli</th><th>NAB Kini</th><th>Nilai (Rp)</th><th>P&amp;L</th><th>Return %</th><th>Risiko</th><th>Aksi</th></tr></thead>
+        <thead><tr>
+          <th onclick="sortRd('name')" style="cursor:pointer;user-select:none">Nama RD <span id="rd-sort-ico-name" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th onclick="sortRd('type')" style="cursor:pointer;user-select:none">Jenis <span id="rd-sort-ico-type" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th>Platform</th>
+          <th onclick="sortRd('units')" style="cursor:pointer;user-select:none">Unit <span id="rd-sort-ico-units" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th>NAB Beli</th><th>NAB Kini</th>
+          <th onclick="sortRd('mv')" style="cursor:pointer;user-select:none">Nilai (Rp) <span id="rd-sort-ico-mv" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th onclick="sortRd('unreal')" style="cursor:pointer;user-select:none">P&amp;L <span id="rd-sort-ico-unreal" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th onclick="sortRd('ret')" style="cursor:pointer;user-select:none">Return % <span id="rd-sort-ico-ret" style="font-size:9px;color:var(--text3)">↕</span></th>
+          <th>Risiko</th><th>Aksi</th>
+        </tr></thead>
         <tbody id="rd-tbody"></tbody>
       </table>
     </div>
@@ -2253,7 +2318,7 @@
         <div style="font-size:15px;font-weight:700;color:var(--accent)">💾 Backup &amp; Restore</div>
         <div style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-top:2px">Kelola data jurnal investasimu</div>
       </div>
-      <button onclick="closeBackupModal()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;line-height:1;padding:4px">✕</button>
+      <button onclick="closeBackupModal()" aria-label="Tutup dialog Backup" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;line-height:1;padding:4px">✕</button>
     </div>
     <div id="backup-modal-body"></div>
   </div>
@@ -2266,7 +2331,7 @@
   <div class="modal">
     <div class="mhead">
       <div class="mtitle" id="m-title">Modal</div>
-      <button class="mclose" id="m-close">×</button>
+      <button class="mclose" id="m-close" aria-label="Tutup dialog">×</button>
     </div>
     <div id="m-body"></div>
   </div>
@@ -2278,27 +2343,27 @@
   <div class="modal" style="width:480px">
     <div class="mhead">
       <div class="mtitle" id="wm-title">Wealth</div>
-      <button class="mclose" onclick="wCloseModal()">×</button>
+      <button class="mclose" onclick="wCloseModal()" aria-label="Tutup dialog">×</button>
     </div>
     <div id="wm-body"></div>
   </div>
 </div>
 
-<script src="js/01-data.js?v=20260723n"></script>
-<script src="js/02-storage.js?v=20260723n"></script>
-<script src="js/03-engine.js?v=20260723n"></script>
-<script src="js/04-render.js?v=20260723n"></script>
-<script src="js/05-assets.js?v=20260723n"></script>
-<script src="js/06-analysis-router.js?v=20260723n"></script>
-<script src="js/07-flowscan.js?v=20260723n"></script>
-<script src="js/08-auth.js?v=20260723n"></script>
-<script src="js/09-divinvest.js?v=20260723n"></script>
-<script src="js/10-hargawajar.js?v=20260723n"></script>
-<script src="js/11-quant.js?v=20260723n"></script>
-<script src="js/12-clean.js?v=20260723n"></script>
-<script src="js/13-realdata.js?v=20260723n"></script>
-<script src="js/14-admin.js?v=20260723n"></script>
-<script src="js/15-txbulk.js?v=20260723n"></script>
-<script src="js/20-wealth.js?v=20260723n"></script>
+<script src="js/01-data.js?v=20260723p"></script>
+<script src="js/02-storage.js?v=20260723p"></script>
+<script src="js/03-engine.js?v=20260723p"></script>
+<script src="js/04-render.js?v=20260723p"></script>
+<script src="js/05-assets.js?v=20260723p"></script>
+<script src="js/06-analysis-router.js?v=20260723p"></script>
+<script src="js/07-flowscan.js?v=20260723p"></script>
+<script src="js/08-auth.js?v=20260723p"></script>
+<script src="js/09-divinvest.js?v=20260723p"></script>
+<script src="js/10-hargawajar.js?v=20260723p"></script>
+<script src="js/11-quant.js?v=20260723p"></script>
+<script src="js/12-clean.js?v=20260723p"></script>
+<script src="js/13-realdata.js?v=20260723p"></script>
+<script src="js/14-admin.js?v=20260723p"></script>
+<script src="js/15-txbulk.js?v=20260723p"></script>
+<script src="js/20-wealth.js?v=20260723p"></script>
 </body>
 </html>
