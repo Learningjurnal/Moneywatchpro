@@ -418,8 +418,19 @@ function aiDisclaimer(src){
 function aiLoading(msg){ return '<div style="text-align:center;padding:16px"><i class="ti ti-loader" style="font-size:20px;color:var(--accent);animation:spin 1s linear infinite"></i><div style="font-size:12px;color:var(--text2);margin-top:8px">'+msg+'</div></div>'; }
 function aiRunHeuristic(){ var box=el('ai-box'); if(!box)return; box.dataset.live=''; box.innerHTML=aiHeuristicHtml(aiBuildContext()); }
 function aiGetKey(){ try{return localStorage.getItem('claude_api_key')||'';}catch(e){return '';} }
-function aiUpdateKeyBtn(){ var b=el('ai-key-btn'); if(b) b.textContent=aiGetKey()?'🔑 API Key ✓':'🔑 API Key'; }
+function aiGetWorkerUrl(){ try{return localStorage.getItem('claude_worker_url')||'';}catch(e){return '';} }
+function aiUpdateKeyBtn(){
+  var b=el('ai-key-btn'); if(b) b.textContent=aiGetKey()?'🔑 API Key ✓':'🔑 API Key';
+  var w=el('ai-worker-btn'); if(w) w.textContent=aiGetWorkerUrl()?'🌐 Worker ✓':'🌐 Worker URL';
+}
 function aiSetKey(){ var cur=aiGetKey(); var k=prompt('Masukkan Anthropic API key (disimpan lokal di browser ini saja). Diperlukan untuk versi self-host. Kosongkan lalu OK untuk menghapus.',cur); if(k===null)return; try{ if(k.trim())localStorage.setItem('claude_api_key',k.trim()); else localStorage.removeItem('claude_api_key'); }catch(e){} aiUpdateKeyBtn(); }
+function aiSetWorkerUrl(){
+  var cur=aiGetWorkerUrl();
+  var u=prompt('URL Cloudflare Worker AI Proxy Anda (opsional — key tidak akan disimpan di browser sama sekali kalau ini diisi). Kosongkan untuk kembali memakai API key langsung di browser. Lihat workers/ai-proxy/README.md untuk cara deploy.', cur);
+  if(u===null) return;
+  try{ if(u.trim()) localStorage.setItem('claude_worker_url', u.trim()); else localStorage.removeItem('claude_worker_url'); }catch(e){}
+  aiUpdateKeyBtn();
+}
 function aiFmtText(t){
   var esc=t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   esc=esc.replace(/\*\*(.+?)\*\*/g,'<b style="color:#dce8ff">$1</b>');
@@ -433,23 +444,38 @@ function aiRunClaude(){
   if(!ctx.m.n){ box.innerHTML='<div style="color:var(--text3);font-size:12px;padding:10px">Belum ada posisi saham untuk dianalisis.</div>'; return; }
   box.innerHTML=aiLoading('Menghubungi Claude & mencari data ekonomi terkini...');
   var key=aiGetKey();
+  var workerUrl=aiGetWorkerUrl();
   var hold=ctx.m.porto.slice().sort(function(a,b){return b.mv-a.mv}).slice(0,15).map(function(p){return p.ticker+' '+(p.mv/ctx.m.totalMV*100).toFixed(1)+'% (unreal '+p.ret.toFixed(0)+'%)';}).join(', ');
   var sektor=Object.keys(ctx.m.bySec).map(function(s){return s+' '+(ctx.m.bySec[s]/ctx.m.totalMV*100).toFixed(0)+'%';}).join(', ');
   var prompt='Anda penasihat investasi saham Indonesia yang tajam dan jujur. Data portofolio (Rupiah): nilai pasar '+Math.round(ctx.m.totalMV)+', modal '+Math.round(ctx.m.totalCost)+', total return '+(ctx.m.totalReturn*100).toFixed(1)+'%, realized '+Math.round(ctx.m.real)+', unrealized '+Math.round(ctx.m.unreal)+', beta '+ctx.m.beta.toFixed(2)+', '+ctx.m.n+' emiten, sektor: '+sektor+', kas '+ctx.cashPct.toFixed(0)+'%. Holdings teratas: '+hold+'. IHSG acuan ~'+ctx.ihsg+'. Cari data TERKINI: level & arah IHSG, BI rate, USD/IDR, suku bunga The Fed, harga komoditas relevan, sentimen pasar global. Lalu beri analisis ringkas berpoin (Bahasa Indonesia, tegas, sebut angka): (1) performa portofolio vs IHSG, (2) kondisi ekonomi domestik & global yang memengaruhi holdings ini, (3) risiko utama & konsentrasi, (4) 3-4 saran rebalancing konkret. Maksimal ~350 kata. Tutup dengan: bukan rekomendasi investasi.';
-  var headers={'Content-Type':'application/json'};
-  if(key){ headers['x-api-key']=key; headers['anthropic-version']='2023-06-01'; headers['anthropic-dangerous-direct-browser-access']='true'; }
-  fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:headers,body:JSON.stringify({
-    model:'claude-sonnet-4-20250514',max_tokens:1200,
-    messages:[{role:'user',content:prompt}],
-    tools:[{type:'web_search_20250305',name:'web_search'}]
-  })}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+
+  var fetchUrl, fetchOpts;
+  if(workerUrl){
+    // Proxy sendiri (Cloudflare Worker) — key Anthropic tidak pernah menyentuh browser ini.
+    fetchUrl = workerUrl;
+    fetchOpts = {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt})};
+  } else {
+    var headers={'Content-Type':'application/json'};
+    if(key){ headers['x-api-key']=key; headers['anthropic-version']='2023-06-01'; headers['anthropic-dangerous-direct-browser-access']='true'; }
+    fetchUrl = 'https://api.anthropic.com/v1/messages';
+    fetchOpts = {method:'POST',headers:headers,body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',max_tokens:1200,
+      messages:[{role:'user',content:prompt}],
+      tools:[{type:'web_search_20250305',name:'web_search'}]
+    })};
+  }
+
+  fetch(fetchUrl, fetchOpts).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
   .then(function(data){
     var text=(data.content||[]).map(function(b){return b.type==='text'?b.text:'';}).filter(Boolean).join('\n');
     if(!text) throw new Error('respons kosong');
     box.dataset.live='1';
-    box.innerHTML='<div>'+aiFmtText(text)+'</div>'+aiDisclaimer('Claude (claude-sonnet-4) + web search — live');
+    box.innerHTML='<div>'+aiFmtText(text)+'</div>'+aiDisclaimer('Claude (claude-sonnet-4)'+(workerUrl?' via worker proxy':'')+' + web search — live');
   }).catch(function(e){
-    box.innerHTML='<div style="background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.25);border-radius:8px;padding:9px 12px;font-size:11px;color:var(--amber);margin-bottom:10px;line-height:1.6">⚠️ Konsultasi live gagal ('+e.message+'). '+(key?'Periksa API key & koneksi internet.':'Tanpa API key, panggilan langsung hanya jalan di pratinjau Claude.ai. Untuk versi yang Anda host sendiri (Netlify/GitHub), klik “🔑 API Key” dan isi key Anthropic Anda.')+' Berikut analisa otomatis offline:</div>'+aiHeuristicHtml(ctx);
+    var hint = workerUrl
+      ? 'Periksa URL worker & apakah sudah di-deploy dengan benar (lihat workers/ai-proxy/README.md).'
+      : (key ? 'Periksa API key & koneksi internet.' : 'Tanpa API key/worker, panggilan langsung hanya jalan di pratinjau Claude.ai. Klik "🔑 API Key" (self-host cepat) atau "🌐 Worker URL" (key tidak tersimpan di browser).');
+    box.innerHTML='<div style="background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.25);border-radius:8px;padding:9px 12px;font-size:11px;color:var(--amber);margin-bottom:10px;line-height:1.6">⚠️ Konsultasi live gagal ('+e.message+'). '+hint+' Berikut analisa otomatis offline:</div>'+aiHeuristicHtml(ctx);
   });
 }
 

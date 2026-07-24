@@ -29,6 +29,19 @@ function wLoad(){
 }
 function wUid(){ return Date.now() + Math.floor(Math.random()*1000); }
 
+// ── Badge notifikasi sidebar — piutang jatuh tempo ≤7 hari (termasuk yang sudah lewat) ──
+function wUpdateDueBadge(){
+  var badge = el('piutang-due-badge');
+  if(!badge) return;
+  var soon = new Date(); soon.setDate(soon.getDate()+7);
+  var dueCount = WEALTH.piutang.filter(function(p){
+    if(p.status==='Lunas' || !p.jatuhTempo) return false;
+    return new Date(p.jatuhTempo) <= soon;
+  }).length;
+  badge.style.display = dueCount>0 ? 'inline-flex' : 'none';
+  badge.textContent = dueCount;
+}
+
 // ── FORMAT ──
 function wRp(n){
   var a = Math.abs(n||0), s = n<0 ? '-' : '';
@@ -512,7 +525,7 @@ function wOpenModal(title, bodyHtml){
 }
 function wCloseModal(){ el('wmodal').classList.remove('on'); }
 function wFind(type,id){ return WEALTH[type].filter(function(x){return x.id==id})[0] || null; }
-function wRerender(){ wSave(); wRenderPage(WPAGES.filter(function(p){ var pg=el('page-'+p); return pg&&pg.classList.contains('on'); })[0] || 'wealth'); }
+function wRerender(){ wSave(); wUpdateDueBadge(); wRenderPage(WPAGES.filter(function(p){ var pg=el('page-'+p); return pg&&pg.classList.contains('on'); })[0] || 'wealth'); }
 
 function wConfirmDelete(type, id, nama){
   wOpenModal('Hapus Data',
@@ -703,3 +716,4 @@ function wImport(){
 
 // ── INIT ──
 wLoad();
+document.addEventListener('DOMContentLoaded', wUpdateDueBadge);

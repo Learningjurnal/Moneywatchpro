@@ -939,6 +939,8 @@ function renderRisiko(){
 }
 
 function renderPajak(){
+  var printDateEl = el('pj-print-date');
+  if(printDateEl) printDateEl.textContent = new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
   // Info bar
   var infoBar = el('pj-info-bar');
   if(infoBar) infoBar.textContent = 'ℹ️ Tarif aktif: Komisi sesuai sekuritas · PPN '+

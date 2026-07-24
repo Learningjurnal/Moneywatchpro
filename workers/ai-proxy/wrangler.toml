@@ -1,0 +1,6 @@
+name = "moneywatch-ai-proxy"
+main = "worker.js"
+compatibility_date = "2024-09-01"
+
+# ANTHROPIC_API_KEY di-set sebagai secret (BUKAN di file ini):
+#   wrangler secret put ANTHROPIC_API_KEY

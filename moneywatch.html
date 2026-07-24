@@ -6,14 +6,14 @@
 <title>Money Watch Pro — Portofolio, Wealth & Analisa Quant</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23131324'/><path d='M7 21 L13 13 L18 17 L25 8' stroke='%2334d399' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/><circle cx='25' cy='8' r='2' fill='%2334d399'/></svg>">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/00-config.js?v=20260723t"></script>
+<script src="js/00-config.js?v=20260723w"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.0/dist/ort.min.js"></script>
-<link rel="stylesheet" href="css/main.css?v=20260723t">
-<link rel="stylesheet" href="css/wealth.css?v=20260723t">
+<link rel="stylesheet" href="css/main.css?v=20260723w">
+<link rel="stylesheet" href="css/wealth.css?v=20260723w">
 </head>
 <body>
 <body>
@@ -223,7 +223,7 @@
       <button onclick="goPage('wealth',this)">🌐 Net Worth</button>
       <button onclick="goPage('wbank',this)">🏦 Bank &amp; Darurat</button>
       <button onclick="goPage('wdebt',this)">💳 Hutang</button>
-      <button onclick="goPage('wpiutang',this)">🧾 Piutang</button>
+      <button onclick="goPage('wpiutang',this)">🧾 Piutang <span id="piutang-due-badge" class="nav-due-badge" style="display:none" title="Piutang jatuh tempo ≤7 hari"></span></button>
       <button onclick="goPage('wfire',this)">🔥 FIRE &amp; Proyeksi</button>
     </div>
   </div>
@@ -629,7 +629,8 @@
       <div class="cheader">
         <span class="ctitle">Analisa &amp; Saran Naratif</span>
         <div style="display:flex;gap:6px">
-          <button class="btn btn-ghost btn-xs" id="ai-key-btn" onclick="aiSetKey()">🔑 API Key</button>
+          <button class="btn btn-ghost btn-xs" id="ai-key-btn" onclick="aiSetKey()" title="Key tersimpan lokal di browser ini">🔑 API Key</button>
+          <button class="btn btn-ghost btn-xs" id="ai-worker-btn" onclick="aiSetWorkerUrl()" title="Opsional — key tidak pernah tersimpan di browser, lihat workers/ai-proxy/README.md">🌐 Worker URL</button>
           <button class="btn btn-blue btn-xs" onclick="aiRunClaude()">✨ Konsultasi Live (Claude)</button>
         </div>
       </div>
@@ -1076,9 +1077,19 @@
 <!-- ===== RISIKO ===== -->
 <!-- ===== PAJAK ===== -->
 <div id="page-pajak" class="page">
-  <div class="ptitle" style="margin-bottom:2px">Pajak &amp; Biaya Transaksi</div>
-  <div class="psub">Rekap PPh &amp; komisi broker — tarif dapat disesuaikan manual di panel Pengaturan</div>
-  <div class="alert alert-info" id="pj-info-bar">ℹ️ Memuat pengaturan pajak...</div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div>
+      <div class="ptitle" style="margin-bottom:2px">Pajak &amp; Biaya Transaksi</div>
+      <div class="psub">Rekap PPh &amp; komisi broker — tarif dapat disesuaikan manual di panel Pengaturan</div>
+    </div>
+    <button class="btn btn-ghost no-print" onclick="window.print()" style="border-color:rgba(129,140,248,.3);color:var(--accent);flex-shrink:0" title="Cetak atau simpan sebagai PDF untuk lampiran SPT Tahunan">🖨 Cetak / Simpan PDF</button>
+  </div>
+  <div id="pj-print-header" class="print-only" style="display:none">
+    <h1 style="font-size:18px;margin-bottom:2px">Rekap Pajak &amp; Biaya Transaksi Saham</h1>
+    <div style="font-size:11px;color:#555">Dicetak dari Money Watch Pro pada <span id="pj-print-date"></span> — lampiran pendukung, bukan dokumen resmi DJP.</div>
+    <hr style="margin:10px 0;border:none;border-top:1px solid #ccc">
+  </div>
+  <div class="alert alert-info no-print" id="pj-info-bar">ℹ️ Memuat pengaturan pajak...</div>
   <div class="row4">
     <div class="metric"><div class="mlabel" id="pj-pph-label">PPh Transaksi</div><div class="mval" id="pj-pph">Rp 0</div><div class="msub neu" id="pj-pph-sub"></div></div>
     <div class="metric"><div class="mlabel">PPh Dividen (10%)</div><div class="mval" id="pj-div">Rp 0</div><div class="msub neu" id="pj-div-sub"></div></div>
@@ -1090,7 +1101,7 @@
       <div class="cheader"><span class="ctitle">Rincian Per Sekuritas</span></div>
       <div id="pj-by-sec"></div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:11px">
+    <div class="no-print" style="display:flex;flex-direction:column;gap:11px">
       <!-- ⚙️ Pengaturan Tarif Pajak -->
       <div class="card" style="border-color:rgba(255,193,7,.3)">
         <div class="cheader">
@@ -2357,21 +2368,21 @@
   </div>
 </div>
 
-<script src="js/01-data.js?v=20260723t"></script>
-<script src="js/02-storage.js?v=20260723t"></script>
-<script src="js/03-engine.js?v=20260723t"></script>
-<script src="js/04-render.js?v=20260723t"></script>
-<script src="js/05-assets.js?v=20260723t"></script>
-<script src="js/06-analysis-router.js?v=20260723t"></script>
-<script src="js/07-flowscan.js?v=20260723t"></script>
-<script src="js/08-auth.js?v=20260723t"></script>
-<script src="js/09-divinvest.js?v=20260723t"></script>
-<script src="js/10-hargawajar.js?v=20260723t"></script>
-<script src="js/11-quant.js?v=20260723t"></script>
-<script src="js/12-clean.js?v=20260723t"></script>
-<script src="js/13-realdata.js?v=20260723t"></script>
-<script src="js/14-admin.js?v=20260723t"></script>
-<script src="js/15-txbulk.js?v=20260723t"></script>
-<script src="js/20-wealth.js?v=20260723t"></script>
+<script src="js/01-data.js?v=20260723w"></script>
+<script src="js/02-storage.js?v=20260723w"></script>
+<script src="js/03-engine.js?v=20260723w"></script>
+<script src="js/04-render.js?v=20260723w"></script>
+<script src="js/05-assets.js?v=20260723w"></script>
+<script src="js/06-analysis-router.js?v=20260723w"></script>
+<script src="js/07-flowscan.js?v=20260723w"></script>
+<script src="js/08-auth.js?v=20260723w"></script>
+<script src="js/09-divinvest.js?v=20260723w"></script>
+<script src="js/10-hargawajar.js?v=20260723w"></script>
+<script src="js/11-quant.js?v=20260723w"></script>
+<script src="js/12-clean.js?v=20260723w"></script>
+<script src="js/13-realdata.js?v=20260723w"></script>
+<script src="js/14-admin.js?v=20260723w"></script>
+<script src="js/15-txbulk.js?v=20260723w"></script>
+<script src="js/20-wealth.js?v=20260723w"></script>
 </body>
 </html>

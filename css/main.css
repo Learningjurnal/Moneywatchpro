@@ -270,6 +270,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;back
 .side-nav button:hover{color:var(--text);background:rgba(255,255,255,.06)}
 .side-nav button.on{background:rgba(129,140,248,.15);color:var(--accent);font-weight:600;box-shadow:inset 2px 0 0 var(--accent)}
 .side-nav::-webkit-scrollbar{width:3px}
+.nav-due-badge{margin-left:auto;flex-shrink:0;background:var(--red);color:#fff;font-size:9px;font-weight:700;line-height:1;padding:2px 5px;border-radius:20px;font-family:'IBM Plex Mono',monospace;min-width:14px;text-align:center}
 
 /* ── Sidebar groups — "spoiler"/accordion agar daftar panjang tidak berantakan ── */
 .side-group{margin-top:2px}
@@ -362,4 +363,35 @@ html,body{font-size:14px}
   .mval.lg{font-size:22px!important}
   .card{padding:11px!important}
   .metric{padding:11px 12px!important}
+}
+
+/* ══════════════════════════════════════════════
+   CETAK / SIMPAN PDF — dipakai halaman Pajak & PPh
+   (window.print()). .no-print disembunyikan, konten
+   dirender di atas kertas putih supaya siap dilampirkan.
+   ══════════════════════════════════════════════ */
+.print-only{display:none}
+@media print{
+  body{background:#fff!important}
+  body::before,body::after{display:none!important}
+  .topbar,.ticker-wrap,.side-nav,.hamburger-btn,.sidebar-backdrop,.load-banner,#schema-warn-banner,.no-print,button,.btn{display:none!important}
+  .print-only{display:block!important}
+  .app{height:auto!important;display:block!important}
+  .main-row{display:block!important}
+  .pages{overflow:visible!important;position:static!important}
+  .page{position:static!important;display:none!important;overflow:visible!important;height:auto!important;padding:0!important}
+  .page.on{display:block!important}
+  .card{background:#fff!important;border:1px solid #ccc!important;backdrop-filter:none!important;break-inside:avoid;page-break-inside:avoid}
+  .metric{background:#f7f7f9!important;border:1px solid #ddd!important}
+  .row4{display:grid!important;grid-template-columns:repeat(4,1fr)!important}
+  .ptitle,.psub,h1{color:#111!important}
+  .mlabel,.msub,.ctitle{color:#555!important}
+  .mval{color:#111!important}
+  .up{color:#0a7a44!important}
+  .dn{color:#c0392b!important}
+  .amb{color:#a5720e!important}
+  .tbl{color:#111!important}
+  .tbl th{color:#555!important;background:#f0f0f2!important;border-bottom:1px solid #ccc!important}
+  .tbl td{border-bottom:1px solid #eee!important}
+  .badge{background:#eee!important;color:#333!important;border:1px solid #ccc!important}
 }
