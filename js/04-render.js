@@ -460,6 +460,7 @@ function renderTransaksi(){
   var list=transactions.slice().sort(function(a,b){return b.date.localeCompare(a.date)}).filter(function(tx){
     return tx.ticker.toUpperCase().indexOf(search)>=0&&(filter==='all'||tx.type===filter)
   });
+  _txVisibleIds = list.map(function(tx){return tx.id});
 
   var pos2={};
   el('tx-tbody').innerHTML=list.map(function(tx){
@@ -473,7 +474,7 @@ function renderTransaksi(){
     }
     if(isBuy){pos2[tx.ticker].lot+=tx.lot;pos2[tx.ticker].cost+=tx.net;}
     return '<tr style="'+(_txSelected.has(tx.id)?'background:rgba(0,200,255,.05)':'')+'">'
-      +'<td><input type="checkbox" '+ (_txSelected.has(tx.id)?'checked':'')+' onchange="txToggleSel('+tx.id+',this.checked)" style="cursor:pointer"></td>'
+      +'<td><input type="checkbox" '+ (_txSelected.has(tx.id)?'checked':'')+' onmousedown="txCbMouseDown(event,'+tx.id+')" onmouseenter="txCbMouseEnter(event,'+tx.id+')" onclick="txCbClick(event,'+tx.id+')" style="cursor:pointer"></td>'
       +'<td class="mono" style="color:var(--text2);font-size:11px">'+tx.date+'</td>'
       +'<td><span class="badge '+(isBuy?'b-up':'b-dn')+'">'+tx.type+'</span></td>'
       +'<td><span class="tp">'+tx.ticker+'</span></td>'

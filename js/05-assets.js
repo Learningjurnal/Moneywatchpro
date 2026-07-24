@@ -1030,18 +1030,55 @@ function saveSecuritas(){
 }
 
 var _txSelected = new Set();
-function txToggleAll(checked){
-  el('tx-tbody').querySelectorAll('input[type=checkbox]').forEach(function(cb){cb.checked=checked;});
-  transactions.forEach(function(t){ checked?_txSelected.add(t.id):_txSelected.delete(t.id); });
-  var b=el('tx-del-sel-btn'); if(b) b.style.display=_txSelected.size>0?'inline-flex':'none';
-}
-function txToggleSel(id, checked){
+var _txVisibleIds = [];   // id transaksi yang sedang tampil (setelah search/filter) — urutan render
+var _txLastClickedId = null;
+var _txDragging = false;
+var _txDragValue = null;
+document.addEventListener('mouseup', function(){ _txDragging = false; });
+
+function txApplySel(id, checked){
   checked?_txSelected.add(id):_txSelected.delete(id);
   var b=el('tx-del-sel-btn'); if(b) b.style.display=_txSelected.size>0?'inline-flex':'none';
 }
+// Drag-select: tekan mouse di satu baris lalu geser kursor melewati baris lain untuk pilih banyak sekaligus.
+// preventDefault() supaya toggle checkbox bawaan browser tidak bentrok dengan checked yang kita atur manual
+// di sini — tanpa ini, drag yang berpindah elemen sebelum mouseup bisa membuat baris awal tidak ke-apply
+// dan/atau checkbox "melompat" balik ke nilai lama saat browser menjalankan aksi toggle bawaannya sendiri.
+function txCbMouseDown(ev, id){
+  ev.preventDefault();
+  _txDragging = true;
+  _txDragValue = !_txSelected.has(id);
+  ev.target.checked = _txDragValue;
+  txApplySel(id, _txDragValue);
+}
+function txCbMouseEnter(ev, id){
+  if(!_txDragging) return;
+  ev.target.checked = _txDragValue;
+  txApplySel(id, _txDragValue);
+}
+// Shift+klik: pilih seluruh rentang baris antara klik terakhir dan baris ini (seperti Windows Explorer/Excel).
+// Nilai checked sudah ditentukan di txCbMouseDown (_txDragValue) — di sini cuma perlu tahu apakah Shift ditekan.
+function txCbClick(ev, id){
+  if(ev.shiftKey && _txLastClickedId!==null && _txLastClickedId!==id){
+    var idxA=_txVisibleIds.indexOf(_txLastClickedId), idxB=_txVisibleIds.indexOf(id);
+    if(idxA>-1 && idxB>-1){
+      var lo=Math.min(idxA,idxB), hi=Math.max(idxA,idxB);
+      for(var i=lo;i<=hi;i++) txApplySel(_txVisibleIds[i], _txDragValue);
+      renderTransaksi();
+    }
+  }
+  _txLastClickedId = id;
+}
+// "Pilih Semua" / checkbox header — HANYA memengaruhi baris yang sedang tampil (sesuai search/filter aktif),
+// bukan seluruh transaksi — supaya "Hapus Terpilih" tidak pernah menghapus di luar apa yang terlihat di layar.
+function txToggleAll(checked){
+  _txVisibleIds.forEach(function(id){ checked?_txSelected.add(id):_txSelected.delete(id); });
+  var b=el('tx-del-sel-btn'); if(b) b.style.display=_txSelected.size>0?'inline-flex':'none';
+  renderTransaksi();
+}
 function txSelectAll(){
-  var allOn=_txSelected.size===transactions.length&&transactions.length>0;
-  txToggleAll(!allOn); renderTransaksi();
+  var allOn=_txVisibleIds.length>0 && _txVisibleIds.every(function(id){return _txSelected.has(id);});
+  txToggleAll(!allOn);
 }
 function txDeleteSelected(){
   if(!_txSelected.size) return;
