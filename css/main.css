@@ -1,10 +1,12 @@
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  /* Link Monitor — violet glassmorphism palette, remapped to Money Watch tokens */
-  --bg:#08080f;--bg2:#13131f;--bg3:#18182a;--bg4:#1f1f33;--bg5:#2a2a44;
+  /* Palet netral gelap — diselaraskan dengan referensi invezgo.com (HSL 222° low-sat)
+     alih-alih hitam bernuansa ungu/glow yang lama. Aksen indigo Money Watch dipertahankan. */
+  --bg:#131416;--bg2:#18191c;--bg3:#1e2023;--bg4:#25272a;--bg5:#2d2f33;
   --accent:#818cf8;--accent2:#6366f1;--green:#34d399;--red:#f87171;--amber:#fbbf24;--purple:#c084fc;--coral:#fb923c;--teal:#34d399;--blue:#818cf8;
-  --text:#e8e8f4;--text2:#a8a8c8;--text3:#6b6b8a;
-  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.12);
+  --text:#fafafa;--text2:#b3b3b8;--text3:#7d7d84;
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);
+  --radius:9px;
   --bb-orange:#818cf8;--bb-grid:rgba(129,140,248,0.06);
   --tv-buy:#34d399;--tv-sell:#f87171;--tv-blue:#818cf8;
   --glow-c:0 0 20px rgba(129,140,248,.35),0 0 40px rgba(129,140,248,.15);
@@ -13,21 +15,16 @@
   --spring:.22s cubic-bezier(.34,1.56,.64,1);
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;font-size:13px;overflow:hidden;-webkit-font-smoothing:antialiased}
-body{
-  background:
-    radial-gradient(ellipse 800px 500px at 85% -5%, rgba(129,140,248,.08) 0%, transparent 60%),
-    radial-gradient(ellipse 600px 400px at -5% 100%, rgba(192,132,252,.06) 0%, transparent 55%),
-    var(--bg);
-}
+body{background:var(--bg)} /* latar datar solid — tanpa glow gradasi dekoratif, mengikuti referensi */
 body::before{content:'';position:fixed;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 0%,rgba(129,140,248,.5) 40%,rgba(192,132,252,.4) 60%,transparent 100%);z-index:9999;pointer-events:none;display:block}
-body::after{display:none} /* Structured Minimalism — pola titik dekoratif dihilangkan, latar dibiarkan bersih */
+body::after{display:none}
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:var(--bg2)}
 ::-webkit-scrollbar-thumb{background:rgba(129,140,248,.25);border-radius:2px}
 ::-webkit-scrollbar-thumb:hover{background:rgba(129,140,248,.5)}
 ::selection{background:rgba(129,140,248,.3);color:#fff}
 /* TICKER TAPE */
-.ticker-wrap{background:rgba(19,19,31,.8);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:24px;overflow:hidden;display:flex;align-items:center;flex-shrink:0;position:relative}
+.ticker-wrap{background:rgba(24,25,28,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:24px;overflow:hidden;display:flex;align-items:center;flex-shrink:0;position:relative}
 .ticker-wrap::before,.ticker-wrap::after{content:'';position:absolute;top:0;bottom:0;width:40px;z-index:2;pointer-events:none}
 .ticker-wrap::before{left:0;background:linear-gradient(90deg,var(--bg2),transparent)}
 .ticker-wrap::after{right:0;background:linear-gradient(270deg,var(--bg2),transparent)}
@@ -41,7 +38,7 @@ body::after{display:none} /* Structured Minimalism — pola titik dekoratif dihi
 .app{display:flex;flex-direction:column;height:100vh}
 
 /* TOPBAR — TradingView style */
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 12px;height:46px;background:rgba(19,19,31,.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);flex-shrink:0;z-index:100;gap:10px;position:relative}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 12px;height:46px;background:rgba(24,25,28,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);flex-shrink:0;z-index:100;gap:10px;position:relative}
 .topbar::after{display:none}
 .logo{font-size:15px;font-weight:700;color:var(--text);letter-spacing:.5px;font-family:'Orbitron',sans-serif;flex-shrink:0;text-transform:none;text-shadow:0 0 16px rgba(129,140,248,.35)}
 .logo span{color:var(--text3)}
@@ -81,9 +78,9 @@ body::after{display:none} /* Structured Minimalism — pola titik dekoratif dihi
 .g2c{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px}
 
-/* METRIC — Structured Minimalism: tanpa kotak/border, cukup garis bawah tipis + spasi */
-.metric{background:none;border:none;border-bottom:1px solid var(--border);border-radius:0;padding:4px 4px 14px;position:relative;transition:border-color .18s ease}
-.metric:hover{border-bottom-color:rgba(129,140,248,.4)}
+/* METRIC — kartu tipis ala invezgo.com: latar & border nyaris tak kentara, radius sedang */
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;position:relative;transition:border-color .18s ease}
+.metric:hover{border-color:rgba(129,140,248,.35)}
 .metric::before{display:none}
 .mlabel{font-size:11px;color:var(--text3);letter-spacing:0;font-family:'Inter',sans-serif;margin-bottom:7px;font-weight:400}
 .mval{font-size:18px;font-weight:600;font-family:'Share Tech Mono',monospace;line-height:1}
@@ -91,10 +88,10 @@ body::after{display:none} /* Structured Minimalism — pola titik dekoratif dihi
 .msub{font-size:11px;margin-top:5px;font-family:'Inter',sans-serif}
 .up{color:var(--green)}.dn{color:var(--red)}.neu{color:var(--text2)}.amb{color:var(--amber)}
 
-/* CARD — Structured Minimalism: tanpa panel/kotak, pemisah lewat whitespace + garis tipis di bawah judul */
-.card{background:none;border:none;border-radius:0;padding:16px 4px;backdrop-filter:none}
+/* CARD — kartu tipis serupa, tanpa blur berat, radius sedang konsisten dengan .metric */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;backdrop-filter:none}
 .ctitle{font-size:11px;color:var(--text3);letter-spacing:0;font-family:'Inter',sans-serif;font-weight:500}
-.cheader{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;padding-bottom:11px;border-bottom:1px solid var(--border)}
+.cheader{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
 
 /* BTN */
 .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border2);font-family:'Inter',sans-serif;letter-spacing:0;text-transform:none;transition:all var(--spring);background:rgba(255,255,255,.04);color:var(--text2)}
@@ -150,7 +147,7 @@ body::after{display:none} /* Structured Minimalism — pola titik dekoratif dihi
 /* MODAL */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:999;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
 .overlay.on{display:flex}
-.modal{background:rgba(19,19,31,.97);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:24px;width:540px;max-width:95vw;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 0 1px rgba(129,140,248,.08)}
+.modal{background:var(--bg3);backdrop-filter:blur(20px);border:1px solid var(--border2);border-radius:14px;padding:24px;width:540px;max-width:95vw;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 0 1px rgba(129,140,248,.08)}
 .mhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
 .mtitle{font-size:15px;font-weight:600;font-family:'Inter',sans-serif;letter-spacing:0}
 .mclose{background:none;border:1px solid var(--border2);color:var(--text3);cursor:pointer;font-size:14px;line-height:1;padding:4px 9px;border-radius:8px;font-family:sans-serif}
@@ -212,7 +209,7 @@ body::after{display:none} /* Structured Minimalism — pola titik dekoratif dihi
 .nav-dd-btn{padding:6px 13px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text3);background:none;border:none;font-family:'Inter',sans-serif;letter-spacing:0;text-transform:none;transition:all var(--spring);white-space:nowrap}
 .nav-dd-btn:hover{color:var(--text);background:rgba(255,255,255,.06)}
 .nav-dd-btn.on{background:rgba(129,140,248,.15);color:var(--accent)}
-.nav-dd-menu{display:none;position:fixed;top:52px;background:rgba(19,19,31,.97);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:5px;min-width:170px;z-index:9999;box-shadow:0 8px 40px rgba(0,0,0,.6),0 0 0 1px rgba(129,140,248,.08)}
+.nav-dd-menu{display:none;position:fixed;top:52px;background:var(--bg3);backdrop-filter:blur(20px);border:1px solid var(--border2);border-radius:10px;padding:5px;min-width:170px;z-index:9999;box-shadow:0 8px 40px rgba(0,0,0,.6),0 0 0 1px rgba(129,140,248,.08)}
 .nav-dd-menu.open{display:flex;flex-direction:column}
 .nav-dd-menu button{padding:8px 13px;border-radius:9px;font-size:12px;font-weight:400;cursor:pointer;color:var(--text2);background:none;border:none;font-family:'Inter',sans-serif;text-align:left;transition:all .12s;white-space:nowrap;width:100%;letter-spacing:0}
 .nav-dd-menu button:hover{background:rgba(129,140,248,.1);color:var(--text)}
@@ -242,7 +239,7 @@ body::after{display:none} /* Structured Minimalism — pola titik dekoratif dihi
     radial-gradient(ellipse 600px 400px at -5% 100%, rgba(192,132,252,.08) 0%, transparent 55%),
     var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column}
 #auth-overlay.hidden{display:none}
-.auth-box{background:rgba(19,19,31,.9);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:36px 40px;width:380px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 0 1px rgba(129,140,248,.08)}
+.auth-box{background:var(--bg3);backdrop-filter:blur(20px);border:1px solid var(--border2);border-radius:14px;padding:36px 40px;width:380px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 0 1px rgba(129,140,248,.08)}
 .auth-logo{font-size:20px;font-weight:700;color:var(--text);letter-spacing:.3px;font-family:'Orbitron',sans-serif;text-align:center;margin-bottom:4px;text-shadow:0 0 16px rgba(129,140,248,.4)}
 .auth-logo span{color:var(--text3)}
 .auth-sub{text-align:center;font-size:12px;color:var(--text3);font-family:'Inter',sans-serif;margin-bottom:28px}
@@ -265,28 +262,62 @@ body::after{display:none} /* Structured Minimalism — pola titik dekoratif dihi
 
 /* ── SIDEBAR NAV (tab dipindah ke samping) ── */
 .main-row{flex:1;display:flex;min-height:0}
-.side-nav{width:198px;flex-shrink:0;overflow-y:auto;background:rgba(19,19,31,.72);backdrop-filter:blur(14px);border-right:1px solid var(--border);padding:8px 8px 20px;display:flex;flex-direction:column}
-.side-nav button{display:flex;align-items:center;gap:7px;width:100%;text-align:left;padding:7px 10px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text2);background:none;border:none;font-family:'Inter',sans-serif;transition:all var(--spring);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side-nav{width:212px;flex-shrink:0;background:rgba(19,20,22,.8);backdrop-filter:blur(14px);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:0;transition:width .18s ease}
+.side-nav button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:7px 9px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text2);background:none;border:1px solid transparent;font-family:'Inter',sans-serif;transition:all var(--spring);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side-nav button i.ti{font-size:15px;flex-shrink:0;width:16px;text-align:center;color:var(--text3);transition:color var(--spring)}
+.side-label{overflow:hidden;text-overflow:ellipsis}
 .side-nav button:hover{color:var(--text);background:rgba(255,255,255,.06)}
-.side-nav button.on{background:rgba(129,140,248,.15);color:var(--accent);font-weight:600;box-shadow:inset 2px 0 0 var(--accent)}
-.side-nav::-webkit-scrollbar{width:3px}
+.side-nav button:hover i.ti{color:var(--text2)}
+/* Active — kartu bergaris (bukan blok solid) */
+.side-nav button.on{background:rgba(129,140,248,.1);color:var(--accent);font-weight:600;border-color:rgba(129,140,248,.45)}
+.side-nav button.on i.ti{color:var(--accent)}
 .nav-due-badge{margin-left:auto;flex-shrink:0;background:var(--red);color:#fff;font-size:9px;font-weight:700;line-height:1;padding:2px 5px;border-radius:20px;font-family:'IBM Plex Mono',monospace;min-width:14px;text-align:center}
 
-/* ── Sidebar groups — "spoiler"/accordion agar daftar panjang tidak berantakan ── */
+/* ── Toolbar sidebar: tombol ciutkan + kolom cari ── */
+.side-toolbar{display:flex;align-items:center;gap:6px;padding:10px 8px;flex-shrink:0;border-bottom:1px solid var(--border)}
+.side-collapse-btn{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;background:none;border:1px solid var(--border2);color:var(--text3);cursor:pointer;font-size:14px;transition:all .15s}
+.side-collapse-btn:hover{color:var(--text);background:rgba(255,255,255,.06)}
+.side-search-wrap{flex:1;min-width:0;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:8px;padding:5px 8px;overflow:hidden}
+.side-search-wrap i.ti{font-size:13px;color:var(--text3);flex-shrink:0}
+.side-search-input{flex:1;min-width:0;background:none;border:none;outline:none;color:var(--text);font-size:11.5px;font-family:'Inter',sans-serif}
+.side-search-input::placeholder{color:var(--text3)}
+.side-kbd{flex-shrink:0;font-size:9px;font-family:'IBM Plex Mono',monospace;color:var(--text3);background:rgba(255,255,255,.06);border:1px solid var(--border2);border-radius:4px;padding:1px 5px;letter-spacing:.02em}
+
+/* ── Area scroll (daftar menu) — terpisah dari toolbar supaya toolbar tetap terlihat ── */
+.side-nav-scroll{flex:1;min-height:0;overflow-y:auto;padding:8px 8px 20px}
+.side-nav-scroll::-webkit-scrollbar{width:3px}
+
+/* ── Sidebar groups — "spoiler"/accordion + garis panduan indentasi ── */
 .side-group{margin-top:2px}
-.side-sec-toggle{display:flex!important;align-items:center;justify-content:space-between;width:100%;padding:10px 10px 10px 8px!important;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3)!important;background:none;border:none;cursor:pointer;border-radius:8px}
+.side-sec-toggle{display:flex!important;align-items:center;gap:9px;width:100%;padding:10px 9px!important;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3)!important;background:none;border:none;cursor:pointer;border-radius:8px}
 .side-sec-toggle:hover{color:var(--text2)!important;background:rgba(255,255,255,.04)}
-.side-chevron{font-size:9px;transition:transform .2s ease;color:var(--text3)}
+.side-sec-toggle i.ti{font-size:13px;width:16px;text-align:center;flex-shrink:0}
+.side-sec-toggle .side-label{flex:1}
+.side-chevron{font-size:9px;transition:transform .2s ease;color:var(--text3);margin-left:auto;flex-shrink:0}
 .side-group.open .side-chevron{transform:rotate(180deg)}
-.side-group-items{max-height:0;overflow:hidden;transition:max-height .25s ease}
+.side-group-items{max-height:0;overflow:hidden;transition:max-height .25s ease;margin-left:16px;padding-left:8px;border-left:1px solid var(--border)}
 .side-group.open .side-group-items{max-height:400px}
 .side-group.has-active .side-sec-toggle{color:var(--accent)!important}
+.side-group.has-active .side-sec-toggle i.ti{color:var(--accent)}
+
+/* ── Ciutkan sidebar (desktop) — sembunyikan label/toolbar teks, sisakan ikon ── */
+.side-nav.collapsed{width:56px}
+.side-nav.collapsed .side-label,.side-nav.collapsed .side-chevron,.side-nav.collapsed .side-search-wrap,.side-nav.collapsed .nav-due-badge{display:none}
+.side-nav.collapsed .side-toolbar{justify-content:center}
+.side-nav.collapsed .side-group-items{margin-left:0;padding-left:0;border-left:none}
+.side-nav.collapsed .side-nav button{justify-content:center;padding:8px 4px}
+.side-nav.collapsed .side-sec-toggle{justify-content:center;padding:8px 4px!important}
+
+/* ── Filter pencarian sidebar — sembunyikan yang tidak cocok, buka grup terkait ── */
+.side-nav button.side-hit-hidden{display:none!important}
 
 @media(max-width:900px){
-  .side-nav{width:56px}
-  .side-sec-toggle span:first-child,.side-chevron{display:none}
-  .side-group-items{max-height:none!important}
-  .side-nav button{justify-content:center;padding:8px 4px}
+  .side-nav:not(.collapsed){width:56px}
+  .side-nav:not(.collapsed) .side-label,.side-nav:not(.collapsed) .side-chevron,.side-nav:not(.collapsed) .side-search-wrap,.side-nav:not(.collapsed) .nav-due-badge{display:none}
+  .side-nav:not(.collapsed) .side-toolbar{justify-content:center}
+  .side-nav:not(.collapsed) .side-group-items{max-height:none!important;margin-left:0;padding-left:0;border-left:none}
+  .side-nav:not(.collapsed) .side-nav button{justify-content:center;padding:8px 4px}
+  .side-nav:not(.collapsed) .side-sec-toggle{justify-content:center;padding:8px 4px!important}
 }
 
 /* ══════════════════════════════════════════════
@@ -305,7 +336,7 @@ html,body{font-size:14px}
 .mval{font-size:22px}
 .mval.lg{font-size:27px}
 .msub{font-size:12px}
-.metric{padding:6px 6px 16px}
+.metric{padding:13px 15px}
 .ctitle{font-size:12.5px;font-weight:600;color:var(--text2)}
 .btn{font-size:13px;padding:8px 15px}
 .btn-sm{font-size:12px;padding:6px 12px}
@@ -361,8 +392,8 @@ html,body{font-size:14px}
 
   .ptitle{font-size:17px!important}
   .mval.lg{font-size:22px!important}
-  .card{padding:13px 2px!important}
-  .metric{padding:4px 2px 12px!important}
+  .card{padding:12px!important}
+  .metric{padding:11px 12px!important}
 }
 
 /* ══════════════════════════════════════════════

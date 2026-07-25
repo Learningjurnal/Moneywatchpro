@@ -6,14 +6,14 @@
 <title>Money Watch Pro — Portofolio, Wealth & Analisa Quant</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23131324'/><path d='M7 21 L13 13 L18 17 L25 8' stroke='%2334d399' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/><circle cx='25' cy='8' r='2' fill='%2334d399'/></svg>">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/00-config.js?v=20260723z"></script>
+<script src="js/00-config.js?v=20260724c"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.0/dist/ort.min.js"></script>
-<link rel="stylesheet" href="css/main.css?v=20260723z">
-<link rel="stylesheet" href="css/wealth.css?v=20260723z">
+<link rel="stylesheet" href="css/main.css?v=20260724c">
+<link rel="stylesheet" href="css/wealth.css?v=20260724c">
 </head>
 <body>
 <body>
@@ -171,70 +171,80 @@
 
 <!-- SIDEBAR NAV -->
 <nav class="nav side-nav" id="side-nav">
-  <button class="on" onclick="goPage('dashboard',this)" style="margin-top:6px">📊 Dashboard</button>
+  <div class="side-toolbar">
+    <button class="side-collapse-btn" onclick="sideToggleCollapse()" aria-label="Ciutkan/lebarkan sidebar" title="Ciutkan/lebarkan sidebar"><i class="ti ti-layout-sidebar"></i></button>
+    <div class="side-search-wrap">
+      <i class="ti ti-search"></i>
+      <input type="text" id="side-nav-search" class="side-search-input" placeholder="Cari halaman..." oninput="sideNavFilter(this.value)" onkeydown="if(event.key==='Escape'){this.value='';sideNavFilter('');this.blur();}">
+      <span class="side-kbd">Ctrl K</span>
+    </div>
+  </div>
+  <div class="side-nav-scroll" id="side-nav-scroll">
+  <button class="on" onclick="goPage('dashboard',this)" style="margin-top:2px"><i class="ti ti-layout-dashboard"></i><span class="side-label">Dashboard</span></button>
 
   <div class="side-group" data-group="portofolio">
-    <button class="side-sec-toggle" onclick="sideToggleGroup(this)"><span>Portofolio</span><span class="side-chevron">▾</span></button>
+    <button class="side-sec-toggle" onclick="sideToggleGroup(this)"><i class="ti ti-briefcase"></i><span class="side-label">Portofolio</span><span class="side-chevron">▾</span></button>
     <div class="side-group-items">
-      <button onclick="goPage('portofolio',this)">📈 Saham IDX</button>
-      <button onclick="goPage('crypto',this)">🪙 Crypto</button>
-      <button onclick="goPage('reksadana',this)">🏦 Reksa Dana</button>
-      <button onclick="goPage('etf',this)">📊 ETF AS</button>
-      <button onclick="goPage('sektoral',this)">🏗 Sektoral</button>
+      <button onclick="goPage('portofolio',this)"><i class="ti ti-chart-line"></i><span class="side-label">Saham IDX</span></button>
+      <button onclick="goPage('crypto',this)"><i class="ti ti-currency-bitcoin"></i><span class="side-label">Crypto</span></button>
+      <button onclick="goPage('reksadana',this)"><i class="ti ti-building-bank"></i><span class="side-label">Reksa Dana</span></button>
+      <button onclick="goPage('etf',this)"><i class="ti ti-chart-bar"></i><span class="side-label">ETF AS</span></button>
+      <button onclick="goPage('sektoral',this)"><i class="ti ti-chart-pie"></i><span class="side-label">Sektoral</span></button>
     </div>
   </div>
 
   <div class="side-group" data-group="analitik">
-    <button class="side-sec-toggle" onclick="sideToggleGroup(this)"><span>Analitik Pra-Beli</span><span class="side-chevron">▾</span></button>
+    <button class="side-sec-toggle" onclick="sideToggleGroup(this)"><i class="ti ti-telescope"></i><span class="side-label">Analitik Pra-Beli</span><span class="side-chevron">▾</span></button>
     <div class="side-group-items">
-      <button onclick="goPage('hargawajar',this)">💎 Harga Wajar</button>
-      <button onclick="goPage('flowscan',this)">🔬 FlowScan</button>
-      <button onclick="goPage('candle',this)">🕯 Candle Analysis</button>
-      <button onclick="goPage('backtester',this)">⚡ Backtester</button>
-      <button onclick="goPage('screener',this)">🔍 Screener LQ45</button>
-      <button onclick="goPage('pairs',this)">🔀 Pairs Trading</button>
+      <button onclick="goPage('hargawajar',this)"><i class="ti ti-scale"></i><span class="side-label">Harga Wajar</span></button>
+      <button onclick="goPage('flowscan',this)"><i class="ti ti-activity"></i><span class="side-label">FlowScan</span></button>
+      <button onclick="goPage('candle',this)"><i class="ti ti-chart-candle"></i><span class="side-label">Candle Analysis</span></button>
+      <button onclick="goPage('backtester',this)"><i class="ti ti-history"></i><span class="side-label">Backtester</span></button>
+      <button onclick="goPage('screener',this)"><i class="ti ti-filter"></i><span class="side-label">Screener LQ45</span></button>
+      <button onclick="goPage('pairs',this)"><i class="ti ti-arrows-left-right"></i><span class="side-label">Pairs Trading</span></button>
     </div>
   </div>
 
   <div class="side-group" data-group="market">
-    <button class="side-sec-toggle" onclick="sideToggleGroup(this)"><span>Market</span><span class="side-chevron">▾</span></button>
+    <button class="side-sec-toggle" onclick="sideToggleGroup(this)"><i class="ti ti-world"></i><span class="side-label">Market</span><span class="side-chevron">▾</span></button>
     <div class="side-group-items">
-      <button onclick="goPage('ranking',this)">🏆 Ranking</button>
-      <button onclick="goPage('heatmap',this)">🌡 Heatmap &amp; Factor</button>
-      <button onclick="goPage('correlation',this)">📉 Correlation</button>
-      <button onclick="goPage('monthly-returns',this)">📅 Monthly Returns</button>
-      <button onclick="goPage('scanner',this)">📡 Scanner</button>
+      <button onclick="goPage('ranking',this)"><i class="ti ti-trophy"></i><span class="side-label">Ranking</span></button>
+      <button onclick="goPage('heatmap',this)"><i class="ti ti-layout-grid"></i><span class="side-label">Heatmap &amp; Factor</span></button>
+      <button onclick="goPage('correlation',this)"><i class="ti ti-chart-dots"></i><span class="side-label">Correlation</span></button>
+      <button onclick="goPage('monthly-returns',this)"><i class="ti ti-calendar"></i><span class="side-label">Monthly Returns</span></button>
+      <button onclick="goPage('scanner',this)"><i class="ti ti-radar-2"></i><span class="side-label">Scanner</span></button>
     </div>
   </div>
 
   <div class="side-group" data-group="keuangan">
-    <button class="side-sec-toggle" onclick="sideToggleGroup(this)"><span>Keuangan</span><span class="side-chevron">▾</span></button>
+    <button class="side-sec-toggle" onclick="sideToggleGroup(this)"><i class="ti ti-wallet"></i><span class="side-label">Keuangan</span><span class="side-chevron">▾</span></button>
     <div class="side-group-items">
-      <button onclick="goPage('transaksi',this)">📋 Transaksi</button>
-      <button onclick="goPage('dividen',this)">💵 Dividen</button>
-      <button onclick="goPage('divinvest',this)">💹 Div. Investing</button>
-      <button onclick="goPage('rdn',this)">🏦 RDN &amp; Kas</button>
+      <button onclick="goPage('transaksi',this)"><i class="ti ti-receipt-2"></i><span class="side-label">Transaksi</span></button>
+      <button onclick="goPage('dividen',this)"><i class="ti ti-cash"></i><span class="side-label">Dividen</span></button>
+      <button onclick="goPage('divinvest',this)"><i class="ti ti-trending-up"></i><span class="side-label">Div. Investing</span></button>
+      <button onclick="goPage('rdn',this)"><i class="ti ti-building-bank"></i><span class="side-label">RDN &amp; Kas</span></button>
     </div>
   </div>
 
   <div class="side-group" data-group="wealth">
-    <button class="side-sec-toggle" onclick="sideToggleGroup(this)"><span>Wealth</span><span class="side-chevron">▾</span></button>
+    <button class="side-sec-toggle" onclick="sideToggleGroup(this)"><i class="ti ti-diamond"></i><span class="side-label">Wealth</span><span class="side-chevron">▾</span></button>
     <div class="side-group-items">
-      <button onclick="goPage('wealth',this)">🌐 Net Worth</button>
-      <button onclick="goPage('wbank',this)">🏦 Bank &amp; Darurat</button>
-      <button onclick="goPage('wdebt',this)">💳 Hutang <span id="debt-due-badge" class="nav-due-badge" style="display:none" title="Hutang jatuh tempo ≤7 hari"></span></button>
-      <button onclick="goPage('wpiutang',this)">🧾 Piutang <span id="piutang-due-badge" class="nav-due-badge" style="display:none" title="Piutang jatuh tempo ≤7 hari"></span></button>
-      <button onclick="goPage('wfire',this)">🔥 FIRE &amp; Proyeksi</button>
+      <button onclick="goPage('wealth',this)"><i class="ti ti-report-money"></i><span class="side-label">Net Worth</span></button>
+      <button onclick="goPage('wbank',this)"><i class="ti ti-building-bank"></i><span class="side-label">Bank &amp; Darurat</span></button>
+      <button onclick="goPage('wdebt',this)"><i class="ti ti-credit-card"></i><span class="side-label">Hutang</span> <span id="debt-due-badge" class="nav-due-badge" style="display:none" title="Hutang jatuh tempo ≤7 hari"></span></button>
+      <button onclick="goPage('wpiutang',this)"><i class="ti ti-file-invoice"></i><span class="side-label">Piutang</span> <span id="piutang-due-badge" class="nav-due-badge" style="display:none" title="Piutang jatuh tempo ≤7 hari"></span></button>
+      <button onclick="goPage('wfire',this)"><i class="ti ti-flame"></i><span class="side-label">FIRE &amp; Proyeksi</span></button>
     </div>
   </div>
 
   <div class="side-group" data-group="pengaturan">
-    <button class="side-sec-toggle" onclick="sideToggleGroup(this)"><span>Pengaturan</span><span class="side-chevron">▾</span></button>
+    <button class="side-sec-toggle" onclick="sideToggleGroup(this)"><i class="ti ti-settings"></i><span class="side-label">Pengaturan</span><span class="side-chevron">▾</span></button>
     <div class="side-group-items">
-      <button onclick="goPage('pajak',this)">🧾 Pajak &amp; PPh</button>
-      <button onclick="openFinnhubSettings()">🔌 Koneksi Data</button>
-      <button onclick="goPage('admin',this)">🛠 Kelola Daftar Saham</button>
+      <button onclick="goPage('pajak',this)"><i class="ti ti-receipt-tax"></i><span class="side-label">Pajak &amp; PPh</span></button>
+      <button onclick="openFinnhubSettings()"><i class="ti ti-plug"></i><span class="side-label">Koneksi Data</span></button>
+      <button onclick="goPage('admin',this)"><i class="ti ti-list-details"></i><span class="side-label">Kelola Daftar Saham</span></button>
     </div>
+  </div>
   </div>
 </nav>
 
@@ -2368,21 +2378,21 @@
   </div>
 </div>
 
-<script src="js/01-data.js?v=20260723z"></script>
-<script src="js/02-storage.js?v=20260723z"></script>
-<script src="js/03-engine.js?v=20260723z"></script>
-<script src="js/04-render.js?v=20260723z"></script>
-<script src="js/05-assets.js?v=20260723z"></script>
-<script src="js/06-analysis-router.js?v=20260723z"></script>
-<script src="js/07-flowscan.js?v=20260723z"></script>
-<script src="js/08-auth.js?v=20260723z"></script>
-<script src="js/09-divinvest.js?v=20260723z"></script>
-<script src="js/10-hargawajar.js?v=20260723z"></script>
-<script src="js/11-quant.js?v=20260723z"></script>
-<script src="js/12-clean.js?v=20260723z"></script>
-<script src="js/13-realdata.js?v=20260723z"></script>
-<script src="js/14-admin.js?v=20260723z"></script>
-<script src="js/15-txbulk.js?v=20260723z"></script>
-<script src="js/20-wealth.js?v=20260723z"></script>
+<script src="js/01-data.js?v=20260724c"></script>
+<script src="js/02-storage.js?v=20260724c"></script>
+<script src="js/03-engine.js?v=20260724c"></script>
+<script src="js/04-render.js?v=20260724c"></script>
+<script src="js/05-assets.js?v=20260724c"></script>
+<script src="js/06-analysis-router.js?v=20260724c"></script>
+<script src="js/07-flowscan.js?v=20260724c"></script>
+<script src="js/08-auth.js?v=20260724c"></script>
+<script src="js/09-divinvest.js?v=20260724c"></script>
+<script src="js/10-hargawajar.js?v=20260724c"></script>
+<script src="js/11-quant.js?v=20260724c"></script>
+<script src="js/12-clean.js?v=20260724c"></script>
+<script src="js/13-realdata.js?v=20260724c"></script>
+<script src="js/14-admin.js?v=20260724c"></script>
+<script src="js/15-txbulk.js?v=20260724c"></script>
+<script src="js/20-wealth.js?v=20260724c"></script>
 </body>
 </html>

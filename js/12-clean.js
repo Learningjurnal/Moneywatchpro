@@ -89,3 +89,58 @@ window.goPage = function(page, btn){
   _sideGoPage.call(this, page, btn);
   sideSyncActiveGroup();
 };
+
+// ── 5. Ciutkan sidebar (desktop) — ikon saja, status tersimpan per browser ──
+var SIDE_COLLAPSE_KEY = 'mw_side_collapsed';
+function sideToggleCollapse(){
+  var nav = document.getElementById('side-nav'); if(!nav) return;
+  var collapsed = nav.classList.toggle('collapsed');
+  try{ localStorage.setItem(SIDE_COLLAPSE_KEY, collapsed?'1':'0'); }catch(e){}
+}
+(function sideRestoreCollapse(){
+  try{
+    if(localStorage.getItem(SIDE_COLLAPSE_KEY)==='1'){
+      var apply=function(){ var nav=document.getElementById('side-nav'); if(nav) nav.classList.add('collapsed'); };
+      if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', apply); else apply();
+    }
+  }catch(e){}
+})();
+
+// ── 6. Cari halaman di sidebar — filter tombol yang cocok, buka grup terkait ──
+function sideNavFilter(q){
+  q=(q||'').trim().toLowerCase();
+  var groups = document.querySelectorAll('.side-group');
+  if(!q){
+    document.querySelectorAll('.side-nav button').forEach(function(b){ b.classList.remove('side-hit-hidden'); });
+    // kembalikan status buka/tutup grup ke preferensi tersimpan, bukan dipaksa terbuka semua
+    var saved=null; try{ var r=localStorage.getItem(SIDE_OPEN_KEY); if(r) saved=JSON.parse(r); }catch(e){}
+    groups.forEach(function(g){
+      var name=g.getAttribute('data-group');
+      g.classList.toggle('open', !!(saved && saved.indexOf(name)>-1));
+    });
+    sideSyncActiveGroup();
+    return;
+  }
+  groups.forEach(function(g){
+    var anyMatch=false;
+    g.querySelectorAll('.side-group-items button').forEach(function(b){
+      var label=(b.querySelector('.side-label')?b.querySelector('.side-label').textContent:b.textContent).toLowerCase();
+      var hit=label.indexOf(q)>-1;
+      b.classList.toggle('side-hit-hidden', !hit);
+      if(hit) anyMatch=true;
+    });
+    g.classList.toggle('open', anyMatch);
+  });
+  var topBtn=document.querySelector('.side-nav-scroll > button.on')||document.querySelector('.side-nav-scroll > button');
+  document.querySelectorAll('.side-nav-scroll > button').forEach(function(b){
+    var label=(b.querySelector('.side-label')?b.querySelector('.side-label').textContent:b.textContent).toLowerCase();
+    b.classList.toggle('side-hit-hidden', label.indexOf(q)===-1);
+  });
+}
+// Pintasan keyboard Ctrl/Cmd+K untuk fokus ke kolom cari sidebar
+document.addEventListener('keydown', function(e){
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){
+    var inp=document.getElementById('side-nav-search');
+    if(inp){ e.preventDefault(); inp.focus(); inp.select(); }
+  }
+});
