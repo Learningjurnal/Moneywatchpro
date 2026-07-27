@@ -1,14 +1,37 @@
 // ============================================================
 // SUPABASE DATA SYNC
 // ============================================================
-async function _supaReplaceTable(table, uid, rows){
-  // Atomically replace: only delete after we know rows are ready to insert.
-  // If insert fails, we throw so caller knows data may be inconsistent.
-  var delRes = await _supabase.from(table).delete().eq('user_id', uid);
-  if(delRes.error) throw new Error('Delete '+table+' failed: '+delRes.error.message);
+async function _supaReplaceTable(table, uid, rows, idCol){
+  // Upsert dulu, baru hapus baris yang sudah tidak ada lokal — BUKAN
+  // delete-lalu-insert. Kalau delete jalan duluan dan insert berikutnya gagal
+  // (network putus, RLS, kolom mismatch, dll), baris di cloud sudah terlanjur
+  // hilang tanpa penggantinya, dan device lain yang login berikutnya akan
+  // menarik tabel kosong itu — persis gejala "data hilang saat pindah device".
+  // Dengan upsert dulu, kegagalan di tengah jalan tidak pernah menghapus data
+  // yang belum berhasil digantikan.
+  idCol = idCol || 'tx_id';
   if(rows && rows.length > 0){
-    var insRes = await _supabase.from(table).insert(rows);
-    if(insRes.error) throw new Error('Insert '+table+' failed: '+insRes.error.message);
+    var insRes = await _supabase.from(table).upsert(rows, {onConflict:'user_id,'+idCol});
+    if(insRes.error && /no unique or exclusion constraint|there is no unique/i.test(insRes.error.message||'')){
+      // Migrasi unique-constraint (lihat sql/schema_migration.sql) belum
+      // dijalankan di Supabase — fallback ke cara lama (delete-lalu-insert)
+      // supaya sync tetap jalan, sambil kasih peringatan di UI.
+      window._schemaOutdated = true;
+      if(typeof updateSchemaWarnBanner==='function') updateSchemaWarnBanner();
+      console.warn('Unique constraint untuk '+table+' belum ada. Jalankan sql/schema_migration.sql agar sync lebih aman terhadap kegagalan parsial.');
+      var delFallback = await _supabase.from(table).delete().eq('user_id', uid);
+      if(delFallback.error) throw new Error('Delete '+table+' failed: '+delFallback.error.message);
+      var insFallback = await _supabase.from(table).insert(rows);
+      if(insFallback.error) throw new Error('Insert '+table+' failed: '+insFallback.error.message);
+      return;
+    }
+    if(insRes.error) throw new Error('Simpan '+table+' gagal (data cloud lama TIDAK diubah): '+insRes.error.message);
+    var keepIds = rows.map(function(r){ return r[idCol]; });
+    var delRes = await _supabase.from(table).delete().eq('user_id', uid).not(idCol, 'in', '('+keepIds.join(',')+')');
+    if(delRes.error) console.warn('Bersihkan baris lama di '+table+' gagal (data baru aman tersimpan, hanya ada baris usang tersisa):', delRes.error.message);
+  } else {
+    var delAllRes = await _supabase.from(table).delete().eq('user_id', uid);
+    if(delAllRes.error) throw new Error('Hapus '+table+' gagal: '+delAllRes.error.message);
   }
 }
 
@@ -46,23 +69,23 @@ async function supaSaveAllData(){
     if(settingsRes.error) throw new Error('Upsert user_settings failed: '+settingsRes.error.message);
 
     await _supaReplaceTable('transactions', uid,
-      (transactions&&transactions.length>0) ? transactions.map(function(t){return {user_id:uid,tx_id:t.id,date:t.date,action:t.action,ticker:t.ticker,sekuritas:t.sekuritas,lot:t.lot,shares:t.shares,price:t.price,gross:t.gross,commission:t.commission,tax:t.tax,net:t.net,pl:t.pl||0};}) : null);
+      (transactions&&transactions.length>0) ? transactions.map(function(t){return {user_id:uid,tx_id:t.id,date:t.date,action:t.action,ticker:t.ticker,sekuritas:t.sekuritas,lot:t.lot,shares:t.shares,price:t.price,gross:t.gross,commission:t.commission,tax:t.tax,net:t.net,pl:t.pl||0};}) : null, 'tx_id');
 
     await _supaReplaceTable('dividends', uid,
-      (dividends&&dividends.length>0) ? dividends.map(function(d){return {user_id:uid,div_id:d.id,date:d.date,ticker:d.ticker,shares:d.shares,dps:d.dps,gross:d.gross,pph:d.pph,net:d.net,yield:d.yield||0};}) : null);
+      (dividends&&dividends.length>0) ? dividends.map(function(d){return {user_id:uid,div_id:d.id,date:d.date,ticker:d.ticker,shares:d.shares,dps:d.dps,gross:d.gross,pph:d.pph,net:d.net,yield:d.yield||0};}) : null, 'div_id');
 
     await _supaReplaceTable('rdn_mutations', uid,
-      (rdnMutations&&rdnMutations.length>0) ? rdnMutations.map(function(r){return {user_id:uid,rdn_id:r.id,date:r.date,type:r.type,description:r.description||'',amount_in:r.amountIn||0,amount_out:r.amountOut||0,balance:r.balance||0};}) : null);
+      (rdnMutations&&rdnMutations.length>0) ? rdnMutations.map(function(r){return {user_id:uid,rdn_id:r.id,date:r.date,type:r.type,description:r.description||'',amount_in:r.amountIn||0,amount_out:r.amountOut||0,balance:r.balance||0};}) : null, 'rdn_id');
 
     await _supaReplaceTable('crypto_tx', uid,
-      (cryptoTx&&cryptoTx.length>0) ? cryptoTx.map(function(c){return {user_id:uid,tx_id:c.id,date:c.date,action:c.action,coin:c.coin,amount:c.amount,price_idr:c.priceIdr||0,total_idr:c.totalIdr||0,pl:c.pl||0};}) : null);
+      (cryptoTx&&cryptoTx.length>0) ? cryptoTx.map(function(c){return {user_id:uid,tx_id:c.id,date:c.date,action:c.action,coin:c.coin,amount:c.amount,price_idr:c.priceIdr||0,total_idr:c.totalIdr||0,pl:c.pl||0};}) : null, 'tx_id');
 
     await _supaReplaceTable('etf_tx', uid,
-      (etfTx&&etfTx.length>0) ? etfTx.map(function(e){return {user_id:uid,tx_id:e.id,date:e.date,action:e.action,ticker:e.ticker,shares:e.shares,price_usd:e.priceUsd||0,total_usd:e.totalUsd||0,total_idr:e.totalIdr||0,kurs:e.kurs||0,pl_idr:e.pl||0};}) : null);
+      (etfTx&&etfTx.length>0) ? etfTx.map(function(e){return {user_id:uid,tx_id:e.id,date:e.date,action:e.action,ticker:e.ticker,shares:e.shares,price_usd:e.priceUsd||0,total_usd:e.totalUsd||0,total_idr:e.totalIdr||0,kurs:e.kurs||0,pl_idr:e.pl||0};}) : null, 'tx_id');
 
     var rdU=(rdTx||[]).filter(function(r){return r._userInput===true;});
     await _supaReplaceTable('rd_tx', uid,
-      rdU.length>0 ? rdU.map(function(r){return {user_id:uid,tx_id:r.id,date:r.date,action:r.action,name:r.name||'',platform:r.platform||'',units:r.units||0,nav:r.nav||0,total_idr:r.total||0,pl:r.pl||0};}) : null);
+      rdU.length>0 ? rdU.map(function(r){return {user_id:uid,tx_id:r.id,date:r.date,action:r.action,name:r.name||'',platform:r.platform||'',units:r.units||0,nav:r.nav||0,total_idr:r.total||0,pl:r.pl||0};}) : null, 'tx_id');
 
     var diRes = await _supabase.from('div_invest').upsert({user_id:uid,data:divInvestData||[],next_id:_divInvestId||1,updated_at:new Date().toISOString()},{onConflict:'user_id'});
     if(diRes.error) throw new Error('Upsert div_invest failed: '+diRes.error.message);
@@ -131,7 +154,14 @@ function saveData(){
     var payload={transactions:transactions,dividends:dividends,rdnMutations:rdnMutations,activeSekuritas:activeSekuritas,rdnBalance:rdnBalance,nextTxId:nextTxId,nextDivId:nextDivId,nextRdnId:nextRdnId,cryptoTx:cryptoTx,etfTx:etfTx,rdTx:rdTx,nextCryptoId:nextCryptoId,nextEtfId:nextEtfId,nextRdId:nextRdId,tradeStrategy:tradeStrategy,sekTaxOverride:sekTaxOverride,savedAt:new Date().toISOString()};
     localStorage.setItem(LS_KEY, JSON.stringify(payload));
   } catch(e){}
-  if(_currentUser){ supaSaveAllData().catch(function(e){console.warn('Supabase sync:',e);}); }
+  if(_currentUser){
+    supaSaveAllData().catch(function(e){
+      console.warn('Supabase sync:',e);
+      // Jangan diam-diam saja — kalau sync ke cloud gagal, user harus tahu
+      // supaya tidak berasumsi datanya aman untuk dibuka di device lain.
+      if(typeof showSaveStatus==='function') showSaveStatus('⚠ Gagal sinkron ke cloud — data hanya tersimpan di device ini', 'var(--red)');
+    });
+  }
 }
 
 function loadData(){ return loadDataFromLocalStorage(); }
