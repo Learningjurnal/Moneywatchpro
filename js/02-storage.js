@@ -148,6 +148,7 @@ function loadDataFromLocalStorage(){
 var LS_KEY = 'ihsg_pro_master_v5'; // bump: start fresh, manual entry only
 
 var tradeStrategy = {};
+var _cloudSyncFailed = false; // dipakai buat nahan banner peringatan sampai sync berikutnya sukses
 function saveData(){
   if(typeof _invalidatePortoCache==='function') _invalidatePortoCache();
   try {
@@ -155,13 +156,33 @@ function saveData(){
     localStorage.setItem(LS_KEY, JSON.stringify(payload));
   } catch(e){}
   if(_currentUser){
-    supaSaveAllData().catch(function(e){
-      console.warn('Supabase sync:',e);
-      // Jangan diam-diam saja — kalau sync ke cloud gagal, user harus tahu
-      // supaya tidak berasumsi datanya aman untuk dibuka di device lain.
-      if(typeof showSaveStatus==='function') showSaveStatus('⚠ Gagal sinkron ke cloud — data hanya tersimpan di device ini', 'var(--red)');
-    });
+    _syncToCloud(true);
+  } else {
+    // Tidak ada sesi login aktif — data HANYA di localStorage device ini.
+    // Ini persis skenario yang bikin data "hilang" di device lain, jadi
+    // harus kelihatan jelas, bukan cuma diam di console.
+    _cloudSyncFailed = true;
+    if(typeof showSaveStatus==='function') showSaveStatus('⚠ Belum login — data hanya tersimpan di device ini, TIDAK ke cloud', 'var(--red)', true);
   }
+}
+
+function _syncToCloud(allowRetry){
+  supaSaveAllData().then(function(){
+    _cloudSyncFailed = false;
+    if(typeof showSaveStatus==='function') showSaveStatus('✓ Tersimpan & tersinkron ke cloud');
+  }).catch(function(e){
+    console.warn('Supabase sync:',e);
+    _cloudSyncFailed = true;
+    // Jangan diam-diam saja — kalau sync ke cloud gagal, user harus tahu
+    // supaya tidak berasumsi datanya aman untuk dibuka di device lain.
+    // Banner ini TIDAK auto-hilang (lihat showSaveStatus) sampai sync sukses.
+    if(typeof showSaveStatus==='function') showSaveStatus('⚠ Gagal sinkron ke cloud — data hanya tersimpan di device ini', 'var(--red)', true);
+    if(allowRetry){
+      // Coba lagi sekali setelah beberapa detik — menutup celah gangguan
+      // jaringan sesaat supaya tidak butuh aksi manual dari user.
+      setTimeout(function(){ if(_currentUser) _syncToCloud(false); }, 8000);
+    }
+  });
 }
 
 function loadData(){ return loadDataFromLocalStorage(); }
@@ -318,13 +339,18 @@ function closeBackupModal(){
   el('backup-modal').style.display = 'none';
 }
 
-function showSaveStatus(msg, color){
+function showSaveStatus(msg, color, persist){
   var bar = el('save-status-bar');
   if(!bar) return;
   bar.textContent = msg;
   bar.style.color = color || 'var(--green)';
   bar.style.opacity = '1';
-  setTimeout(function(){ bar.style.opacity = '0'; }, 2000);
+  // persist=true (dipakai untuk peringatan gagal-sync) sengaja TIDAK auto-hilang
+  // dalam 2 detik — user harus benar-benar melihatnya, bukan sekilas lewat,
+  // supaya tidak berasumsi data sudah aman padahal belum tersinkron ke cloud.
+  if(!persist){
+    setTimeout(function(){ bar.style.opacity = '0'; }, 2000);
+  }
 }
 
 // ── Peringatan skema Supabase belum diperbarui — tampil di UI, bukan cuma console ──
