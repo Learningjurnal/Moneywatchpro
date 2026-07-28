@@ -146,6 +146,7 @@ function loadDataFromLocalStorage(){
 // LOCALSTORAGE — PERSISTENSI DATA
 // ============================================================
 var LS_KEY = 'ihsg_pro_master_v5'; // bump: start fresh, manual entry only
+var LS_PENDING_KEY = 'ihsg_sync_pending';
 
 var tradeStrategy = {};
 var _cloudSyncFailed = false; // dipakai buat nahan banner peringatan sampai sync berikutnya sukses
@@ -156,6 +157,13 @@ function saveData(){
     localStorage.setItem(LS_KEY, JSON.stringify(payload));
   } catch(e){}
   if(_currentUser){
+    // Tandai "ada perubahan lokal belum terkonfirmasi ke cloud" SEBELUM
+    // request sync dikirim. Kalau user refresh/tutup app sebelum sync
+    // selesai, penanda ini masih ada di localStorage saat boot berikutnya —
+    // supaya boot tahu TIDAK BOLEH menimpa data lokal dari cloud (yang
+    // mungkin masih versi lama), harus push dulu. Tanpa ini, refresh cepat
+    // setelah input data bisa bikin data baru hilang tertimpa cloud lama.
+    try{ localStorage.setItem(LS_PENDING_KEY,'1'); }catch(e){}
     _syncToCloud(true);
   } else {
     // Tidak ada sesi login aktif — data HANYA di localStorage device ini.
@@ -169,6 +177,7 @@ function saveData(){
 function _syncToCloud(allowRetry){
   supaSaveAllData().then(function(){
     _cloudSyncFailed = false;
+    try{ localStorage.setItem(LS_PENDING_KEY,'0'); }catch(e){}
     if(typeof showSaveStatus==='function') showSaveStatus('✓ Tersimpan & tersinkron ke cloud');
   }).catch(function(e){
     console.warn('Supabase sync:',e);
@@ -185,12 +194,27 @@ function _syncToCloud(allowRetry){
   });
 }
 
+// ── Dipanggil saat boot (authInit/login) — SATU-SATUNYA pintu masuk untuk
+// menarik data dari cloud. Kalau ada perubahan lokal yang belum terkonfirmasi
+// tersinkron (LS_PENDING_KEY==='1'), JANGAN tarik dari cloud sama sekali —
+// push dulu apa yang ada di localStorage, supaya data lokal yang lebih baru
+// tidak pernah tertimpa oleh cloud yang lebih lama. ──
+function safeCloudBoot(){
+  var pending = false;
+  try{ pending = localStorage.getItem(LS_PENDING_KEY)==='1'; }catch(e){}
+  if(pending){
+    console.warn('Ada perubahan lokal yang belum terkonfirmasi tersinkron — push ke cloud dulu, TIDAK menimpa dari cloud kali ini.');
+    return _syncToCloud(true);
+  }
+  return supaLoadAllData();
+}
+
 function loadData(){ return loadDataFromLocalStorage(); }
 
 function clearData(){
   if(!confirm('\u26a0\ufe0f Hapus SEMUA data transaksi tersimpan dan mulai dari awal?\n\nTindakan ini tidak bisa dibatalkan!')) return;
-  if(_currentUser){var uid=_currentUser.id;Promise.all([_supabase.from('transactions').delete().eq('user_id',uid),_supabase.from('dividends').delete().eq('user_id',uid),_supabase.from('rdn_mutations').delete().eq('user_id',uid),_supabase.from('crypto_tx').delete().eq('user_id',uid),_supabase.from('etf_tx').delete().eq('user_id',uid),_supabase.from('rd_tx').delete().eq('user_id',uid),_supabase.from('user_settings').delete().eq('user_id',uid),_supabase.from('div_invest').delete().eq('user_id',uid)]).then(function(){localStorage.removeItem('ihsg_pro_master_v5');location.reload();});}
-  else{localStorage.removeItem('ihsg_pro_master_v5');location.reload();}
+  if(_currentUser){var uid=_currentUser.id;Promise.all([_supabase.from('transactions').delete().eq('user_id',uid),_supabase.from('dividends').delete().eq('user_id',uid),_supabase.from('rdn_mutations').delete().eq('user_id',uid),_supabase.from('crypto_tx').delete().eq('user_id',uid),_supabase.from('etf_tx').delete().eq('user_id',uid),_supabase.from('rd_tx').delete().eq('user_id',uid),_supabase.from('user_settings').delete().eq('user_id',uid),_supabase.from('div_invest').delete().eq('user_id',uid)]).then(function(){localStorage.removeItem('ihsg_pro_master_v5');localStorage.removeItem(LS_PENDING_KEY);location.reload();});}
+  else{localStorage.removeItem('ihsg_pro_master_v5');localStorage.removeItem(LS_PENDING_KEY);location.reload();}
 }
 
 

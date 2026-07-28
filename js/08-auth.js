@@ -102,7 +102,7 @@ function authDoLogin(){
       if(result.error){ authShowErr('Email atau password salah. Coba lagi.'); return; }
       _currentUser=result.data.user;
       var displayName=(_currentUser.user_metadata&&_currentUser.user_metadata.display_name)||_currentUser.email||'User';
-      supaLoadAllData().then(function(){ authShowApp(displayName); }).catch(function(loadErr){ authShowErr('Login berhasil tapi gagal memuat data: '+(loadErr&&loadErr.message||'unknown')); if(btn){ btn.disabled=false; btn.textContent='Masuk \u2192'; } });
+      safeCloudBoot().then(function(){ authShowApp(displayName); }).catch(function(loadErr){ authShowErr('Login berhasil tapi gagal memuat data: '+(loadErr&&loadErr.message||'unknown')); if(btn){ btn.disabled=false; btn.textContent='Masuk \u2192'; } });
     })
     .catch(function(err){
       if(btn){ btn.disabled=false; btn.textContent='Masuk \u2192'; }
@@ -176,7 +176,7 @@ function authInit(){
     if(session&&session.user){
       _currentUser=session.user;
       var displayName=(_currentUser.user_metadata&&_currentUser.user_metadata.display_name)||_currentUser.email||'User';
-      supaLoadAllData().then(function(){ authShowApp(displayName); }).catch(function(){ authShowLogin(); });
+      safeCloudBoot().then(function(){ authShowApp(displayName); }).catch(function(){ authShowLogin(); });
     } else { authShowLogin(); }
   }).catch(function(){ authShowLogin(); });
   _supabase.auth.onAuthStateChange(function(event,session){
