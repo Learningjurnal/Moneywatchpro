@@ -204,7 +204,11 @@ function saveData(){
 }
 
 function _syncToCloud(allowRetry){
-  supaSaveAllData().then(function(){
+  // PENTING: harus `return` promise-nya — safeCloudBoot() dan pemanggil lain
+  // memanggil .then()/.catch() pada hasil fungsi ini. Tanpa return, hasilnya
+  // undefined dan .then() di pemanggil crash ("Cannot read properties of
+  // undefined (reading 'then')") — persis error yang muncul di layar login.
+  return supaSaveAllData().then(function(){
     _cloudSyncFailed = false;
     try{ localStorage.setItem(LS_PENDING_KEY,'0'); }catch(e){}
     if(typeof showSaveStatus==='function') showSaveStatus('✓ Tersimpan & tersinkron ke cloud');
