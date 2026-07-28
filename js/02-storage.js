@@ -68,24 +68,45 @@ async function supaSaveAllData(){
     }
     if(settingsRes.error) throw new Error('Upsert user_settings failed: '+settingsRes.error.message);
 
+    // ── PENTING: mapping di bawah ini HARUS cocok dengan nama field asli yang
+    // dipakai engine (03-engine.js/05-assets.js), BUKAN nama kolom Supabase.
+    // Versi sebelumnya salah total (mis. t.action/t.commission padahal field
+    // aslinya t.type/t.komisi) — hasilnya transaksi yang ditarik lagi dari
+    // cloud punya action=undefined, sehingga filter BUY/SELL di seluruh
+    // dashboard gagal cocok dan totalnya kelihatan 0, sementara Riwayat
+    // Transaksi menampilkan "undefined" & "NaN". Ini penyebab data yang
+    // "muncul lalu hilang" di dashboard utama.
     await _supaReplaceTable('transactions', uid,
-      (transactions&&transactions.length>0) ? transactions.map(function(t){return {user_id:uid,tx_id:t.id,date:t.date,action:t.action,ticker:t.ticker,sekuritas:t.sekuritas,lot:t.lot,shares:t.shares,price:t.price,gross:t.gross,commission:t.commission,tax:t.tax,net:t.net,pl:t.pl||0};}) : null, 'tx_id');
+      (transactions&&transactions.length>0) ? transactions.map(function(t){return {user_id:uid,tx_id:t.id,date:t.date,action:t.type,ticker:t.ticker,sekuritas:t.sekuritas,lot:t.lot,shares:t.lot*100,price:t.price,gross:t.gross,commission:t.komisi,tax:t.tax,net:t.net,pl:0};}) : null, 'tx_id');
 
     await _supaReplaceTable('dividends', uid,
-      (dividends&&dividends.length>0) ? dividends.map(function(d){return {user_id:uid,div_id:d.id,date:d.date,ticker:d.ticker,shares:d.shares,dps:d.dps,gross:d.gross,pph:d.pph,net:d.net,yield:d.yield||0};}) : null, 'div_id');
+      (dividends&&dividends.length>0) ? dividends.map(function(d){return {user_id:uid,div_id:d.id,date:d.date,ticker:d.ticker,shares:d.shares,dps:d.dps,gross:d.gross,pph:d.tax,net:d.net,yield:0};}) : null, 'div_id');
 
-    await _supaReplaceTable('rdn_mutations', uid,
-      (rdnMutations&&rdnMutations.length>0) ? rdnMutations.map(function(r){return {user_id:uid,rdn_id:r.id,date:r.date,type:r.type,description:r.description||'',amount_in:r.amountIn||0,amount_out:r.amountOut||0,balance:r.balance||0};}) : null, 'rdn_id');
+    try {
+      await _supaReplaceTable('rdn_mutations', uid,
+        (rdnMutations&&rdnMutations.length>0) ? rdnMutations.map(function(r){return {user_id:uid,rdn_id:r.id,date:r.date,type:r.type,description:r.ket||'',amount_in:r.amount>0?r.amount:0,amount_out:r.amount<0?-r.amount:0,balance:r.balance||0,linked_tx_id:r.linkedTxId!=null?String(r.linkedTxId):null};}) : null, 'rdn_id');
+    } catch(rdnErr) {
+      if(/column .* does not exist/i.test(rdnErr.message||'')){
+        // Migrasi linked_tx_id (lihat sql/schema_migration.sql) belum
+        // dijalankan — simpan tanpa kolom itu dulu supaya mutasi RDN inti
+        // tetap tersinkron. Kelemahannya: hapus transaksi tidak akan ikut
+        // menghapus mutasi RDN terkait di device lain sampai migrasi jalan.
+        window._schemaOutdated = true;
+        if(typeof updateSchemaWarnBanner==='function') updateSchemaWarnBanner();
+        await _supaReplaceTable('rdn_mutations', uid,
+          (rdnMutations&&rdnMutations.length>0) ? rdnMutations.map(function(r){return {user_id:uid,rdn_id:r.id,date:r.date,type:r.type,description:r.ket||'',amount_in:r.amount>0?r.amount:0,amount_out:r.amount<0?-r.amount:0,balance:r.balance||0};}) : null, 'rdn_id');
+      } else { throw rdnErr; }
+    }
 
     await _supaReplaceTable('crypto_tx', uid,
-      (cryptoTx&&cryptoTx.length>0) ? cryptoTx.map(function(c){return {user_id:uid,tx_id:c.id,date:c.date,action:c.action,coin:c.coin,amount:c.amount,price_idr:c.priceIdr||0,total_idr:c.totalIdr||0,pl:c.pl||0};}) : null, 'tx_id');
+      (cryptoTx&&cryptoTx.length>0) ? cryptoTx.map(function(c){return {user_id:uid,tx_id:c.id,date:c.date,action:c.type,coin:c.coin,amount:c.qty,price_idr:c.priceIdr||0,total_idr:c.total||0,pl:0};}) : null, 'tx_id');
 
     await _supaReplaceTable('etf_tx', uid,
-      (etfTx&&etfTx.length>0) ? etfTx.map(function(e){return {user_id:uid,tx_id:e.id,date:e.date,action:e.action,ticker:e.ticker,shares:e.shares,price_usd:e.priceUsd||0,total_usd:e.totalUsd||0,total_idr:e.totalIdr||0,kurs:e.kurs||0,pl_idr:e.pl||0};}) : null, 'tx_id');
+      (etfTx&&etfTx.length>0) ? etfTx.map(function(e){return {user_id:uid,tx_id:e.id,date:e.date,action:e.type,ticker:e.ticker,shares:e.shares,price_usd:e.priceUSD||0,total_usd:e.totalUSD||0,total_idr:e.totalIdr||0,kurs:e.kurs||0,pl_idr:0};}) : null, 'tx_id');
 
     var rdU=(rdTx||[]).filter(function(r){return r._userInput===true;});
     await _supaReplaceTable('rd_tx', uid,
-      rdU.length>0 ? rdU.map(function(r){return {user_id:uid,tx_id:r.id,date:r.date,action:r.action,name:r.name||'',platform:r.platform||'',units:r.units||0,nav:r.nav||0,total_idr:r.total||0,pl:r.pl||0};}) : null, 'tx_id');
+      rdU.length>0 ? rdU.map(function(r){return {user_id:uid,tx_id:r.id,date:r.date,action:r.type,name:r.code||'',platform:'',units:r.units||0,nav:r.nab||0,total_idr:r.amount||0,pl:0};}) : null, 'tx_id');
 
     var diRes = await _supabase.from('div_invest').upsert({user_id:uid,data:divInvestData||[],next_id:_divInvestId||1,updated_at:new Date().toISOString()},{onConflict:'user_id'});
     if(diRes.error) throw new Error('Upsert div_invest failed: '+diRes.error.message);
@@ -120,18 +141,26 @@ async function supaLoadAllData(){
         }
       }catch(e){ console.warn('Sinkronisasi Daftar Saham dari cloud gagal:', e); }
     }
+    // ── Sama seperti di supaSaveAllData: field lokal aslinya t.type/t.komisi/
+    // r.ket/r.amount/c.qty/c.total/e.priceUSD/e.totalUSD/r.code/r.nab/r.amount
+    // (bukan action/commission/description/amountIn-Out/amount/total_idr/
+    // priceUsd/totalUsd/name/nav/total_idr) — kalau ini tidak dipetakan balik
+    // dengan nama yang sama persis, seluruh dashboard & render (yang baca
+    // t.type, t.komisi, dst) menganggap datanya kosong/undefined walau
+    // baris di tabel Riwayat Transaksi tetap tampil (raw, tanpa filter).
     var txRes=await _supabase.from('transactions').select('*').eq('user_id',uid).order('date',{ascending:true});
-    if(txRes.data&&txRes.data.length>0) transactions=txRes.data.map(function(t){return {id:t.tx_id,date:t.date,action:t.action,ticker:t.ticker,sekuritas:t.sekuritas,lot:t.lot,shares:t.shares,price:t.price,gross:t.gross,commission:t.commission,tax:t.tax,net:t.net,pl:t.pl};});
+    if(txRes.data&&txRes.data.length>0) transactions=txRes.data.map(function(t){return {id:t.tx_id,date:t.date,type:t.action,ticker:t.ticker,sekuritas:t.sekuritas,lot:t.lot,price:t.price,gross:t.gross,komisi:t.commission,ppn:0,levy:0,pph:0,tax:t.tax,net:t.net};});
     var divRes=await _supabase.from('dividends').select('*').eq('user_id',uid).order('date',{ascending:true});
-    if(divRes.data&&divRes.data.length>0) dividends=divRes.data.map(function(d){return {id:d.div_id,date:d.date,ticker:d.ticker,shares:d.shares,dps:d.dps,gross:d.gross,pph:d.pph,net:d.net,yield:d.yield};});
+    if(divRes.data&&divRes.data.length>0) dividends=divRes.data.map(function(d){return {id:d.div_id,date:d.date,ticker:d.ticker,shares:d.shares,dps:d.dps,gross:d.gross,tax:d.pph,net:d.net};});
     var rdnRes=await _supabase.from('rdn_mutations').select('*').eq('user_id',uid).order('date',{ascending:true});
-    if(rdnRes.data&&rdnRes.data.length>0) rdnMutations=rdnRes.data.map(function(r){return {id:r.rdn_id,date:r.date,type:r.type,description:r.description,amountIn:r.amount_in,amountOut:r.amount_out,balance:r.balance};});
+    if(rdnRes.data&&rdnRes.data.length>0) rdnMutations=rdnRes.data.map(function(r){return {id:r.rdn_id,date:r.date,type:r.type,ket:r.description||'',amount:(r.amount_in||0)-(r.amount_out||0),balance:r.balance||0,linkedTxId:r.linked_tx_id||null,sekuritas:''};});
+    if(typeof rebuildRdnBalance==='function' && rdnMutations && rdnMutations.length>0) rebuildRdnBalance();
     var cRes=await _supabase.from('crypto_tx').select('*').eq('user_id',uid).order('date',{ascending:true});
-    if(cRes.data&&cRes.data.length>0) cryptoTx=cRes.data.map(function(c){return {id:c.tx_id,date:c.date,action:c.action,coin:c.coin,amount:c.amount,priceIdr:c.price_idr,totalIdr:c.total_idr,pl:c.pl};});
+    if(cRes.data&&cRes.data.length>0) cryptoTx=cRes.data.map(function(c){return {id:c.tx_id,date:c.date,type:c.action,coin:c.coin,qty:c.amount,priceIdr:c.price_idr,total:c.total_idr};});
     var eRes=await _supabase.from('etf_tx').select('*').eq('user_id',uid).order('date',{ascending:true});
-    if(eRes.data&&eRes.data.length>0) etfTx=eRes.data.map(function(e){return {id:e.tx_id,date:e.date,action:e.action,ticker:e.ticker,shares:e.shares,priceUsd:e.price_usd,totalUsd:e.total_usd,totalIdr:e.total_idr,kurs:e.kurs,pl:e.pl_idr,_userInput:true};});
+    if(eRes.data&&eRes.data.length>0) etfTx=eRes.data.map(function(e){return {id:e.tx_id,date:e.date,type:e.action,ticker:e.ticker,shares:e.shares,priceUSD:e.price_usd,totalUSD:e.total_usd,totalIdr:e.total_idr,kurs:e.kurs};});
     var rRes=await _supabase.from('rd_tx').select('*').eq('user_id',uid).order('date',{ascending:true});
-    if(rRes.data&&rRes.data.length>0) rdTx=rRes.data.map(function(r){return {id:r.tx_id,date:r.date,action:r.action,name:r.name,platform:r.platform,units:r.units,nav:r.nav,total:r.total_idr,pl:r.pl,_userInput:true};});
+    if(rRes.data&&rRes.data.length>0) rdTx=rRes.data.map(function(r){return {id:r.tx_id,date:r.date,type:r.action,code:r.name,amount:r.total_idr,nab:r.nav,units:r.units,_userInput:true};});
     var diRes=await _supabase.from('div_invest').select('*').eq('user_id',uid).maybeSingle();
     if(diRes.data){divInvestData=diRes.data.data||[];_divInvestId=diRes.data.next_id||1;}
     return true;

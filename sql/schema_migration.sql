@@ -87,3 +87,19 @@ alter table public.etf_tx
 alter table public.rd_tx
   drop constraint if exists rd_tx_user_tx_unique,
   add constraint rd_tx_user_tx_unique unique (user_id, tx_id);
+
+-- ══════════════════════════════════════════════════════════
+-- FIX: field mapping cloud-sync salah total (bug lama, terpisah dari
+-- fix di atas) — kode sebelumnya menulis/membaca t.action/t.commission/
+-- r.description/r.amountIn-Out padahal field asli di engine adalah
+-- t.type/t.komisi/r.ket/r.amount (satu nilai bertanda + / -). Akibatnya
+-- transaksi yang ditarik ulang dari cloud selalu action=undefined —
+-- semua filter BUY/SELL di dashboard gagal cocok, jadi Dashboard Utama
+-- terlihat kosong padahal Riwayat Transaksi (render mentah) masih
+-- menampilkan barisnya (dengan Aksi "undefined" & Pajak "NaN").
+--
+-- Kolom baru ini menyimpan id transaksi/dividen terkait per mutasi RDN
+-- (dulu tidak pernah disimpan ke cloud sama sekali), supaya hapus
+-- transaksi ikut menghapus mutasi RDN terkait juga di device lain.
+alter table public.rdn_mutations
+  add column if not exists linked_tx_id text;
