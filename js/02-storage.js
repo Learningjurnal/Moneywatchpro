@@ -112,8 +112,22 @@ async function supaSaveAllData(){
     await _supaReplaceTable('rd_tx', uid,
       rdU.length>0 ? rdU.map(function(r){return {user_id:uid,tx_id:r.id,date:r.date,action:r.type,name:r.code||'',platform:'',units:r.units||0,nav:r.nab||0,total_idr:r.amount||0,pl:0};}) : null, 'tx_id');
 
-    var diRes = await _supabase.from('div_invest').upsert({user_id:uid,data:divInvestData||[],next_id:_divInvestId||1,updated_at:new Date().toISOString()},{onConflict:'user_id'});
-    if(diRes.error) throw new Error('Upsert div_invest failed: '+diRes.error.message);
+    var diPayload = {user_id:uid,data:divInvestData||[],next_id:_divInvestId||1,updated_at:new Date().toISOString()};
+    var diRes = await _supabase.from('div_invest').upsert(diPayload, {onConflict:'user_id'});
+    if(diRes.error && /no unique or exclusion constraint|there is no unique/i.test(diRes.error.message||'')){
+      // Tabel div_invest belum punya unique constraint di user_id (lihat
+      // sql/schema_migration.sql) — upsert dengan onConflict gagal. Fallback:
+      // update kalau baris sudah ada, insert kalau belum. Fitur Div. Investing
+      // ini sekunder, jadi kegagalannya TIDAK menghentikan sync data inti
+      // (saham/dividen/RDN/dst di atas sudah tersimpan duluan).
+      window._schemaOutdated = true;
+      if(typeof updateSchemaWarnBanner==='function') updateSchemaWarnBanner();
+      var existing = await _supabase.from('div_invest').select('user_id').eq('user_id', uid).maybeSingle();
+      diRes = existing.data
+        ? await _supabase.from('div_invest').update(diPayload).eq('user_id', uid)
+        : await _supabase.from('div_invest').insert(diPayload);
+    }
+    if(diRes.error) console.warn('Sync div_invest gagal (fitur Div. Investing saja, data inti tetap aman):', diRes.error.message);
   } catch(err){ console.warn('Supabase save error:',err); throw err; }
 }
 

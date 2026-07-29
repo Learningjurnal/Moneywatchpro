@@ -103,3 +103,16 @@ alter table public.rd_tx
 -- transaksi ikut menghapus mutasi RDN terkait juga di device lain.
 alter table public.rdn_mutations
   add column if not exists linked_tx_id text;
+
+-- div_invest juga di-upsert dengan onConflict:'user_id' tapi tabelnya tidak
+-- pernah diberi unique constraint di kolom itu sejak awal — bug lama terpisah,
+-- baru ketahuan setelah rdn_mutations & transactions dites (error: "there is
+-- no unique or exclusion constraint matching the ON CONFLICT specification").
+do $$
+begin
+  delete from public.div_invest a using public.div_invest b
+    where a.user_id=b.user_id and a.ctid<b.ctid;
+end $$;
+alter table public.div_invest
+  drop constraint if exists div_invest_user_unique,
+  add constraint div_invest_user_unique unique (user_id);
