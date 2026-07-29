@@ -373,8 +373,7 @@ function fhFetchIHSG(){
 function fhApplyIHSG(price, prev, open, high, low){
   ihsgCur  = price;
   ihsgBase = prev||price;
-  ihsgHist.push(Math.round(price*100)/100);
-  if(ihsgHist.length>120) ihsgHist.shift();
+  ihsgHistPush(Math.round(price*100)/100);
   if(open>0){ var e=el('ihsg-op'); if(e) e.textContent=open.toLocaleString('id-ID',{minimumFractionDigits:2}); }
   if(high>0){ var e=el('ihsg-hi'); if(e) e.textContent=high.toLocaleString('id-ID',{minimumFractionDigits:2}); }
   if(low>0){  var e=el('ihsg-lo'); if(e) e.textContent=low.toLocaleString('id-ID',{minimumFractionDigits:2}); }

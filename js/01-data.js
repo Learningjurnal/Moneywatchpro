@@ -1166,6 +1166,21 @@ var IHSG_REAL = {
 };
 var ihsgCur = 6195.43;
 var ihsgHist = [];
+// Persist histori grafik IHSG 1H/3H ke localStorage — sebelumnya cuma di
+// memori, jadi hilang tiap reload dan grafik 1H/3H sempat kosong sampai
+// live fetch berikutnya mengisi ulang (butuh beberapa menit di titik awal).
+var IHSG_HIST_KEY = 'mw_ihsg_hist_v1';
+(function(){
+  try{
+    var raw = localStorage.getItem(IHSG_HIST_KEY);
+    if(raw){ var arr = JSON.parse(raw); if(Array.isArray(arr)) ihsgHist = arr.slice(-120); }
+  }catch(e){}
+})();
+function ihsgHistPush(v){
+  ihsgHist.push(v);
+  if(ihsgHist.length>120) ihsgHist.shift();
+  try{ localStorage.setItem(IHSG_HIST_KEY, JSON.stringify(ihsgHist)); }catch(e){}
+}
 var nextTxId = 1;
 var nextDivId = 1;
 var nextRdnId = 1;

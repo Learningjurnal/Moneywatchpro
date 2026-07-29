@@ -427,7 +427,7 @@ function renderRdn(){
     return '<tr>'
       +'<td class="mono" style="color:var(--text2);font-size:11px">'+r.date+'</td>'
       +'<td><span class="badge '+(typeColors[r.type]||'b-gray')+'">'+(typeLabels[r.type]||r.type)+'</span></td>'
-      +'<td style="max-width:200px;color:var(--text2);font-size:11px">'+r.ket+'</td>'
+      +'<td style="max-width:200px;color:var(--text2);font-size:11px">'+escHtml(r.ket)+'</td>'
       +'<td class="mono up">'+(isin?'Rp '+fmtK(r.amount):'—')+'</td>'
       +'<td class="mono dn">'+(!isin?'Rp '+fmtK(Math.abs(r.amount)):'—')+'</td>'
       +'<td class="mono" style="font-weight:600">Rp '+fmtK(r.balance)+'</td>'
