@@ -218,7 +218,10 @@ function _syncToCloud(allowRetry){
     // Jangan diam-diam saja — kalau sync ke cloud gagal, user harus tahu
     // supaya tidak berasumsi datanya aman untuk dibuka di device lain.
     // Banner ini TIDAK auto-hilang (lihat showSaveStatus) sampai sync sukses.
-    if(typeof showSaveStatus==='function') showSaveStatus('⚠ Gagal sinkron ke cloud — data hanya tersimpan di device ini', 'var(--red)', true);
+    // Tampilkan pesan error ASLI (bukan cuma generik) supaya bisa didiagnosis
+    // dari screenshot, tanpa user perlu buka DevTools Console.
+    var _errMsg = (e && e.message) ? e.message : String(e);
+    if(typeof showSaveStatus==='function') showSaveStatus('⚠ Gagal sinkron ke cloud: '+_errMsg, 'var(--red)', true);
     if(allowRetry){
       // Coba lagi sekali setelah beberapa detik — menutup celah gangguan
       // jaringan sesaat supaya tidak butuh aksi manual dari user.
