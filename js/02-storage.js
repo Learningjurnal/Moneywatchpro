@@ -53,7 +53,7 @@ async function supaSaveAllData(){
       admin_extra: (typeof ADMIN_EXTRA!=='undefined') ? ADMIN_EXTRA : []
     };
     var settingsRes = await _supabase.from('user_settings').upsert(Object.assign({}, coreFields, newFields), {onConflict:'user_id'});
-    if(settingsRes.error && /column .* does not exist/i.test(settingsRes.error.message||'')){
+    if(settingsRes.error && /column .* does not exist|could not find the .* column/i.test(settingsRes.error.message||'')){
       // Migrasi belum dijalankan di Supabase — simpan tanpa kolom baru dulu,
       // supaya data inti (transaksi, dividen, RDN, dst) tetap tersinkron.
       // Strategi per-emiten, override komisi, dan Daftar Saham TIDAK akan ikut
@@ -86,7 +86,11 @@ async function supaSaveAllData(){
       await _supaReplaceTable('rdn_mutations', uid,
         (rdnMutations&&rdnMutations.length>0) ? rdnMutations.map(function(r){return {user_id:uid,rdn_id:r.id,date:r.date,type:r.type,description:r.ket||'',amount_in:r.amount>0?r.amount:0,amount_out:r.amount<0?-r.amount:0,balance:r.balance||0,linked_tx_id:r.linkedTxId!=null?String(r.linkedTxId):null};}) : null, 'rdn_id');
     } catch(rdnErr) {
-      if(/column .* does not exist/i.test(rdnErr.message||'')){
+      // PostgREST tidak selalu pakai pesan Postgres native "column X does not
+      // exist" — kadang "Could not find the 'X' column of 'Y' in the schema
+      // cache" (yang persis ini terjadi pada linked_tx_id sebelum migrasi
+      // dijalankan). Cocokkan kedua pola supaya fallback benar-benar kepicu.
+      if(/column .* does not exist|could not find the .* column/i.test(rdnErr.message||'')){
         // Migrasi linked_tx_id (lihat sql/schema_migration.sql) belum
         // dijalankan — simpan tanpa kolom itu dulu supaya mutasi RDN inti
         // tetap tersinkron. Kelemahannya: hapus transaksi tidak akan ikut
