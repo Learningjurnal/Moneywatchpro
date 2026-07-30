@@ -221,16 +221,42 @@ function saveData(){
   }
 }
 
+// FIX: dua panggilan _syncToCloud() yang tumpang tindih (mis. "Hapus Semua"
+// lalu langsung "Upload Excel" dalam hitungan detik) sebelumnya bisa jalan
+// BERSAMAAN — dua request delete/upsert ke tabel yang sama, dan yang
+// SELESAI BELAKANGAN menang secara acak, bukan yang datanya paling baru.
+// Ini persis skenario yang bikin data hasil upload tertimpa balik oleh
+// delete-semua dari langkah sebelumnya. Sekarang di-serialize: kalau ada
+// sync yang sedang berjalan, panggilan baru cuma ditandai "antre" dan akan
+// otomatis dikirim ulang begitu yang sedang jalan selesai — dengan data
+// TERBARU (bukan snapshot lama), karena supaSaveAllData() selalu baca
+// variabel global saat itu juga, bukan parameter yang di-capture di awal.
+var _syncInFlight = false;
+var _syncQueued = false;
 function _syncToCloud(allowRetry){
+  if(_syncInFlight){
+    _syncQueued = true;
+    return Promise.resolve();
+  }
+  _syncInFlight = true;
   // PENTING: harus `return` promise-nya — safeCloudBoot() dan pemanggil lain
   // memanggil .then()/.catch() pada hasil fungsi ini. Tanpa return, hasilnya
   // undefined dan .then() di pemanggil crash ("Cannot read properties of
   // undefined (reading 'then')") — persis error yang muncul di layar login.
   return supaSaveAllData().then(function(){
+    _syncInFlight = false;
     _cloudSyncFailed = false;
+    if(_syncQueued){
+      // Ada perubahan lain yang masuk selagi sync ini berjalan — kirim
+      // ulang sekarang juga dengan state terbaru, jangan anggap selesai dulu.
+      _syncQueued = false;
+      try{ localStorage.setItem(LS_PENDING_KEY,'1'); }catch(e){}
+      return _syncToCloud(allowRetry);
+    }
     try{ localStorage.setItem(LS_PENDING_KEY,'0'); }catch(e){}
     if(typeof showSaveStatus==='function') showSaveStatus('✓ Tersimpan & tersinkron ke cloud');
   }).catch(function(e){
+    _syncInFlight = false;
     console.warn('Supabase sync:',e);
     _cloudSyncFailed = true;
     // Jangan diam-diam saja — kalau sync ke cloud gagal, user harus tahu
@@ -240,6 +266,10 @@ function _syncToCloud(allowRetry){
     // dari screenshot, tanpa user perlu buka DevTools Console.
     var _errMsg = (e && e.message) ? e.message : String(e);
     if(typeof showSaveStatus==='function') showSaveStatus('⚠ Gagal sinkron ke cloud: '+_errMsg, 'var(--red)', true);
+    if(_syncQueued){
+      _syncQueued = false;
+      return _syncToCloud(allowRetry);
+    }
     if(allowRetry){
       // Coba lagi sekali setelah beberapa detik — menutup celah gangguan
       // jaringan sesaat supaya tidak butuh aksi manual dari user.
