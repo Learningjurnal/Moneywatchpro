@@ -858,13 +858,30 @@ function renderSektoral(){
 
   el('sector-detail').innerHTML=sectors.map(function(s){
     var sv=byS[s];var alloc=(sv.mv/totalMV*100);
-    var sInfo=IDX_SECTORS[s]||{color:sectorColor(s),desc:''};
-    return '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><div style="display:flex;align-items:center;gap:6px"><span class="sec-dot" style="background:'+sInfo.color+'"></span><span style="font-size:12px;font-weight:600">'+s+'</span></div><div style="text-align:right"><span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px">'+alloc.toFixed(1)+'%</span></div></div><div class="prog"><div class="progf" style="width:'+alloc+'%;background:'+sInfo.color+'"></div></div><div style="font-size:10px;color:var(--text3);margin-top:2px">'+sv.stocks.length+' saham · Rp '+fmtK(sv.mv)+'</div></div>';
+    var sInfo=IDX_SECTORS[s]||{color:sectorColor(s),icon:sectorIcon(s),desc:''};
+    return '<div style="margin-bottom:12px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+          +'<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:7px;background:'+sInfo.color+'22;font-size:12px;flex-shrink:0">'+sInfo.icon+'</span>'
+          +'<span style="font-size:12px;font-weight:600">'+s+'</span>'
+        +'</div>'
+        +'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;font-weight:700;color:'+sInfo.color+'">'+alloc.toFixed(1)+'%</span>'
+      +'</div>'
+      +'<div class="prog" style="height:6px;border-radius:99px;overflow:hidden"><div class="progf" style="width:'+alloc+'%;background:'+sInfo.color+';border-radius:99px"></div></div>'
+      +'<div style="font-size:10px;color:var(--text3);margin-top:3px">'+sv.stocks.length+' saham · Rp '+fmtK(sv.mv)+'</div>'
+    +'</div>';
   }).join('')||'<div style="color:var(--text3);text-align:center;padding:20px">Belum ada portofolio</div>';
 
   el('sector-stocks').innerHTML=sectors.map(function(s){
-    var sv=byS[s];var sInfo=IDX_SECTORS[s]||{color:sectorColor(s),desc:''};
-    return '<div style="margin-bottom:14px"><div style="display:flex;align-items:center;gap:7px;margin-bottom:7px"><span class="sec-dot" style="background:'+sInfo.color+'"></span><span style="font-size:12px;font-weight:600">'+s+'</span><span class="badge b-gray" style="margin-left:auto">'+sInfo.desc+'</span></div><div style="display:flex;flex-wrap:wrap;gap:6px">'+sv.stocks.map(function(p){return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:7px 10px;min-width:120px"><div style="display:flex;justify-content:space-between;align-items:center"><span class="tp" style="border-color:'+sInfo.color+'">'+p.ticker+'</span><span class="badge '+(p.ret>=0?'b-up':'b-dn')+'">'+(p.ret>=0?'+':'')+p.ret.toFixed(1)+'%</span></div><div style="font-size:10px;color:var(--text2);margin-top:3px">'+p.lot+' lot · Rp '+fmtK(p.mv)+'</div></div>'}).join('')+'</div></div>';
+    var sv=byS[s];var sInfo=IDX_SECTORS[s]||{color:sectorColor(s),icon:sectorIcon(s),desc:''};
+    return '<div style="margin-bottom:14px">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">'
+        +'<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:7px;background:'+sInfo.color+'22;font-size:12px;flex-shrink:0">'+sInfo.icon+'</span>'
+        +'<span style="font-size:12px;font-weight:600">'+s+'</span>'
+        +'<span class="badge b-gray" style="margin-left:auto">'+sInfo.desc+'</span>'
+      +'</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:6px">'+sv.stocks.map(function(p){return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:7px 10px;min-width:120px"><div style="display:flex;justify-content:space-between;align-items:center"><span class="tp" style="border-color:'+sInfo.color+'">'+p.ticker+'</span><span class="badge '+(p.ret>=0?'b-up':'b-dn')+'">'+(p.ret>=0?'+':'')+p.ret.toFixed(1)+'%</span></div><div style="font-size:10px;color:var(--text2);margin-top:3px">'+p.lot+' lot · Rp '+fmtK(p.mv)+'</div></div>'}).join('')+'</div>'
+    +'</div>';
   }).join('')||'<div style="color:var(--text3);text-align:center;padding:20px">Belum ada portofolio</div>';
 
   buildSectorChart(porto);

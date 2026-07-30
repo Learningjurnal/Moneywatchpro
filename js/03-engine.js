@@ -889,13 +889,60 @@ function buildDivCharts(){
   // This function is kept as stub for backward compatibility
 }
 
+// Plugin ringan: tulis teks di tengah donut (jumlah sektor + sektor teratas)
+// — dipakai khusus untuk sectorChart lewat opsi `plugins:[...]` per-chart,
+// tidak didaftarkan global supaya tidak memengaruhi donut/pie lain.
+var _centerTextPlugin = {
+  id: 'centerText',
+  afterDraw: function(chart){
+    var opt = chart.config.options.centerText;
+    if(!opt) return;
+    var ctx = chart.ctx;
+    var x = (chart.chartArea.left+chart.chartArea.right)/2;
+    var y = (chart.chartArea.top+chart.chartArea.bottom)/2;
+    ctx.save();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = '700 20px "IBM Plex Mono",monospace';
+    ctx.fillStyle = opt.color || '#f5f5fa';
+    ctx.fillText(opt.top, x, y-9);
+    ctx.font = '600 9px "IBM Plex Mono",monospace';
+    ctx.fillStyle = '#8a90ad';
+    ctx.fillText(opt.bottom, x, y+10);
+    ctx.restore();
+  }
+};
+
 function buildSectorChart(porto){
   kc('sector');var cv=el('sectorChart');if(!cv)return;
   var byS={};var totalMV=porto.reduce(function(a,p){return a+p.mv},0)||1;
   porto.forEach(function(p){byS[p.info.sector]=(byS[p.info.sector]||0)+p.mv});
-  var labels=Object.keys(byS);var vals=labels.map(function(s){return byS[s]});
+  // Urutkan besar → kecil supaya alur visual donut sejalan dengan daftar
+  // "Detail Sektor" di sebelahnya (sama-sama diurutkan dari sektor terbesar).
+  var labels=Object.keys(byS).sort(function(a,b){return byS[b]-byS[a];});
+  var vals=labels.map(function(s){return byS[s]});
   var cols=labels.map(function(s){return sectorColor(s);});
-  charts['sector']=new Chart(cv,{type:'doughnut',data:{labels:labels,datasets:[{data:vals,backgroundColor:cols,borderWidth:0,hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{display:false},tooltip:Object.assign({},TT,{callbacks:{label:function(c){return c.label+': '+(c.parsed/totalMV*100).toFixed(1)+'%'}}})}}});
+  var icons=labels.map(function(s){return sectorIcon(s);});
+  var topLabel = labels.length ? (icons[0]+' '+(vals[0]/totalMV*100).toFixed(0)+'%') : '—';
+  charts['sector']=new Chart(cv,{
+    type:'doughnut',
+    plugins:[_centerTextPlugin],
+    data:{labels:labels,datasets:[{
+      data:vals, backgroundColor:cols,
+      borderColor:'#18191c', borderWidth:3, borderRadius:4,
+      hoverOffset:10, hoverBorderWidth:3, spacing:2
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'68%',
+      centerText:{top:topLabel, bottom:labels.length+' SEKTOR', color:cols[0]||'#f5f5fa'},
+      animation:{animateRotate:true, duration:600},
+      plugins:{
+        legend:{display:false},
+        tooltip:Object.assign({},TT,{callbacks:{
+          label:function(c){return c.label+': '+(c.parsed/totalMV*100).toFixed(1)+'% · Rp '+fmtK(c.parsed);}
+        }})
+      }
+    }
+  });
 }
 
 function buildRdnChart(){

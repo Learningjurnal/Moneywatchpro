@@ -155,19 +155,35 @@ function loadCashAccounts(){
   try{ var r=localStorage.getItem('ihsg_cash_v1'); if(r){ var d=JSON.parse(r); Object.keys(CASH_ACCOUNTS).forEach(function(k){ if(d[k]) Object.assign(CASH_ACCOUNTS[k],d[k]); }); } }catch(e){}
 }
 
-// IDX SECTORS (11 sektor resmi IDX)
+// IDX SECTORS (11 sektor resmi IDX) — key Indonesia DAN alias Inggris
+// (nama resmi IDX/GICS yang dipakai data hasil import Excel Admin Panel)
+// mengarah ke warna & ikon YANG SAMA, supaya grafik/badge sektor konsisten
+// terlepas dari sumber datanya pakai penamaan Indonesia atau Inggris.
 var IDX_SECTORS = {
-  'Energi':          {color:'#f97316',desc:'Batubara, Minyak & Gas, Energi Terbarukan'},
-  'Barang Baku':     {color:'#eab308',desc:'Kimia, Kehutanan, Logam & Mineral, Kertas'},
-  'Perindustrian':   {color:'#84cc16',desc:'Otomotif, Konstruksi, Mesin & Alat Berat'},
-  'Konsumer Non-Primer':{color:'#22c55e',desc:'Ritel, Restoran, Hiburan, Perjalanan'},
-  'Konsumer Primer': {color:'#10b981',desc:'Makanan & Minuman, Rokok, Produk RT'},
-  'Kesehatan':       {color:'#14b8a6',desc:'Farmasi, RS, Alat Kesehatan, Biotek'},
-  'Keuangan':        {color:'#3b82f6',desc:'Bank, Asuransi, Investasi, Multifinance'},
-  'Properti':        {color:'#8b5cf6',desc:'Properti, Real Estat, Konstruksi Gedung'},
-  'Teknologi':       {color:'#d946ef',desc:'Software, Hardware, Startup Teknologi'},
-  'Infrastruktur':   {color:'#f43f5e',desc:'Telekomunikasi, Utilitas, Transportasi'},
-  'Keuangan Syariah':{color:'#06b6d4',desc:'Bank Syariah, Asuransi Syariah, Sukuk'},
+  'Energi':             {color:'#f97316',icon:'⚡',desc:'Batubara, Minyak & Gas, Energi Terbarukan'},
+  'Energy':             {color:'#f97316',icon:'⚡',desc:'Batubara, Minyak & Gas, Energi Terbarukan'},
+  'Barang Baku':        {color:'#eab308',icon:'⛏️',desc:'Kimia, Kehutanan, Logam & Mineral, Kertas'},
+  'Basic Materials':    {color:'#eab308',icon:'⛏️',desc:'Kimia, Kehutanan, Logam & Mineral, Kertas'},
+  'Perindustrian':      {color:'#84cc16',icon:'🏭',desc:'Otomotif, Konstruksi, Mesin & Alat Berat'},
+  'Industrials':        {color:'#84cc16',icon:'🏭',desc:'Otomotif, Konstruksi, Mesin & Alat Berat'},
+  'Konsumer Non-Primer':{color:'#22c55e',icon:'🛍️',desc:'Ritel, Restoran, Hiburan, Perjalanan'},
+  'Consumer Cyclicals': {color:'#22c55e',icon:'🛍️',desc:'Ritel, Restoran, Hiburan, Perjalanan'},
+  'Konsumer Primer':    {color:'#10b981',icon:'🛒',desc:'Makanan & Minuman, Rokok, Produk RT'},
+  'Consumer Non-Cyclicals':{color:'#10b981',icon:'🛒',desc:'Makanan & Minuman, Rokok, Produk RT'},
+  'Kesehatan':          {color:'#14b8a6',icon:'🏥',desc:'Farmasi, RS, Alat Kesehatan, Biotek'},
+  'Healthcare':         {color:'#14b8a6',icon:'🏥',desc:'Farmasi, RS, Alat Kesehatan, Biotek'},
+  'Keuangan':           {color:'#3b82f6',icon:'🏦',desc:'Bank, Asuransi, Investasi, Multifinance'},
+  'Financials':         {color:'#3b82f6',icon:'🏦',desc:'Bank, Asuransi, Investasi, Multifinance'},
+  'Properti':           {color:'#8b5cf6',icon:'🏢',desc:'Properti, Real Estat, Konstruksi Gedung'},
+  'Properties':         {color:'#8b5cf6',icon:'🏢',desc:'Properti, Real Estat, Konstruksi Gedung'},
+  'Properties & Real Estate':{color:'#8b5cf6',icon:'🏢',desc:'Properti, Real Estat, Konstruksi Gedung'},
+  'Teknologi':          {color:'#d946ef',icon:'💻',desc:'Software, Hardware, Startup Teknologi'},
+  'Technology':         {color:'#d946ef',icon:'💻',desc:'Software, Hardware, Startup Teknologi'},
+  'Infrastruktur':      {color:'#f43f5e',icon:'🏗️',desc:'Telekomunikasi, Utilitas, Transportasi'},
+  'Infrastructures':    {color:'#f43f5e',icon:'🏗️',desc:'Telekomunikasi, Utilitas, Transportasi'},
+  'Transportation & Logistic':{color:'#6366f1',icon:'🚚',desc:'Transportasi, Logistik, Pergudangan'},
+  'Keuangan Syariah':   {color:'#06b6d4',icon:'🕌',desc:'Bank Syariah, Asuransi Syariah, Sukuk'},
+  'Lainnya':            {color:'#94a3b8',icon:'📦',desc:'Belum terklasifikasi sektor resmi IDX'},
 };
 
 // STOCK DATABASE dengan sektor IDX
@@ -1146,6 +1162,11 @@ function sectorColor(name){
   var h=0;
   for(var i=0;i<(name||'').length;i++){ h=(h*31+name.charCodeAt(i))|0; }
   return COLORS[Math.abs(h)%COLORS.length];
+}
+// Ikon per sektor untuk mempercantik daftar/badge — fallback 📊 kalau sektor
+// tidak dikenali (mis. label kustom dari Admin Panel).
+function sectorIcon(name){
+  return (IDX_SECTORS[name] && IDX_SECTORS[name].icon) || '📊';
 }
 
 // ============================================================
