@@ -197,6 +197,41 @@ function getRealizedPnl(){
   return real;
 }
 
+// ── Performa per Saham — realized (posisi ditutup/sebagian) + unrealized
+// (posisi masih terbuka) per ticker, metodologi average-cost yang SAMA
+// dengan getPortfolio()/getRealizedPnl() (satu sumber kebenaran, bukan
+// rumus baru). Beda dari getPortfolio(): saham yang SUDAH TERTUTUP PENUH
+// (lot=0) tetap muncul di sini dengan realized P&L-nya, bukan hilang dari
+// tampilan begitu saja seperti di tabel Portofolio (yang cuma tampilkan
+// posisi aktif).
+function getStockPerformanceByTicker(){
+  var pos={};
+  transactions.slice().sort(function(a,b){return a.date.localeCompare(b.date)}).forEach(function(tx){
+    if(!pos[tx.ticker]) pos[tx.ticker]={ticker:tx.ticker,lot:0,shares:0,cost:0,realized:0,firstDate:tx.date,lastDate:tx.date,txCount:0};
+    var p=pos[tx.ticker];
+    p.txCount++; p.lastDate=tx.date;
+    if(tx.type==='BUY'){
+      p.lot+=tx.lot; p.shares+=tx.lot*100; p.cost+=tx.gross;
+    } else if(tx.type==='SELL' && p.lot>0){
+      var avg=p.cost/(p.lot*100), sold=tx.lot*100;
+      p.realized+=(tx.gross-avg*sold);
+      p.lot-=tx.lot; p.shares-=sold; p.cost=Math.max(0,p.cost-avg*sold);
+    }
+  });
+  var portoByTicker={};
+  getPortfolio().forEach(function(p){ portoByTicker[p.ticker]=p; });
+  return Object.keys(pos).map(function(t){
+    var p=pos[t], live=portoByTicker[t];
+    var mv = live ? live.mv : 0;
+    var unreal = live ? live.unreal : 0;
+    return {
+      ticker:t, lot:p.lot, shares:p.shares, cost:p.cost, avg: p.shares>0?p.cost/p.shares:0,
+      mv:mv, unreal:unreal, realized:p.realized, total:p.realized+unreal,
+      closed: p.lot<=0, firstDate:p.firstDate, lastDate:p.lastDate, txCount:p.txCount
+    };
+  });
+}
+
 function calcRdnBalance(){
   // FIX AUDIT F3: sebelumnya fungsi ini "percaya" variabel cache rdnBalance
   // apa adanya (hanya menghitung ulang jika kebetulan 0) — model kepercayaan
@@ -456,6 +491,21 @@ function fhFetchCrypto(){
   });
 }
 
+// ── Mode refresh — 'fast' (default, IHSG/15dtk·saham/2mnt·kurs/10mnt) atau
+// 'slow' (hemat, semua jenis harga tiap 15 menit bersamaan). Mode 'fast'
+// memukul proxy CORS publik gratis terus-menerus (240x/jam hanya untuk
+// IHSG) — tidak ada backoff kalau proxy rate-limit, jadi 'slow' berguna
+// buat user yang lebih mementingkan stabilitas daripada kecepatan update.
+var FH_REFRESH_KEY = 'mw_fh_refresh_mode_v1';
+FH.mode = (function(){ try{ return localStorage.getItem(FH_REFRESH_KEY)||'fast'; }catch(e){ return 'fast'; } })();
+function fhSetRefreshMode(mode){
+  FH.mode = (mode==='slow') ? 'slow' : 'fast';
+  try{ localStorage.setItem(FH_REFRESH_KEY, FH.mode); }catch(e){}
+  if(FH.timer) fhStart(); // restart supaya interval baru langsung berlaku
+  if(typeof showSaveStatus==='function') showSaveStatus('✓ Mode refresh: '+(FH.mode==='slow'?'Hemat (15 menit)':'Real-time (15 detik)'));
+  if(el('m-title') && el('m-title').textContent.indexOf('Harga Realtime')>=0) openFinnhubSettings(); // refresh tampilan tombol aktif
+}
+
 // ── Start Yahoo Finance realtime engine ──
 function fhStart(){
   if(FH._simTimer){ clearInterval(FH._simTimer); FH._simTimer=null; }
@@ -467,15 +517,24 @@ function fhStart(){
   setTimeout(fhFetchEtf,    8000);
   if(FH.timer) clearInterval(FH.timer);
   var tick = 0;
+  var slow = FH.mode==='slow';
   FH.timer = setInterval(function(){
     tick++;
+    if(slow){
+      // Mode hemat: base interval sudah 15 menit, jadi semua jenis harga
+      // langsung di-refresh bersamaan tiap tick — tidak perlu throttle
+      // modulo tambahan seperti mode real-time.
+      fhFetchIHSG(); fhFetchStocks(); fhFetchCrypto(); fhFetchEtf(); fhFetchKurs();
+      renderPage(currentPage);
+      return;
+    }
     fhFetchIHSG();                       // IHSG tiap 15 detik
     if(tick%8===0)  fhFetchStocks();     // saham tiap 2 menit
     if(tick%8===0)  fhFetchCrypto();     // crypto tiap 2 menit
     if(tick%8===0)  fhFetchEtf();        // ETF tiap 2 menit
     if(tick%40===0) fhFetchKurs();       // kurs tiap 10 menit
     if(tick%4===0)  renderPage(currentPage);
-  }, 15000);
+  }, slow ? 15*60*1000 : 15000);
 }
 
 // ── Stop (fallback ke simulasi) ──
@@ -522,10 +581,18 @@ function openFinnhubSettings(){
       'Request diteruskan via CORS proxy publik (allorigins → corsproxy.io → codetabs), otomatis pindah jika satu proxy gagal.'+
     '</div>'+
     '<div style="background:rgba(0,200,255,.06);border:1px solid rgba(0,200,255,.15);border-radius:8px;padding:9px 12px;margin-bottom:11px;font-size:11px;color:var(--text2);line-height:1.65">'+
-      '<div style="font-weight:700;color:var(--accent);margin-bottom:3px">📊 Data realtime:</div>'+
-      '• IHSG — tiap 15 detik<br>'+
-      '• Saham IDX portofolio — tiap 2 menit<br>'+
-      '• USD/IDR — tiap 10 menit'+
+      '<div style="font-weight:700;color:var(--accent);margin-bottom:3px">📊 Data realtime (mode saat ini: '+(FH.mode==='slow'?'Hemat 15 menit':'Real-time')+'):</div>'+
+      (FH.mode==='slow'
+        ? '• Semua harga (IHSG, saham, crypto, ETF, kurs) — tiap 15 menit bersamaan'
+        : '• IHSG — tiap 15 detik<br>• Saham IDX portofolio — tiap 2 menit<br>• USD/IDR — tiap 10 menit')+
+    '</div>'+
+    '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;margin-bottom:11px">'+
+      '<div style="font-weight:700;color:var(--text2);margin-bottom:6px;font-size:11px">⏱ Kecepatan Refresh</div>'+
+      '<div style="font-size:10.5px;color:var(--text3);margin-bottom:8px;line-height:1.5">Proxy CORS publik gratis bisa rate-limit kalau dipukul terus-menerus. Pilih "Hemat" kalau sering lihat status Error.</div>'+
+      '<div style="display:flex;gap:8px">'+
+        '<button class="btn '+(FH.mode!=='slow'?'btn-blue':'btn-ghost')+' btn-sm" onclick="fhSetRefreshMode(\'fast\')" style="flex:1">⚡ Real-time (15 detik)</button>'+
+        '<button class="btn '+(FH.mode==='slow'?'btn-blue':'btn-ghost')+' btn-sm" onclick="fhSetRefreshMode(\'slow\')" style="flex:1">🐢 Hemat (15 menit)</button>'+
+      '</div>'+
     '</div>'+
     '<div style="background:rgba(255,61,90,.06);border:1px solid rgba(255,61,90,.15);border-radius:8px;padding:9px 12px;margin-bottom:12px;font-size:11px;color:var(--text2);line-height:1.65">'+
       '<div style="font-weight:700;color:var(--red);margin-bottom:3px">⚠️ Jika Error:</div>'+

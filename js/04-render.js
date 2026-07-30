@@ -497,6 +497,7 @@ function renderTransaksi(){
 }
 
 function renderPortofolio(){
+  if(typeof renderStockPerformance==='function') renderStockPerformance();
   var porto=getPortfolio();
   var totalMV=porto.reduce(function(a,p){return a+p.mv},0);
   var totalCost=porto.reduce(function(a,p){return a+p.cost},0);
@@ -561,6 +562,64 @@ function renderPortofolio(){
     var secColor=sectorColor(p.info.sector);
     return '<tr><td><span class="tp" style="border-color:'+COLORS[i%12]+'">'+p.ticker+'</span></td><td style="font-size:11px;color:var(--text2)">'+p.info.name+'</td><td><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:\'IBM Plex Mono\',monospace;color:var(--text2)"><span class="sec-dot" style="background:'+secColor+'"></span>'+p.info.sector+'</span></td><td class="mono">'+p.lot+'</td><td class="mono">'+p.shares+'</td><td class="mono">Rp '+fmt(p.avg)+'</td><td class="mono" style="color:var(--accent)">Rp '+fmt(p.mp)+'</td><td class="mono">Rp '+fmtK(p.mv)+'</td><td class="mono" style="color:var(--text2)">Rp '+fmtK(p.cost)+'</td><td class="mono '+(p.unreal>=0?'up':'dn')+'">'+(p.unreal>=0?'+':'')+'Rp '+fmtK(p.unreal)+'</td><td class="mono '+(p.ret>=0?'up':'dn')+'">'+(p.ret>=0?'+':'')+p.ret.toFixed(2)+'%</td><td><div class="prog" style="width:70px"><div class="progf" style="width:'+alloc.toFixed(1)+'%;background:'+COLORS[i%12]+'"></div></div><div style="font-size:9px;color:var(--text3);font-family:\'IBM Plex Mono\',monospace;margin-top:2px">'+alloc.toFixed(1)+'%</div></td><td><span class="sig '+sigCls+'">'+sig+'</span></td></tr>';
   }).join('')||'<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:16px;font-family:\'IBM Plex Mono\',monospace">'+(porto.length?'Tidak ada saham yang cocok dengan filter':'Belum ada posisi aktif')+'</td></tr>';
+}
+
+// ── Toolbar Performa per Saham — realized + unrealized P&L tiap kode,
+// termasuk saham yang sudah TERTUTUP PENUH (tidak muncul di tabel
+// Portofolio biasa karena lot-nya 0). Lihat getStockPerformanceByTicker()
+// di 03-engine.js untuk metodologinya (sama persis dengan getPortfolio()).
+var _perfSort = {key:'total', asc:false};
+var _perfShowClosed = true;
+function sortPerf(key){
+  if(_perfSort.key===key) _perfSort.asc=!_perfSort.asc;
+  else { _perfSort.key=key; _perfSort.asc=false; }
+  renderStockPerformance();
+}
+function togglePerfClosed(){
+  _perfShowClosed = !_perfShowClosed;
+  renderStockPerformance();
+}
+function renderStockPerformance(){
+  var box = el('perf-toolbar-body');
+  if(!box) return;
+  var rows = getStockPerformanceByTicker();
+  var totalRealized = rows.reduce(function(a,r){return a+r.realized;},0);
+  var totalUnreal = rows.reduce(function(a,r){return a+r.unreal;},0);
+  var totalAll = totalRealized+totalUnreal;
+
+  var sum = el('perf-summary');
+  if(sum){
+    sum.innerHTML =
+      '<div class="metric"><div class="mlabel">Realized P&amp;L (semua saham)</div><div class="mval '+(totalRealized>=0?'up':'dn')+'">'+(totalRealized>=0?'+':'')+'Rp '+fmtK(totalRealized)+'</div></div>'+
+      '<div class="metric"><div class="mlabel">Unrealized P&amp;L (posisi aktif)</div><div class="mval '+(totalUnreal>=0?'up':'dn')+'">'+(totalUnreal>=0?'+':'')+'Rp '+fmtK(totalUnreal)+'</div></div>'+
+      '<div class="metric"><div class="mlabel">Total P&amp;L Akun</div><div class="mval '+(totalAll>=0?'up':'dn')+'">'+(totalAll>=0?'+':'')+'Rp '+fmtK(totalAll)+'</div></div>';
+  }
+
+  var view = _perfShowClosed ? rows : rows.filter(function(r){return !r.closed;});
+  var sk=_perfSort.key, asc=_perfSort.asc;
+  view = view.slice().sort(function(a,b){
+    if(sk==='ticker') return asc?a.ticker.localeCompare(b.ticker):b.ticker.localeCompare(a.ticker);
+    return asc?a[sk]-b[sk]:b[sk]-a[sk];
+  });
+  ['ticker','lot','realized','unreal','total'].forEach(function(k){
+    var ico=el('perf-sort-ico-'+k);
+    if(ico) ico.textContent=k===sk?(asc?'↑':'↓'):'↕';
+  });
+
+  box.innerHTML = view.map(function(r){
+    var statusBadge = r.closed
+      ? '<span class="badge b-gray" style="font-size:9px">○ Ditutup</span>'
+      : '<span class="badge b-up" style="font-size:9px">● Aktif</span>';
+    return '<tr>'
+      +'<td><span class="tp">'+r.ticker+'</span></td>'
+      +'<td>'+statusBadge+'</td>'
+      +'<td class="mono">'+(r.closed?'—':r.lot)+'</td>'
+      +'<td class="mono '+(r.realized>=0?'up':'dn')+'">'+(r.realized>=0?'+':'')+'Rp '+fmtK(r.realized)+'</td>'
+      +'<td class="mono '+(r.unreal>=0?'up':'dn')+'">'+(r.closed?'—':(r.unreal>=0?'+':'')+'Rp '+fmtK(r.unreal))+'</td>'
+      +'<td class="mono" style="font-weight:700;'+(r.total>=0?'color:var(--green)':'color:var(--red)')+'">'+(r.total>=0?'+':'')+'Rp '+fmtK(r.total)+'</td>'
+      +'<td style="font-size:10px;color:var(--text3)">'+r.txCount+'x · '+r.firstDate+' → '+r.lastDate+'</td>'
+    +'</tr>';
+  }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:16px;font-family:\'IBM Plex Mono\',monospace">Belum ada transaksi saham</td></tr>';
 }
 
 var _divSelected = new Set();
