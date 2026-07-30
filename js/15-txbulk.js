@@ -214,12 +214,18 @@ function txConfirmImport(){
 function divDownloadTemplate(){
   if(typeof XLSX==='undefined'){ if(typeof showSaveStatus==='function') showSaveStatus('⚠ Pustaka Excel belum termuat, coba lagi sebentar','var(--red)'); return; }
 
+  // Default tarif PPh diisi dari pengaturan pajak yang SEDANG aktif — cuma
+  // sebagai contoh awal, kolom ini boleh diubah per baris supaya dividen
+  // lama yang dikenai tarif regulasi BERBEDA (PPh dividen sempat berubah
+  // dari waktu ke waktu) tetap tercatat dengan tarif historisnya, bukan
+  // dipaksa memakai tarif yang berlaku sekarang untuk semua baris.
+  var defPct = (TAX_SETTINGS.pphDividen*100).toFixed(0);
   var sample = [
-    {Tanggal:'2026-03-15', 'Kode Saham':'BBCA', 'Jumlah Lembar':5900, 'Dividen per Lembar':250},
-    {Tanggal:'2026-06-20', 'Kode Saham':'TLKM', 'Jumlah Lembar':10000, 'Dividen per Lembar':85}
+    {Tanggal:'2026-03-15', 'Kode Saham':'BBCA', 'Jumlah Lembar':5900, 'Dividen per Lembar':250, 'PPh Dividen (%)':defPct},
+    {Tanggal:'2026-06-20', 'Kode Saham':'TLKM', 'Jumlah Lembar':10000, 'Dividen per Lembar':85, 'PPh Dividen (%)':defPct}
   ];
   var wsDiv = XLSX.utils.json_to_sheet(sample);
-  wsDiv['!cols'] = [{wch:12},{wch:12},{wch:14},{wch:18}];
+  wsDiv['!cols'] = [{wch:12},{wch:12},{wch:14},{wch:18},{wch:16}];
 
   var wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, wsDiv, 'Dividen');
@@ -232,8 +238,9 @@ function divDownloadTemplate(){
     ['Kode Saham', 'Kode ticker IDX, contoh: BBCA, TLKM (tanpa akhiran .JK)'],
     ['Jumlah Lembar', 'Jumlah lembar saham yang Anda miliki saat cum date'],
     ['Dividen per Lembar', 'Dividen per lembar dalam Rupiah, SEBELUM dipotong pajak'],
+    ['PPh Dividen (%)', 'Tarif PPh final dividen SAAT dividen itu dibayarkan (bukan tarif hari ini) — isi angka, mis. 10 untuk 10%. Kosongkan untuk pakai tarif yang sedang aktif di Pengaturan Pajak ('+defPct+'%).'],
     [''],
-    ['PPh Dividen 10% dihitung OTOMATIS oleh aplikasi — jangan diisi manual.'],
+    ['PENTING: tarif PPh dividen bisa berubah mengikuti regulasi pemerintah dari waktu ke waktu. Isi kolom PPh Dividen (%) sesuai tarif yang BERLAKU SAAT dividen itu dibayarkan, jangan disamakan semua ke tarif sekarang kalau riwayat Anda mencakup beberapa tahun dengan tarif berbeda.'],
     ['Dividen yang diimpor akan menambah saldo RDN, sama seperti input manual "+ Catat Dividen".'],
     ['Hapus 2 baris contoh sebelum mengisi data Anda, atau timpa langsung baris tersebut.'],
     ['Setelah selesai, unggah file ini lewat tombol "📤 Upload Excel" di tab Dividen.']
@@ -275,6 +282,12 @@ function divValidateRow(r, idx){
   var ticker = String(r['Kode Saham']||'').trim().toUpperCase().replace(/\.JK$/,'');
   var shares = parsePrice(r['Jumlah Lembar']);
   var dps = parsePrice(r['Dividen per Lembar']);
+  // Kolom PPh Dividen (%) opsional — kosong = pakai tarif TAX_SETTINGS yang
+  // sedang aktif (backward-compatible dengan template lama yang belum
+  // punya kolom ini). Diisi = tarif HISTORIS baris itu, bisa beda-beda per
+  // baris kalau riwayat dividen mencakup periode dengan regulasi berbeda.
+  var pphRaw = r['PPh Dividen (%)'];
+  var pphPct = (pphRaw===''||pphRaw==null) ? (TAX_SETTINGS.pphDividen*100) : parsePrice(pphRaw);
 
   var errs = [];
   if(!date) errs.push('Tanggal tidak valid (pakai format YYYY-MM-DD)');
@@ -282,8 +295,9 @@ function divValidateRow(r, idx){
   // FIX AUDIT F7: tolak juga Infinity, bukan cuma NaN/negatif/nol
   if(!(shares>0) || !isFinite(shares)) errs.push('Jumlah Lembar harus angka > 0');
   if(!(dps>0) || !isFinite(dps)) errs.push('Dividen per Lembar harus angka > 0');
+  if(!isFinite(pphPct) || pphPct<0 || pphPct>100) errs.push('PPh Dividen (%) harus angka 0-100');
 
-  return {row:idx+2, date:date, ticker:ticker, shares:shares, dps:dps, ok:errs.length===0, errs:errs};
+  return {row:idx+2, date:date, ticker:ticker, shares:shares, dps:dps, pphPct:pphPct, ok:errs.length===0, errs:errs};
 }
 
 // FIX AUDIT F6: kunci pencocokan duplikat untuk dividen
@@ -324,11 +338,13 @@ function divProcessImportRows(rows, fileName){
       '<label style="display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer"><input type="checkbox" id="div-import-dupes-chk"> <span>Impor juga baris duplikat ini (saya yakin ini dividen baru, bukan duplikat)</span></label>'+
     '</div>' : '')+
     (valid.length ? '<div style="overflow-x:auto;max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">'+
-      '<table class="tbl"><thead><tr><th>Tanggal</th><th>Kode</th><th>Lembar</th><th>Div/Lembar</th><th>Dividen Kotor</th></tr></thead><tbody>'+
+      '<table class="tbl"><thead><tr><th>Tanggal</th><th>Kode</th><th>Lembar</th><th>Div/Lembar</th><th>Dividen Kotor</th><th>PPh %</th><th>Net</th></tr></thead><tbody>'+
       valid.map(function(p){
+        var gross=p.shares*p.dps, net=gross*(1-p.pphPct/100);
         return '<tr><td class="mono">'+p.date+'</td><td class="tp">'+p.ticker+'</td>'+
           '<td class="mono">'+fmt(p.shares)+'</td><td class="mono">Rp '+fmt(p.dps)+'</td>'+
-          '<td class="mono">Rp '+fmt(p.shares*p.dps)+'</td></tr>';
+          '<td class="mono">Rp '+fmt(gross)+'</td><td class="mono">'+p.pphPct+'%</td>'+
+          '<td class="mono">Rp '+fmt(net)+'</td></tr>';
       }).join('')+
       '</tbody></table></div>' : (dupes.length ? '' : '<div style="font-size:12px;color:var(--red)">Tidak ada baris valid untuk diimpor — perbaiki file lalu upload ulang.</div>'));
 
@@ -352,7 +368,7 @@ function divConfirmImport(){
   var realSaveData = saveData;
   saveData = function(){};
   try{
-    rows.forEach(function(r){ addDiv(r.date, r.ticker, r.shares, r.dps); });
+    rows.forEach(function(r){ addDiv(r.date, r.ticker, r.shares, r.dps, r.pphPct/100); });
   } finally {
     saveData = realSaveData;
   }

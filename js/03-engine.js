@@ -105,10 +105,16 @@ function addTx(date,type,ticker,lot,price,sekuritas){
   saveData();
 }
 
-function addDiv(date,ticker,shares,dps){
+function addDiv(date,ticker,shares,dps,pphRate){
   // FIX AUDIT F1: pakai TAX_SETTINGS.pphDividen (single source of truth),
   // bukan literal 0.1 — lihat AUDIT_FINANCIAL_ENGINE.md Temuan #1.
-  var gross=shares*dps;var tax=gross*TAX_SETTINGS.pphDividen;var net=gross-tax;
+  // `pphRate` opsional (pecahan, mis. 0.1 untuk 10%) — dipakai bulk import
+  // dividen supaya tarif PPh HISTORIS (saat regulasi belum berubah) tetap
+  // bisa dicatat per baris, bukan otomatis memakai tarif TAX_SETTINGS yang
+  // berlaku SEKARANG untuk seluruh dividen lama. Kalau tidak diisi, tetap
+  // pakai TAX_SETTINGS.pphDividen seperti sebelumnya (jalur manual/sample).
+  var rate = (typeof pphRate==='number' && isFinite(pphRate) && pphRate>=0) ? pphRate : TAX_SETTINGS.pphDividen;
+  var gross=shares*dps;var tax=gross*rate;var net=gross-tax;
   var divId = nextDivId++;
   dividends.push({id:divId,date:date,ticker:ticker,shares:shares,dps:dps,gross:gross,tax:tax,net:net});
   addRdn(date,'DIVIDEN','Dividen '+ticker+' Rp '+fmt(dps)+'/lbr',net,'—', 'div-'+divId);
