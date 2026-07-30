@@ -36,6 +36,21 @@ async function _supaReplaceTable(table, uid, rows, idCol){
   // yang belum berhasil digantikan.
   idCol = idCol || 'tx_id';
   if(rows && rows.length > 0){
+    // FIX: Postgres menolak SELURUH upsert ("ON CONFLICT DO UPDATE command
+    // cannot affect row a second time") kalau satu batch berisi >1 baris
+    // dengan id yang sama — apapun penyebabnya di sisi lokal (id generator
+    // yang pernah drift, dsb), ini dulu memblokir SEMUA sync berikutnya
+    // (termasuk perubahan kecil seperti Strategi per Emiten, karena satu
+    // fungsi sync yang sama menangani semuanya). Dedup di sini menutup
+    // masalahnya secara permanen, apapun akar penyebabnya — simpan baris
+    // TERAKHIR untuk tiap id (dianggap versi paling baru/lengkap).
+    var seenIdx = {};
+    rows.forEach(function(r, i){ seenIdx[r[idCol]] = i; });
+    var dupCount = rows.length - Object.keys(seenIdx).length;
+    if(dupCount > 0){
+      console.warn(dupCount+' baris duplikat (id sama) di '+table+' dibuang sebelum sync ke cloud.');
+      rows = Object.keys(seenIdx).map(function(k){ return rows[seenIdx[k]]; });
+    }
     var insRes = await _supabase.from(table).upsert(rows, {onConflict:'user_id,'+idCol});
     if(insRes.error && /no unique or exclusion constraint|there is no unique/i.test(insRes.error.message||'')){
       // Migrasi unique-constraint (lihat sql/schema_migration.sql) belum
