@@ -1,3 +1,12 @@
+// Helper bersama: id berikutnya yang AMAN untuk sebuah array {id,...} —
+// selalu max(id yang ada)+1, tidak pernah dihitung dari JUMLAH baris
+// (transactions.length+1 BUKAN jaminan lebih besar dari id maksimum kalau
+// ada baris yang pernah dihapus/id tidak rapat) supaya id baru tidak pernah
+// bentrok dengan id yang sudah ada — akar penyebab error "ON CONFLICT DO
+// UPDATE command cannot affect row a second time" & realized P&L berubah
+// sendiri (salah satu dari dua baris id-kembar dibuang saat sync).
+function _maxIdPlus1(arr){ var m=0; (arr||[]).forEach(function(x){ if(x.id>m) m=x.id; }); return m+1; }
+
 // ============================================================
 // SUPABASE DATA SYNC
 // ============================================================
@@ -48,7 +57,12 @@ async function _supaReplaceTable(table, uid, rows, idCol){
     rows.forEach(function(r, i){ seenIdx[r[idCol]] = i; });
     var dupCount = rows.length - Object.keys(seenIdx).length;
     if(dupCount > 0){
+      // JANGAN diam-diam saja — kalau dua baris beda (bukan duplikat asli)
+      // kebetulan punya id sama, salah satunya akan hilang di sini. User
+      // harus tahu supaya bisa cek & tidak mengira datanya utuh padahal
+      // sudah berkurang.
       console.warn(dupCount+' baris duplikat (id sama) di '+table+' dibuang sebelum sync ke cloud.');
+      if(typeof showSaveStatus==='function') showSaveStatus('⚠ '+dupCount+' baris '+table+' punya ID sama — salah satunya digabung/dibuang saat sync. Cek datanya kalau ada yang hilang.', 'var(--amber)', true);
       rows = Object.keys(seenIdx).map(function(k){ return rows[seenIdx[k]]; });
     }
     var insRes = await _supabase.from(table).upsert(rows, {onConflict:'user_id,'+idCol});
@@ -237,12 +251,45 @@ async function supaLoadAllData(){
     if(rData.length>0) rdTx=rData.map(function(r){return {id:r.tx_id,date:r.date,type:r.action,code:r.name,amount:r.total_idr,nab:r.nav,units:r.units,_userInput:true};});
     var diRes=await _supabase.from('div_invest').select('*').eq('user_id',uid).maybeSingle();
     if(diRes.data){divInvestData=diRes.data.data||[];_divInvestId=diRes.data.next_id||1;}
+    // FIX: counter next_tx_id/next_div_id/dst di user_settings bisa drift jadi
+    // LEBIH RENDAH dari id maksimum yang sebenarnya sudah ada di data (mis.
+    // gagal sebagian saat sync settings, atau baris settings sempat kosong).
+    // Kalau itu terjadi, transaksi BARU akan dapat id yang BENTROK dengan
+    // yang sudah ada — persis penyebab error "ON CONFLICT DO UPDATE command
+    // cannot affect row a second time" dan realized P&L yang berubah sendiri
+    // (salah satu dari dua baris id-kembar dibuang saat sync). Jadikan
+    // counter ini SELALU minimal (max id yang ada + 1) — tidak pernah lebih
+    // rendah dari itu, apapun yang tersimpan di user_settings.
+    nextTxId  = Math.max(nextTxId,  _maxIdPlus1(transactions));
+    nextDivId = Math.max(nextDivId, _maxIdPlus1(dividends));
+    nextRdnId = Math.max(nextRdnId, _maxIdPlus1(rdnMutations));
+    nextCryptoId = Math.max(nextCryptoId, _maxIdPlus1(cryptoTx));
+    nextEtfId    = Math.max(nextEtfId,    _maxIdPlus1(etfTx));
+    nextRdId     = Math.max(nextRdId,     _maxIdPlus1(rdTx));
     return true;
   } catch(err){ console.warn('Supabase load error:',err); return false; }
 }
 
 function loadDataFromLocalStorage(){
-  try{var raw=localStorage.getItem('ihsg_pro_master_v5');if(!raw)return false;var d=JSON.parse(raw);if(!d||!d.transactions)return false;transactions=d.transactions||[];dividends=d.dividends||[];rdnMutations=d.rdnMutations||[];activeSekuritas=d.activeSekuritas||'Mirae Asset';rdnBalance=d.rdnBalance||0;nextTxId=d.nextTxId||(transactions.length+1);nextDivId=d.nextDivId||(dividends.length+1);nextRdnId=d.nextRdnId||(rdnMutations.length+1);cryptoTx=d.cryptoTx||[];etfTx=d.etfTx||[];rdTx=(d.rdTx||[]).filter(function(tx){return tx._userInput===true;});nextCryptoId=d.nextCryptoId||(cryptoTx.length+1);nextEtfId=d.nextEtfId||(etfTx.length+1);nextRdId=d.nextRdId||(rdTx.length+1);tradeStrategy=d.tradeStrategy||{};sekTaxOverride=d.sekTaxOverride||{};return true;}catch(e){return false;}
+  try{
+    var raw=localStorage.getItem('ihsg_pro_master_v5');if(!raw)return false;var d=JSON.parse(raw);if(!d||!d.transactions)return false;
+    transactions=d.transactions||[];dividends=d.dividends||[];rdnMutations=d.rdnMutations||[];activeSekuritas=d.activeSekuritas||'Mirae Asset';rdnBalance=d.rdnBalance||0;
+    cryptoTx=d.cryptoTx||[];etfTx=d.etfTx||[];rdTx=(d.rdTx||[]).filter(function(tx){return tx._userInput===true;});
+    tradeStrategy=d.tradeStrategy||{};sekTaxOverride=d.sekTaxOverride||{};
+    // FIX: fallback lama pakai JUMLAH baris (transactions.length+1) sebagai
+    // id berikutnya kalau nextTxId tidak tersimpan — tapi jumlah baris BUKAN
+    // id maksimum (bisa lebih rendah kalau ada baris yang pernah dihapus di
+    // tengah, atau id tidak berurutan rapat), jadi transaksi baru bisa
+    // BENTROK dengan id yang sudah ada. Pakai max id + 1, dan tetap ambil
+    // yang LEBIH BESAR antara nilai tersimpan vs hasil hitung ulang ini.
+    nextTxId=Math.max(d.nextTxId||0, _maxIdPlus1(transactions));
+    nextDivId=Math.max(d.nextDivId||0, _maxIdPlus1(dividends));
+    nextRdnId=Math.max(d.nextRdnId||0, _maxIdPlus1(rdnMutations));
+    nextCryptoId=Math.max(d.nextCryptoId||0, _maxIdPlus1(cryptoTx));
+    nextEtfId=Math.max(d.nextEtfId||0, _maxIdPlus1(etfTx));
+    nextRdId=Math.max(d.nextRdId||0, _maxIdPlus1(rdTx));
+    return true;
+  }catch(e){return false;}
 }
 
 // ============================================================
@@ -352,8 +399,31 @@ function safeCloudBoot(){
 function loadData(){ return loadDataFromLocalStorage(); }
 
 function clearData(){
-  if(!confirm('\u26a0\ufe0f Hapus SEMUA data transaksi tersimpan dan mulai dari awal?\n\nTindakan ini tidak bisa dibatalkan!')) return;
-  if(_currentUser){var uid=_currentUser.id;Promise.all([_supabase.from('transactions').delete().eq('user_id',uid),_supabase.from('dividends').delete().eq('user_id',uid),_supabase.from('rdn_mutations').delete().eq('user_id',uid),_supabase.from('crypto_tx').delete().eq('user_id',uid),_supabase.from('etf_tx').delete().eq('user_id',uid),_supabase.from('rd_tx').delete().eq('user_id',uid),_supabase.from('user_settings').delete().eq('user_id',uid),_supabase.from('div_invest').delete().eq('user_id',uid)]).then(function(){localStorage.removeItem('ihsg_pro_master_v5');localStorage.removeItem(LS_PENDING_KEY);location.reload();});}
+  if(!confirm('\u26a0\ufe0f Hapus SEMUA data transaksi tersimpan (termasuk di cloud) dan mulai dari awal?\n\nTindakan ini tidak bisa dibatalkan!')) return;
+  if(_currentUser){
+    var uid=_currentUser.id;
+    var tables=['transactions','dividends','rdn_mutations','crypto_tx','etf_tx','rd_tx','user_settings','div_invest'];
+    if(typeof showSaveStatus==='function') showSaveStatus('\u23f3 Menghapus semua data di cloud...', 'var(--amber)', true);
+    Promise.all(tables.map(function(t){ return _supabase.from(t).delete().eq('user_id',uid); }))
+      .then(function(results){
+        // FIX: sebelumnya Promise.all cuma menunggu semua request SELESAI,
+        // tidak pernah mengecek apakah masing-masing benar SUKSES (.error
+        // bisa terisi meski promise-nya resolve, bukan reject) \u2014 kalau satu
+        // tabel gagal dihapus (mis. koneksi putus), reset lokal tetap jalan
+        // seolah semuanya bersih, padahal cloud masih menyisakan data lama
+        // yang bisa "muncul lagi" saat sync berikutnya.
+        var failed = tables.filter(function(t,i){ return results[i].error; });
+        if(failed.length){
+          if(typeof showSaveStatus==='function') showSaveStatus('\u26a0 Gagal hapus: '+failed.join(', ')+' \u2014 reset TIDAK selesai, coba lagi', 'var(--red)', true);
+          return;
+        }
+        localStorage.removeItem('ihsg_pro_master_v5');localStorage.removeItem(LS_PENDING_KEY);
+        location.reload();
+      })
+      .catch(function(err){
+        if(typeof showSaveStatus==='function') showSaveStatus('\u26a0 Gagal reset: '+(err&&err.message||'unknown'), 'var(--red)', true);
+      });
+  }
   else{localStorage.removeItem('ihsg_pro_master_v5');localStorage.removeItem(LS_PENDING_KEY);location.reload();}
 }
 
@@ -425,15 +495,15 @@ function importData(){
         rdnMutations    = d.rdnMutations    || [];
         activeSekuritas = d.activeSekuritas || 'Mirae Asset';
         rdnBalance      = d.rdnBalance      || 0;
-        nextTxId        = d.nextTxId        || transactions.length+1;
-        nextDivId       = d.nextDivId       || dividends.length+1;
-        nextRdnId       = d.nextRdnId       || rdnMutations.length+1;
+        nextTxId        = Math.max(d.nextTxId||0, _maxIdPlus1(transactions));
+        nextDivId       = Math.max(d.nextDivId||0, _maxIdPlus1(dividends));
+        nextRdnId       = Math.max(d.nextRdnId||0, _maxIdPlus1(rdnMutations));
         cryptoTx        = d.cryptoTx        || [];
         etfTx           = d.etfTx           || [];
         rdTx            = d.rdTx            || [];
-        nextCryptoId    = d.nextCryptoId    || cryptoTx.length+1;
-        nextEtfId       = d.nextEtfId       || etfTx.length+1;
-        nextRdId        = d.nextRdId        || rdTx.length+1;
+        nextCryptoId    = Math.max(d.nextCryptoId||0, _maxIdPlus1(cryptoTx));
+        nextEtfId       = Math.max(d.nextEtfId||0, _maxIdPlus1(etfTx));
+        nextRdId        = Math.max(d.nextRdId||0, _maxIdPlus1(rdTx));
         saveData();
         closeBackupModal();
         showSaveStatus('✓ '+txCount+' transaksi berhasil diimport', 'var(--accent)');
