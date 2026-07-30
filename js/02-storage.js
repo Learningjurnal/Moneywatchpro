@@ -1,6 +1,31 @@
 // ============================================================
 // SUPABASE DATA SYNC
 // ============================================================
+// FIX KRITIS: PostgREST (Supabase) membatasi hasil `select()` ke default
+// 1000 baris per request (db-max-rows) — TANPA error, cuma diam-diam
+// terpotong. Trader aktif dengan >1000 transaksi (mis. 4441 baris hasil
+// bulk import) sebelumnya hanya menarik ~1000 baris TERTUA (order by
+// tanggal ascending) dari cloud, lalu berhenti. Efeknya: transaksi SELL
+// yang menutup posisi (tanggal lebih baru, di luar 1000 baris pertama)
+// tidak ikut termuat — saham yang sebenarnya sudah terjual habis
+// (UNTR/ASII/TLKM/dst) muncul lagi seolah masih posisi terbuka, PADAHAL
+// cloud-nya sendiri sudah benar (terverifikasi lewat SQL count). Ini juga
+// diam-diam memotong rdn_mutations (1 baris per transaksi BUY/SELL —
+// pasti >1000 untuk trader aktif). Sekarang: ambil per halaman 1000 baris
+// sampai habis, bukan sekali select() saja.
+async function _supaFetchAllPages(table, uid, orderCol){
+  var PAGE = 1000, all = [], from = 0;
+  while(true){
+    var res = await _supabase.from(table).select('*').eq('user_id', uid).order(orderCol, {ascending:true}).range(from, from+PAGE-1);
+    if(res.error) throw new Error('Ambil '+table+' gagal: '+res.error.message);
+    var batch = res.data || [];
+    all = all.concat(batch);
+    if(batch.length < PAGE) break; // halaman terakhir (kurang dari PAGE = tidak ada lagi)
+    from += PAGE;
+  }
+  return all;
+}
+
 async function _supaReplaceTable(table, uid, rows, idCol){
   // Upsert dulu, baru hapus baris yang sudah tidak ada lokal — BUKAN
   // delete-lalu-insert. Kalau delete jalan duluan dan insert berikutnya gagal
@@ -26,9 +51,25 @@ async function _supaReplaceTable(table, uid, rows, idCol){
       return;
     }
     if(insRes.error) throw new Error('Simpan '+table+' gagal (data cloud lama TIDAK diubah): '+insRes.error.message);
+    // FIX: sebelumnya bikin filter "NOT IN (id1,id2,...,idN)" berisi SEMUA id
+    // yang mau disimpan langsung di URL request — untuk trader aktif dengan
+    // ribuan baris (mis. 4441 transaksi), ini bisa menghasilkan query string
+    // puluhan KB yang gampang kepotong/gagal di batas panjang URL server.
+    // Sekarang: ambil id yang SEKARANG ada di cloud (paginated, aman untuk
+    // jumlah besar), hitung selisihnya di JS (biasanya kecil/kosong), lalu
+    // hapus HANYA id yang stale itu, dikirim berkelompok kecil.
     var keepIds = rows.map(function(r){ return r[idCol]; });
-    var delRes = await _supabase.from(table).delete().eq('user_id', uid).not(idCol, 'in', '('+keepIds.join(',')+')');
-    if(delRes.error) console.warn('Bersihkan baris lama di '+table+' gagal (data baru aman tersimpan, hanya ada baris usang tersisa):', delRes.error.message);
+    var keepSet = {}; keepIds.forEach(function(id){ keepSet[id]=1; });
+    var existingRows = await _supaFetchAllPages(table, uid, idCol);
+    var staleIds = existingRows.map(function(r){ return r[idCol]; }).filter(function(id){ return !keepSet[id]; });
+    if(staleIds.length>0){
+      var CHUNK=200;
+      for(var ci=0; ci<staleIds.length; ci+=CHUNK){
+        var chunk = staleIds.slice(ci, ci+CHUNK);
+        var delRes = await _supabase.from(table).delete().eq('user_id', uid).in(idCol, chunk);
+        if(delRes.error){ console.warn('Bersihkan baris lama di '+table+' gagal (data baru aman tersimpan, hanya ada baris usang tersisa):', delRes.error.message); break; }
+      }
+    }
   } else {
     var delAllRes = await _supabase.from(table).delete().eq('user_id', uid);
     if(delAllRes.error) throw new Error('Hapus '+table+' gagal: '+delAllRes.error.message);
@@ -166,19 +207,19 @@ async function supaLoadAllData(){
     // dengan nama yang sama persis, seluruh dashboard & render (yang baca
     // t.type, t.komisi, dst) menganggap datanya kosong/undefined walau
     // baris di tabel Riwayat Transaksi tetap tampil (raw, tanpa filter).
-    var txRes=await _supabase.from('transactions').select('*').eq('user_id',uid).order('date',{ascending:true});
-    if(txRes.data&&txRes.data.length>0) transactions=txRes.data.map(function(t){return {id:t.tx_id,date:t.date,type:t.action,ticker:t.ticker,sekuritas:t.sekuritas,lot:t.lot,price:t.price,gross:t.gross,komisi:t.commission,ppn:0,levy:0,pph:0,tax:t.tax,net:t.net};});
-    var divRes=await _supabase.from('dividends').select('*').eq('user_id',uid).order('date',{ascending:true});
-    if(divRes.data&&divRes.data.length>0) dividends=divRes.data.map(function(d){return {id:d.div_id,date:d.date,ticker:d.ticker,shares:d.shares,dps:d.dps,gross:d.gross,tax:d.pph,net:d.net};});
-    var rdnRes=await _supabase.from('rdn_mutations').select('*').eq('user_id',uid).order('date',{ascending:true});
-    if(rdnRes.data&&rdnRes.data.length>0) rdnMutations=rdnRes.data.map(function(r){return {id:r.rdn_id,date:r.date,type:r.type,ket:r.description||'',amount:(r.amount_in||0)-(r.amount_out||0),balance:r.balance||0,linkedTxId:r.linked_tx_id||null,sekuritas:''};});
+    var txData=await _supaFetchAllPages('transactions', uid, 'date');
+    if(txData.length>0) transactions=txData.map(function(t){return {id:t.tx_id,date:t.date,type:t.action,ticker:t.ticker,sekuritas:t.sekuritas,lot:t.lot,price:t.price,gross:t.gross,komisi:t.commission,ppn:0,levy:0,pph:0,tax:t.tax,net:t.net};});
+    var divData=await _supaFetchAllPages('dividends', uid, 'date');
+    if(divData.length>0) dividends=divData.map(function(d){return {id:d.div_id,date:d.date,ticker:d.ticker,shares:d.shares,dps:d.dps,gross:d.gross,tax:d.pph,net:d.net};});
+    var rdnData=await _supaFetchAllPages('rdn_mutations', uid, 'date');
+    if(rdnData.length>0) rdnMutations=rdnData.map(function(r){return {id:r.rdn_id,date:r.date,type:r.type,ket:r.description||'',amount:(r.amount_in||0)-(r.amount_out||0),balance:r.balance||0,linkedTxId:r.linked_tx_id||null,sekuritas:''};});
     if(typeof rebuildRdnBalance==='function' && rdnMutations && rdnMutations.length>0) rebuildRdnBalance();
-    var cRes=await _supabase.from('crypto_tx').select('*').eq('user_id',uid).order('date',{ascending:true});
-    if(cRes.data&&cRes.data.length>0) cryptoTx=cRes.data.map(function(c){return {id:c.tx_id,date:c.date,type:c.action,coin:c.coin,qty:c.amount,priceIdr:c.price_idr,total:c.total_idr};});
-    var eRes=await _supabase.from('etf_tx').select('*').eq('user_id',uid).order('date',{ascending:true});
-    if(eRes.data&&eRes.data.length>0) etfTx=eRes.data.map(function(e){return {id:e.tx_id,date:e.date,type:e.action,ticker:e.ticker,shares:e.shares,priceUSD:e.price_usd,totalUSD:e.total_usd,totalIdr:e.total_idr,kurs:e.kurs};});
-    var rRes=await _supabase.from('rd_tx').select('*').eq('user_id',uid).order('date',{ascending:true});
-    if(rRes.data&&rRes.data.length>0) rdTx=rRes.data.map(function(r){return {id:r.tx_id,date:r.date,type:r.action,code:r.name,amount:r.total_idr,nab:r.nav,units:r.units,_userInput:true};});
+    var cData=await _supaFetchAllPages('crypto_tx', uid, 'date');
+    if(cData.length>0) cryptoTx=cData.map(function(c){return {id:c.tx_id,date:c.date,type:c.action,coin:c.coin,qty:c.amount,priceIdr:c.price_idr,total:c.total_idr};});
+    var eData=await _supaFetchAllPages('etf_tx', uid, 'date');
+    if(eData.length>0) etfTx=eData.map(function(e){return {id:e.tx_id,date:e.date,type:e.action,ticker:e.ticker,shares:e.shares,priceUSD:e.price_usd,totalUSD:e.total_usd,totalIdr:e.total_idr,kurs:e.kurs};});
+    var rData=await _supaFetchAllPages('rd_tx', uid, 'date');
+    if(rData.length>0) rdTx=rData.map(function(r){return {id:r.tx_id,date:r.date,type:r.action,code:r.name,amount:r.total_idr,nab:r.nav,units:r.units,_userInput:true};});
     var diRes=await _supabase.from('div_invest').select('*').eq('user_id',uid).maybeSingle();
     if(diRes.data){divInvestData=diRes.data.data||[];_divInvestId=diRes.data.next_id||1;}
     return true;
