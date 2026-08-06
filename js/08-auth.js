@@ -29,6 +29,18 @@ function authShowApp(username){
   AUTH._sesStart = Date.now();
   AUTH._sesExp = Date.now() + AUTH.SESSION_MS;
   authStartTimeoutBar();
+  // FIX: sebelumnya halaman yang sedang aktif (default 'dashboard') dirender
+  // SEKALI saja saat DOMContentLoaded, memakai data localStorage lokal yang
+  // basi/kosong — SEBELUM data asli dari cloud (safeCloudBoot) selesai
+  // dimuat. authShowApp() dipanggil SETELAH cloud selesai dimuat, tapi tidak
+  // pernah render ulang, jadi user melihat angka lama (mis. Kas Rp 0 di
+  // device baru) sampai siklus refresh harga otomatis berikutnya (~60 detik)
+  // kebetulan memicu render ulang — persis gejala "nilai Kas berubah sendiri
+  // tanpa pengeditan" yang dilaporkan. Render ulang di sini memastikan
+  // halaman langsung menampilkan data cloud yang benar begitu login selesai,
+  // tidak menunggu tick berikutnya.
+  try{ if(typeof renderPage==='function' && typeof currentPage!=='undefined') renderPage(currentPage); }catch(e){}
+  try{ if(typeof renderCashWidgets==='function') renderCashWidgets(); }catch(e){}
   // Rebuild ticker tape after login (data may now be loaded)
   try{ buildTickerTape(); }catch(e){}
   // Activity listeners reset timer
