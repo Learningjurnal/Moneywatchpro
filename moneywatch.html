@@ -1425,7 +1425,7 @@
     <span style="font-size:22px">📋</span>
     <div>
       <div style="font-size:12px;font-weight:700;color:var(--amber)">Semua reksa dana sudah dicairkan</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:2px">Data berikut adalah <strong>riwayat historis</strong> transaksi reksa dana dari 3 platform (BIBIT, IPOT, POEMS). Total gain kumulatif: <strong style="color:var(--green)">Rp 19.626.491</strong>. Gunakan tombol + Beli RD untuk mulai mencatat posisi aktif baru.</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:2px">Data berikut adalah <strong>riwayat historis</strong> transaksi reksa dana. Gunakan tombol + Beli RD untuk mulai mencatat posisi aktif baru.</div>
     </div>
     <button class="btn btn-green btn-sm" onclick="openRdModal('beli')" style="flex-shrink:0">+ Beli RD Baru</button>
   </div>
@@ -1433,32 +1433,17 @@
   <!-- Summary metrics -->
     <!-- Cash widget reksadana -->
   <div style="background:rgba(0,0,0,.15);border:1px solid #a78bfa33;border-radius:9px;padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-    <span style="font-size:10px;font-weight:700;color:#a78bfa;letter-spacing:.8px;white-space:nowrap">💰 KAS REKSA DANA (BIBIT/IPOT)</span>
+    <span style="font-size:10px;font-weight:700;color:#a78bfa;letter-spacing:.8px;white-space:nowrap">💰 KAS REKSA DANA</span>
     <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:#a78bfa" id="cash-reksadana-disp">Rp 0</span>
     <input type="number" id="cash-reksadana-input" placeholder="Set kas..." class="finput" style="width:140px;padding:4px 9px;font-size:11px">
     <button class="btn btn-ghost btn-xs" style="color:#a78bfa;border-color:#a78bfa44" onclick="saveCashInput('reksadana')">💾 Simpan</button>
-    <span style="font-size:10px;color:var(--text3);flex:1">Saldo IDR di platform reksa dana (Bibit, IPOT, POEMS)</span>
+    <span style="font-size:10px;color:var(--text3);flex:1">Saldo IDR di platform reksa dana</span>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:11px">
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:11px">
     <div class="metric" style="border-color:rgba(0,229,160,.3)">
       <div class="mlabel">Total Gain Kumulatif</div>
       <div class="mval up" id="rd-total" style="font-size:18px">Rp 0</div>
       <div class="msub neu">realisasi 2018–2026</div>
-    </div>
-    <div class="metric">
-      <div class="mlabel">Gain BIBIT</div>
-      <div class="mval up" id="rd-gain-bibit">Rp 0</div>
-      <div class="msub neu" id="rd-gain-bibit-sub"></div>
-    </div>
-    <div class="metric">
-      <div class="mlabel">Gain IPOT</div>
-      <div class="mval" id="rd-gain-ipot">Rp 0</div>
-      <div class="msub neu" id="rd-gain-ipot-sub"></div>
-    </div>
-    <div class="metric">
-      <div class="mlabel">Gain POEMS</div>
-      <div class="mval" id="rd-gain-poems">Rp 0</div>
-      <div class="msub neu" id="rd-gain-poems-sub"></div>
     </div>
     <div class="metric">
       <div class="mlabel">Posisi Aktif Saat Ini</div>
@@ -1468,18 +1453,9 @@
   </div>
 
   <!-- Charts -->
-  <div class="g2b" style="margin-bottom:11px">
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Gain per Kategori (Semua Platform)</span></div>
-      <div class="cw" style="height:160px"><canvas id="rdPerfChart"></canvas></div>
-    </div>
-    <div class="card">
-      <div class="cheader"><span class="ctitle">Gain per Platform</span></div>
-      <div style="display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center">
-        <div class="cw" style="height:160px"><canvas id="rdDonut"></canvas></div>
-        <div id="rd-leg"></div>
-      </div>
-    </div>
+  <div class="card" style="margin-bottom:11px">
+    <div class="cheader"><span class="ctitle">Gain per Kategori</span></div>
+    <div class="cw" style="height:160px"><canvas id="rdPerfChart"></canvas></div>
   </div>
 
   <!-- Posisi aktif user (rdTx) -->
@@ -1524,9 +1500,6 @@
       <span class="ctitle">Riwayat Historis 2018–2026</span>
       <div style="display:flex;gap:5px">
         <button class="btn btn-ghost btn-xs" onclick="rdFilterPlatform('all',this)" style="color:var(--accent)">Semua</button>
-        <button class="btn btn-ghost btn-xs" onclick="rdFilterPlatform('BIBIT',this)">BIBIT</button>
-        <button class="btn btn-ghost btn-xs" onclick="rdFilterPlatform('IPOT',this)">IPOT</button>
-        <button class="btn btn-ghost btn-xs" onclick="rdFilterPlatform('POEMS',this)">POEMS</button>
       </div>
     </div>
     <div style="overflow-x:auto">

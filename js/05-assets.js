@@ -743,23 +743,12 @@ function renderReksaDana(){
   var totalGain = funds.reduce(function(a,f){return a+(f.gl||0)},0);
   var mc = XLSX_DATA.fund_margin_by_cat;
 
-  var gainBIBIT  = mc.BIBIT  ? (mc.BIBIT.Saham  + mc.BIBIT.FixedIncome  + mc.BIBIT.MoneyMarket)  : 0;
-  var gainIPOT   = mc.IPOT   ? (mc.IPOT.Saham   + mc.IPOT.FixedIncome   + mc.IPOT.MoneyMarket)   : 0;
-  var gainPOEMS  = mc.POEMS  ? (mc.POEMS.Saham  + mc.POEMS.FixedIncome  + mc.POEMS.MoneyMarket)  : 0;
-
   // ── Posisi aktif dari rdTx ──
   var porto = getRdPortfolio();
   var aktivMV = porto.reduce(function(a,p){return a+p.mv},0);
 
   // ── Metrics ──
   el('rd-total').textContent = 'Rp '+fmtK(totalGain);
-  el('rd-gain-bibit').textContent  = 'Rp '+fmtK(gainBIBIT);
-  el('rd-gain-bibit-sub').textContent = Object.keys(mc.BIBIT||{}).length+' kategori';
-  el('rd-gain-ipot').className = 'mval '+(gainIPOT>=0?'up':'dn');
-  el('rd-gain-ipot').textContent   = (gainIPOT>=0?'+':'')+'Rp '+fmtK(gainIPOT);
-  el('rd-gain-ipot-sub').textContent = 'IPOT platform';
-  el('rd-gain-poems').textContent  = 'Rp '+fmtK(gainPOEMS);
-  el('rd-gain-poems-sub').textContent = 'POEMS platform';
   el('rd-aktif-val').textContent   = aktivMV>0 ? 'Rp '+fmtK(aktivMV) : 'Rp 0';
   el('rd-aktif-val').className     = 'mval '+(aktivMV>0?'up':'neu');
   el('rd-aktif-sub').textContent   = aktivMV>0 ? porto.length+' produk aktif' : '0 produk (semua dicairkan)';
@@ -782,32 +771,6 @@ function renderReksaDana(){
       plugins:{legend:{display:false},tooltip:Object.assign({},TT,{callbacks:{label:function(c){return 'Gain: Rp '+fmtK(c.parsed.y)}}})},
       scales:{x:{grid:{color:GC},ticks:TC},y:{grid:{color:GC},ticks:Object.assign({},TC,{callback:function(v){return 'Rp '+fmtK(v)}}),position:'right'}}}
   });
-
-  // ── Chart: donut per platform ──
-  kc('rdDonut');
-  var platData = [
-    {label:'BIBIT',  val:gainBIBIT,  color:'#00c8ff'},
-    {label:'IPOT',   val:gainIPOT,   color:'#a78bfa'},
-    {label:'POEMS',  val:gainPOEMS,  color:'#ffc107'},
-  ].filter(function(p){return p.val>0});
-  var cvD = el('rdDonut');
-  if(cvD && platData.length) charts['rdDonut'] = new Chart(cvD,{
-    type:'doughnut',
-    data:{labels:platData.map(function(p){return p.label}),
-          datasets:[{data:platData.map(function(p){return p.val}),
-                     backgroundColor:platData.map(function(p){return p.color}),borderWidth:0,hoverOffset:4}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',
-      plugins:{legend:{display:false},tooltip:Object.assign({},TT,{callbacks:{label:function(c){return c.label+': Rp '+fmtK(c.parsed)}}})}}
-  });
-  var totalPlatGain = gainBIBIT+gainIPOT+gainPOEMS||1;
-  el('rd-leg').innerHTML = platData.map(function(p){
-    return '<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px">'
-      +'<div style="width:8px;height:8px;border-radius:2px;background:'+p.color+';flex-shrink:0"></div>'
-      +'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--text2);flex:1">'+p.label+'</span>'
-      +'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:'+p.color+';font-weight:700">'+(p.val/totalPlatGain*100).toFixed(1)+'%</span>'
-      +'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--text3);min-width:55px;text-align:right">'+fmtK(p.val)+'</span>'
-      +'</div>';
-  }).join('');
 
   // ── Isi dropdown filter jenis (pertahankan pilihan aktif) ──
   var rdTypeSel=el('rd-filter-type');
