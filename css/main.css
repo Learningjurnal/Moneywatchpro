@@ -63,35 +63,37 @@ body::after{display:none}
 
 /* PAGES */
 .pages{flex:1;overflow:hidden;position:relative}
-.page{display:none;height:100%;overflow-y:auto;padding:14px 16px;position:absolute;inset:0}
+.page{display:none;height:100%;overflow-y:auto;padding:20px 26px;position:absolute;inset:0}
 .page.on{display:block}
 #page-transaksi.on{display:flex}
-.ptitle{font-size:16px;font-weight:600;margin-bottom:2px;font-family:'Inter',sans-serif;letter-spacing:0;color:var(--text)}
-.psub{font-size:12px;color:var(--text3);font-family:'Inter',sans-serif;margin-bottom:14px}
+.ptitle{font-size:17px;font-weight:600;margin-bottom:3px;font-family:'Inter',sans-serif;letter-spacing:0;color:var(--text)}
+.psub{font-size:12px;color:var(--text3);font-family:'Inter',sans-serif;margin-bottom:20px}
 
-/* GRID */
-.row4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
-.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
-.row5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:10px}
-.g2{display:grid;grid-template-columns:1fr 280px;gap:10px;margin-bottom:10px}
-.g2b{display:grid;grid-template-columns:1.2fr 1fr;gap:10px;margin-bottom:10px}
-.g2c{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px}
+/* GRID — jarak dilonggarkan supaya kartu tidak terasa berjejal/bertumpuk */
+.row4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.row5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px}
+.g2{display:grid;grid-template-columns:1fr 280px;gap:16px;margin-bottom:18px}
+.g2b{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-bottom:18px}
+.g2c{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:18px}
 
-/* METRIC — kartu tipis ala invezgo.com: latar & border nyaris tak kentara, radius sedang */
-.metric{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;position:relative;transition:border-color .18s ease}
+/* METRIC — kartu tipis, satu bahasa visual konsisten: latar & border netral,
+   warna dipakai HANYA untuk makna (naik/turun/label kategori), bukan hiasan
+   per-kartu — supaya beberapa kartu berdampingan tidak terasa "karnaval warna" */
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;position:relative;transition:border-color .18s ease}
 .metric:hover{border-color:rgba(129,140,248,.35)}
 .metric::before{display:none}
-.mlabel{font-size:11px;color:var(--text3);letter-spacing:0;font-family:'Inter',sans-serif;margin-bottom:7px;font-weight:400}
-.mval{font-size:18px;font-weight:600;font-family:'Share Tech Mono',monospace;line-height:1}
-.mval.lg{font-size:22px}
-.msub{font-size:11px;margin-top:5px;font-family:'Inter',sans-serif}
+.mlabel{font-size:11px;color:var(--text3);letter-spacing:.02em;font-family:'Inter',sans-serif;margin-bottom:8px;font-weight:500;text-transform:uppercase}
+.mval{font-size:19px;font-weight:600;font-family:'Share Tech Mono',monospace;line-height:1.15}
+.mval.lg{font-size:26px}
+.msub{font-size:11px;margin-top:6px;font-family:'Inter',sans-serif;color:var(--text3)}
 .up{color:var(--green)}.dn{color:var(--red)}.neu{color:var(--text2)}.amb{color:var(--amber)}
 
 /* CARD — kartu tipis serupa, tanpa blur berat, radius sedang konsisten dengan .metric */
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;backdrop-filter:none}
-.ctitle{font-size:11px;color:var(--text3);letter-spacing:0;font-family:'Inter',sans-serif;font-weight:500}
-.cheader{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;backdrop-filter:none}
+.ctitle{font-size:12.5px;color:var(--text2);letter-spacing:0;font-family:'Inter',sans-serif;font-weight:600}
+.cheader{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)}
 
 /* BTN */
 .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border2);font-family:'Inter',sans-serif;letter-spacing:0;text-transform:none;transition:all var(--spring);background:rgba(255,255,255,.04);color:var(--text2)}
@@ -330,14 +332,6 @@ body::after{display:none}
   --text3:#9093b8;         /* tersier: dari #6b6b8a — label kini terbaca */
 }
 html,body{font-size:14px}
-.ptitle{font-size:20px;font-weight:700}
-.psub{font-size:13px}
-.mlabel{font-size:12px;font-weight:500}
-.mval{font-size:22px}
-.mval.lg{font-size:27px}
-.msub{font-size:12px}
-.metric{padding:13px 15px}
-.ctitle{font-size:12.5px;font-weight:600;color:var(--text2)}
 .btn{font-size:13px;padding:8px 15px}
 .btn-sm{font-size:12px;padding:6px 12px}
 .btn-xs{font-size:11px;padding:4px 9px}

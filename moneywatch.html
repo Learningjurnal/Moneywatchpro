@@ -258,24 +258,29 @@
     ⚠ Skema database belum diperbarui — beberapa data (Strategi per Emiten, override komisi, Daftar Saham) tidak ikut tersimpan ke cloud dan bisa hilang saat reload. Jalankan <code style="font-family:'IBM Plex Mono',monospace">sql/schema_migration.sql</code> sekali di Supabase SQL Editor untuk memperbaikinya.
   </div>
 
-  <!-- ROW 1: Total AUM hero + 4 P&L cards -->
-  <div class="dash-hero-row" style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1fr;gap:9px;margin-bottom:11px">
-    <!-- Hero: Total AUM -->
-    <div class="metric" style="background:linear-gradient(135deg,#0c1e3a 0%,#0e2444 100%);border-color:rgba(0,200,255,.25);position:relative;overflow:hidden">
-      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at top right,rgba(0,200,255,.07) 0%,transparent 60%);pointer-events:none"></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
-        <div class="mlabel" style="color:var(--accent);letter-spacing:1.5px">💼 TOTAL AUM DIKELOLA</div>
-        <button onclick="toggleMetric('aum')" id="eye-aum" title="Sembunyikan nilai" aria-label="Sembunyikan/tampilkan nilai Total AUM"
-          style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 5px;line-height:1;border-radius:4px;transition:color .15s"
-          onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">👁</button>
+  <!-- ROW 1: Total AUM hero — berdiri sendiri, jadi satu-satunya fokus utama layar -->
+  <div class="metric" style="background:linear-gradient(135deg,#0c1e3a 0%,#0e2444 100%);border-color:rgba(0,200,255,.2);position:relative;overflow:hidden;margin-bottom:14px;padding:20px 24px">
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at top right,rgba(0,200,255,.06) 0%,transparent 60%);pointer-events:none"></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span class="mlabel" style="color:var(--accent);letter-spacing:.08em;margin-bottom:0">💼 TOTAL AUM DIKELOLA</span>
+          <button onclick="toggleMetric('aum')" id="eye-aum" title="Sembunyikan nilai" aria-label="Sembunyikan/tampilkan nilai Total AUM"
+            style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 5px;line-height:1;border-radius:4px;transition:color .15s"
+            onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">👁</button>
+        </div>
+        <div class="mval lg" id="d-aum" style="color:var(--accent);font-size:32px">Rp 0</div>
+        <div class="msub" id="d-aum-sub" style="margin-top:8px"></div>
       </div>
-      <div class="mval lg" id="d-aum" style="color:var(--accent);font-size:26px">Rp 0</div>
-      <div class="msub" id="d-aum-sub" style="margin-top:6px"></div>
-      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap" id="d-aum-badges"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;max-width:280px;justify-content:flex-end" id="d-aum-badges"></div>
     </div>
+  </div>
+
+  <!-- ROW 1b: 4 metrik pendukung — baris terpisah, tidak berebut perhatian dengan AUM -->
+  <div class="row4">
     <div class="metric">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
-        <div class="mlabel">Unrealized P&amp;L</div>
+        <div class="mlabel" style="margin-bottom:0">Unrealized P&amp;L</div>
         <button onclick="toggleMetric('unreal')" id="eye-unreal" title="Sembunyikan nilai" aria-label="Sembunyikan/tampilkan nilai Unrealized P&amp;L"
           style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 5px;line-height:1;border-radius:4px;transition:color .15s"
           onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">👁</button>
@@ -285,7 +290,7 @@
     </div>
     <div class="metric">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
-        <div class="mlabel">Realized P&amp;L</div>
+        <div class="mlabel" style="margin-bottom:0">Realized P&amp;L</div>
         <button onclick="toggleMetric('real')" id="eye-real" title="Sembunyikan nilai" aria-label="Sembunyikan/tampilkan nilai Realized P&amp;L"
           style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 5px;line-height:1;border-radius:4px;transition:color .15s"
           onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">👁</button>
@@ -295,7 +300,7 @@
     </div>
     <div class="metric">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
-        <div class="mlabel">Saldo RDN</div>
+        <div class="mlabel" style="margin-bottom:0">Saldo RDN</div>
         <button onclick="toggleMetric('rdn')" id="eye-rdn" title="Sembunyikan nilai" aria-label="Sembunyikan/tampilkan nilai Saldo RDN"
           style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 5px;line-height:1;border-radius:4px;transition:color .15s"
           onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">👁</button>
@@ -305,7 +310,7 @@
     </div>
     <div class="metric">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
-        <div class="mlabel">Total Dividen YTD</div>
+        <div class="mlabel" style="margin-bottom:0">Total Dividen YTD</div>
         <button onclick="toggleMetric('div')" id="eye-div" title="Sembunyikan nilai" aria-label="Sembunyikan/tampilkan nilai Total Dividen YTD"
           style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 5px;line-height:1;border-radius:4px;transition:color .15s"
           onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">👁</button>
@@ -315,24 +320,22 @@
     </div>
   </div>
 
-  <!-- ROW 1b: Risiko + Strategi/Alokasi -->
-  <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:11px;margin-bottom:11px;align-items:stretch">
-    <div style="display:flex;flex-direction:column;gap:11px;min-width:0">
-      <div class="card" style="margin:0">
-        <div class="cheader"><span class="ctitle">⚠️ Analisis Risiko Portofolio</span><button class="btn btn-ghost btn-xs" onclick="goDashSection('dash-risiko-section')">Lihat detail ↓</button></div>
-        <div id="d-risk-strip" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:9px"></div>
-      </div>
-      <div class="card" style="margin:0;flex:1">
-        <div class="cheader"><span class="ctitle">🎯 Strategi Trade &amp; Alokasi Aset</span><span class="badge b-gray">manual</span></div>
-        <div id="d-tradetype"></div>
-      </div>
+  <!-- ROW 1c: Risiko + Strategi/Alokasi -->
+  <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:18px">
+    <div class="card" style="margin:0">
+      <div class="cheader"><span class="ctitle">⚠️ Analisis Risiko Portofolio</span><button class="btn btn-ghost btn-xs" onclick="goDashSection('dash-risiko-section')">Lihat detail ↓</button></div>
+      <div id="d-risk-strip" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:16px"></div>
+    </div>
+    <div class="card" style="margin:0">
+      <div class="cheader"><span class="ctitle">🎯 Strategi Trade &amp; Alokasi Aset</span><span class="badge b-gray">manual</span></div>
+      <div id="d-tradetype"></div>
     </div>
   </div>
 
   <!-- ROW 2: 4 Asset Class Cards dengan bobot -->
-  <div class="dash-asset-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:11px">
+  <div class="dash-asset-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px">
     <!-- Saham IDX -->
-    <div class="metric" style="border-color:rgba(0,229,160,.3);cursor:pointer" onclick="goPage('portofolio')">
+    <div class="metric" style="cursor:pointer" onclick="goPage('portofolio')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div>
           <div style="font-size:10px;font-weight:700;color:var(--green);font-family:'IBM Plex Mono',monospace;letter-spacing:.5px">📈 SAHAM IDX</div>
@@ -350,7 +353,7 @@
       </div>
     </div>
     <!-- Crypto -->
-    <div class="metric" style="border-color:rgba(247,147,26,.3);cursor:pointer" onclick="goPage('crypto')">
+    <div class="metric" style="cursor:pointer" onclick="goPage('crypto')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div>
           <div style="font-size:10px;font-weight:700;color:#f7931a;font-family:'IBM Plex Mono',monospace;letter-spacing:.5px">🪙 CRYPTO</div>
@@ -368,7 +371,7 @@
       </div>
     </div>
     <!-- ETF -->
-    <div class="metric" style="border-color:rgba(0,200,255,.3);cursor:pointer" onclick="goPage('etf')">
+    <div class="metric" style="cursor:pointer" onclick="goPage('etf')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div>
           <div style="font-size:10px;font-weight:700;color:var(--accent);font-family:'IBM Plex Mono',monospace;letter-spacing:.5px">📊 ETF AMERIKA</div>
@@ -386,7 +389,7 @@
       </div>
     </div>
     <!-- Reksa Dana -->
-    <div class="metric" style="border-color:rgba(167,139,250,.3);cursor:pointer" onclick="goPage('reksadana')">
+    <div class="metric" style="cursor:pointer" onclick="goPage('reksadana')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div>
           <div style="font-size:10px;font-weight:700;color:var(--purple);font-family:'IBM Plex Mono',monospace;letter-spacing:.5px">🏦 REKSA DANA</div>
@@ -406,7 +409,7 @@
   </div>
 
   <!-- ROW 3: Chart AUM allocation + IHSG chart + Top movers -->
-  <div class="dash-chart-row" style="display:grid;grid-template-columns:260px 1fr 240px;gap:11px;margin-bottom:11px">
+  <div class="dash-chart-row" style="display:grid;grid-template-columns:260px 1fr 240px;gap:16px;margin-bottom:18px">
     <!-- Donut alokasi AUM -->
     <div class="card">
       <div class="cheader"><span class="ctitle">Alokasi AUM</span><span class="badge b-gray" id="d-aum-total-badge">Rp 0</span></div>
@@ -456,7 +459,7 @@
   </div>
 
   <!-- ROW 4: Per-aset breakdown + Recent tx -->
-  <div class="dash-table-row" style="display:grid;grid-template-columns:1fr 300px;gap:11px;margin-bottom:11px">
+  <div class="dash-table-row" style="display:grid;grid-template-columns:1fr 300px;gap:16px;margin-bottom:18px">
     <!-- Tabel ringkasan semua aset -->
     <div class="card">
       <div class="cheader"><span class="ctitle">Ringkasan Semua Aset</span><span class="badge b-gray" id="d-total-items">0 instrumen</span></div>
@@ -477,7 +480,7 @@
       </div>
     </div>
     <!-- Panel kanan: recent tx + kas -->
-    <div style="display:flex;flex-direction:column;gap:9px">
+    <div style="display:flex;flex-direction:column;gap:16px">
       <div class="card">
         <div class="cheader">
           <span class="ctitle">Transaksi Terakhir</span>
@@ -493,7 +496,7 @@
   </div>
 
   <!-- ROW 5b: Bar Chart Modal vs Posisi -->
-  <div class="card" style="margin-bottom:11px">
+  <div class="card" style="margin-bottom:18px">
     <div class="cheader">
       <span class="ctitle">📊 Modal vs Posisi Saat Ini (per Saham)</span>
       <div style="display:flex;gap:8px;align-items:center">
@@ -507,7 +510,7 @@
   </div>
 
   <!-- ROW 5: Sektoral + Dividen -->
-  <div class="dash-bottom-row" style="display:grid;grid-template-columns:1.4fr 1fr;gap:11px;margin-bottom:11px">
+  <div class="dash-bottom-row" style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:18px">
     <div class="card">
       <div class="cheader"><span class="ctitle">Alokasi Sektoral Saham</span><span class="badge b-gray">IDX • Nilai Modal</span></div>
       <div id="d-sectoral-detail"></div>
@@ -523,7 +526,7 @@
   <!-- ===== WATCHLIST (dipindahkan ke bawah Dashboard utama) ===== -->
   <div id="dash-watchlist-section" style="margin-top:24px;padding-top:18px;border-top:1px solid var(--border)">
     <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px">⭐ Watchlist Saya</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:2px;margin-bottom:11px">Pantau saham pilihan dengan analisa big money real-time</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:2px;margin-bottom:18px">Pantau saham pilihan dengan analisa big money real-time</div>
     <div class="card" style="margin-top:11px">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
         <div style="display:flex;gap:7px;align-items:center">
@@ -550,7 +553,7 @@
   <!-- ===== RIWAYAT EKUITAS HARIAN ===== -->
   <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--border)">
     <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px">📈 Riwayat Ekuitas Harian</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:2px;margin-bottom:11px">Performa total modal (AUM) dari waktu ke waktu — tercatat otomatis setiap kali Anda membuka aplikasi</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:2px;margin-bottom:18px">Performa total modal (AUM) dari waktu ke waktu — tercatat otomatis setiap kali Anda membuka aplikasi</div>
     <div class="card" style="margin-top:11px">
       <div id="eq-hist-summary"></div>
       <div class="cw" style="height:220px;margin-top:8px"><canvas id="equityHistoryChart"></canvas></div>
@@ -560,7 +563,7 @@
   <!-- ===== MANAJEMEN RISIKO (dipindahkan ke bawah Watchlist) ===== -->
   <div id="dash-risiko-section" style="margin-top:24px;padding-top:18px;border-top:1px solid var(--border)">
     <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px">⚠️ Analisa Risiko Portofolio</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:2px;margin-bottom:11px">Volatilitas, Value at Risk (VaR), korelasi, dan metrik risiko lainnya</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:2px;margin-bottom:18px">Volatilitas, Value at Risk (VaR), korelasi, dan metrik risiko lainnya</div>
     <div class="row4">
       <div class="metric">
         <div class="mlabel">Risk Score</div>
@@ -605,7 +608,7 @@
         <div class="msub neu" id="risk-win-sub">trade menang</div>
       </div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px">
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
       <div class="card" style="margin:0">
         <div class="cheader"><span class="ctitle">Distribusi Return</span></div>
         <div class="cw" style="height:190px"><canvas id="retDistChart"></canvas></div>
@@ -628,9 +631,9 @@
   </div>
 
   <!-- ===== AI GUIDE (dipindahkan ke bawah Watchlist) ===== -->
-  <div id="dash-ai-section" style="margin-top:24px;padding-top:18px;border-top:1px solid var(--border);margin-bottom:11px">
+  <div id="dash-ai-section" style="margin-top:24px;padding-top:18px;border-top:1px solid var(--border);margin-bottom:18px">
     <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px">🤖 AI Guide — Saran Portofolio</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:2px;margin-bottom:11px">Rekomendasi hold / trim / cut-loss per saham dan saran rebalancing — berbasis aturan otomatis, opsional analisa live via Claude</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:2px;margin-bottom:18px">Rekomendasi hold / trim / cut-loss per saham dan saran rebalancing — berbasis aturan otomatis, opsional analisa live via Claude</div>
     <div class="card" style="margin-top:11px">
       <div class="cheader"><span class="ctitle">Aksi per Saham</span></div>
       <div id="ai-holding-reco"></div>
@@ -779,7 +782,7 @@
     <button class="btn btn-blue" id="btn-beli2">+ Beli Saham</button>
   </div>
   <!-- Cash widget saham -->
-  <div style="background:rgba(0,0,0,.15);border:1px solid #00e5a033;border-radius:9px;padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+  <div style="background:rgba(0,0,0,.15);border:1px solid #00e5a033;border-radius:9px;padding:8px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
     <span style="font-size:10px;font-weight:700;color:#00e5a0;letter-spacing:.8px;white-space:nowrap">💰 KAS AKUN SAHAM (RDN)</span>
     <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:#00e5a0" id="cash-saham-disp">Rp 0</span>
     <input type="number" id="cash-saham-input" placeholder="Set kas..." class="finput" style="width:140px;padding:4px 9px;font-size:11px">
@@ -795,7 +798,7 @@
 
   <!-- ═══ TOOLBAR PERFORMA PER SAHAM — realized + unrealized per kode, termasuk yang sudah ditutup ═══ -->
   <div class="card" style="margin-bottom:12px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
       <div class="ptitle" style="font-size:14px">📊 Performa per Saham</div>
       <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);cursor:pointer">
         <input type="checkbox" checked onchange="togglePerfClosed()"> Tampilkan saham yang sudah ditutup (lot=0)
@@ -876,7 +879,7 @@
     <div class="metric"><div class="mlabel">Dividend Yield (est.)</div><div class="mval" id="dv-yield">0,00%</div><div class="msub neu">dari portofolio</div></div>
   </div>
   <!-- Chart tabs: per tahun -->
-  <div class="g2c" style="margin-bottom:11px">
+  <div class="g2c" style="margin-bottom:18px">
     <div class="card">
       <div class="cheader">
         <span class="ctitle">Dividen Per Tahun (2018–2026)</span>
@@ -889,7 +892,7 @@
     </div>
   </div>
   <!-- Proyeksi 5 tahun -->
-  <div class="card" style="margin-bottom:11px">
+  <div class="card" style="margin-bottom:18px">
     <div class="cheader">
       <span class="ctitle">📈 Proyeksi Dividen 5 Tahun (2027–2031)</span>
       <div style="display:flex;gap:6px;align-items:center">
@@ -903,7 +906,7 @@
         </select>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:10px" id="div-proj-cards"></div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px" id="div-proj-cards"></div>
     <div class="cw" style="height:130px"><canvas id="divProjChart"></canvas></div>
   </div>
   <!-- Tabel per tahun -->
@@ -950,7 +953,7 @@
   </div>
 
   <!-- Metric Row -->
-  <div class="row4" style="margin-bottom:11px">
+  <div class="row4" style="margin-bottom:18px">
     <div class="metric"><div class="mlabel">Total Realisasi (Net)</div><div class="mval up" id="di-total-net">Rp 0</div><div class="msub neu" id="di-total-sub">sejak 2019</div></div>
     <div class="metric"><div class="mlabel">Emiten Rutin Bayar</div><div class="mval" id="di-emiten-cnt">0</div><div class="msub neu" id="di-emiten-sub">dari portofolio</div></div>
     <div class="metric"><div class="mlabel">Proyeksi Next Year</div><div class="mval up" id="di-proj-next">Rp 0</div><div class="msub neu" id="di-proj-sub">estimasi probabilistik</div></div>
@@ -959,7 +962,7 @@
 
   <!-- Input History Dividen Form (hidden by default) -->
   <div id="di-form-box" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
-    <div class="cheader" style="margin-bottom:10px">
+    <div class="cheader" style="margin-bottom:16px">
       <span class="ctitle">📝 Input History Dividen Payment</span>
       <button class="btn btn-ghost btn-xs" onclick="closeDivInvestForm()">✕ Tutup</button>
     </div>
@@ -989,7 +992,7 @@
   </div>
 
   <!-- Rating Overview Cards -->
-  <div class="card" style="margin-bottom:11px">
+  <div class="card" style="margin-bottom:18px">
     <div class="cheader">
       <span class="ctitle">🏅 Rating Emiten Dividen (Analisa Profesional)</span>
       <div style="display:flex;gap:5px;align-items:center">
@@ -1003,11 +1006,11 @@
         </select>
       </div>
     </div>
-    <div id="di-rating-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:9px;margin-top:4px"></div>
+    <div id="di-rating-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:4px"></div>
   </div>
 
   <!-- DPR Table per emiten -->
-  <div class="g2c" style="margin-bottom:11px">
+  <div class="g2c" style="margin-bottom:18px">
     <div class="card">
       <div class="cheader"><span class="ctitle">📊 Realisasi Pendapatan per Emiten</span></div>
       <div style="overflow-x:auto">
@@ -1024,7 +1027,7 @@
   </div>
 
   <!-- Proyeksi Next Year Detail -->
-  <div class="card" style="margin-bottom:11px">
+  <div class="card" style="margin-bottom:18px">
     <div class="cheader">
       <span class="ctitle">🔮 Proyeksi Dividen Tahun Depan (Probabilistik)</span>
       <div style="display:flex;gap:6px;align-items:center">
@@ -1054,7 +1057,7 @@
   </div>
 
   <!-- History chart per tahun per emiten -->
-  <div class="card" style="margin-bottom:11px">
+  <div class="card" style="margin-bottom:18px">
     <div class="cheader">
       <span class="ctitle">📅 History DPS per Tahun per Emiten</span>
       <select class="finput fsel" id="di-history-ticker" onchange="renderDivHistoryChart()" style="padding:3px 7px;font-size:10px"><option value="ALL">Semua Emiten</option></select>
@@ -1137,14 +1140,14 @@
       <div class="cheader"><span class="ctitle">Rincian Per Sekuritas</span></div>
       <div id="pj-by-sec"></div>
     </div>
-    <div class="no-print" style="display:flex;flex-direction:column;gap:11px">
+    <div class="no-print" style="display:flex;flex-direction:column;gap:16px">
       <!-- ⚙️ Pengaturan Tarif Pajak -->
       <div class="card" style="border-color:rgba(255,193,7,.3)">
         <div class="cheader">
           <span class="ctitle" style="color:var(--amber)">⚙️ Pengaturan Tarif Pajak</span>
           <button class="btn btn-amber btn-xs" onclick="saveTaxFromUI()">💾 Simpan</button>
         </div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Sesuai regulasi: PMK 131/2024 (PPN 12%), PP 14/1997 (PPh Final 0,1% jual), BEI+KPEI+KSEI Levy 0,043%. PPh Beli tidak ada dalam hukum Indonesia.</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:16px">Sesuai regulasi: PMK 131/2024 (PPN 12%), PP 14/1997 (PPh Final 0,1% jual), BEI+KPEI+KSEI Levy 0,043%. PPh Beli tidak ada dalam hukum Indonesia.</div>
         <div class="fgrid" style="grid-template-columns:1fr 1fr 1fr">
           <div class="fg">
             <label class="flabel">PPN × Komisi (%)</label>
@@ -1249,7 +1252,7 @@
     </div>
   </div>
     <!-- Cash widget crypto -->
-  <div style="background:rgba(0,0,0,.15);border:1px solid #f7931a33;border-radius:9px;padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+  <div style="background:rgba(0,0,0,.15);border:1px solid #f7931a33;border-radius:9px;padding:8px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
     <span style="font-size:10px;font-weight:700;color:#f7931a;letter-spacing:.8px;white-space:nowrap">💰 KAS CRYPTO (WALLET/EXCHANGE)</span>
     <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:#f7931a" id="cash-crypto-disp">Rp 0</span>
     <input type="number" id="cash-crypto-input" placeholder="Set kas..." class="finput" style="width:140px;padding:4px 9px;font-size:11px">
@@ -1334,7 +1337,7 @@
     </div>
   </div>
     <!-- Cash widget etf -->
-  <div style="background:rgba(0,0,0,.15);border:1px solid #00c8ff33;border-radius:9px;padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+  <div style="background:rgba(0,0,0,.15);border:1px solid #00c8ff33;border-radius:9px;padding:8px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
     <span style="font-size:10px;font-weight:700;color:#00c8ff;letter-spacing:.8px;white-space:nowrap">💰 KAS ETF (USD ACCOUNT)</span>
     <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:#00c8ff" id="cash-etf-disp">$ 0</span>
     <input type="number" id="cash-etf-input" placeholder="Set kas..." class="finput" style="width:140px;padding:4px 9px;font-size:11px">
@@ -1432,14 +1435,14 @@
 
   <!-- Summary metrics -->
     <!-- Cash widget reksadana -->
-  <div style="background:rgba(0,0,0,.15);border:1px solid #a78bfa33;border-radius:9px;padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+  <div style="background:rgba(0,0,0,.15);border:1px solid #a78bfa33;border-radius:9px;padding:8px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
     <span style="font-size:10px;font-weight:700;color:#a78bfa;letter-spacing:.8px;white-space:nowrap">💰 KAS REKSA DANA</span>
     <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:#a78bfa" id="cash-reksadana-disp">Rp 0</span>
     <input type="number" id="cash-reksadana-input" placeholder="Set kas..." class="finput" style="width:140px;padding:4px 9px;font-size:11px">
     <button class="btn btn-ghost btn-xs" style="color:#a78bfa;border-color:#a78bfa44" onclick="saveCashInput('reksadana')">💾 Simpan</button>
     <span style="font-size:10px;color:var(--text3);flex:1">Saldo IDR di platform reksa dana</span>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:11px">
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:18px">
     <div class="metric" style="border-color:rgba(0,229,160,.3)">
       <div class="mlabel">Total Gain Kumulatif</div>
       <div class="mval up" id="rd-total" style="font-size:18px">Rp 0</div>
@@ -1453,7 +1456,7 @@
   </div>
 
   <!-- Charts -->
-  <div class="card" style="margin-bottom:11px">
+  <div class="card" style="margin-bottom:18px">
     <div class="cheader"><span class="ctitle">Gain per Kategori</span></div>
     <div class="cw" style="height:160px"><canvas id="rdPerfChart"></canvas></div>
   </div>
@@ -1561,7 +1564,7 @@
   </div>
 
   <!-- Notice untuk timeframe pendek -->
-  <div id="fs-period-notice" style="display:none;align-items:center;gap:8px;background:rgba(255,193,7,.06);border:1px solid rgba(255,193,7,.2);border-radius:8px;padding:8px 14px;margin-bottom:10px"></div>
+  <div id="fs-period-notice" style="display:none;align-items:center;gap:8px;background:rgba(255,193,7,.06);border:1px solid rgba(255,193,7,.2);border-radius:8px;padding:8px 14px;margin-bottom:16px"></div>
 
   <!-- Analysis tabs -->
   <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:13px;overflow-x:auto">
@@ -1570,7 +1573,7 @@
   </div>
 
   <!-- OV -->
-  <div id="fs-prob" style="margin-bottom:11px"></div>
+  <div id="fs-prob" style="margin-bottom:18px"></div>
   <div id="fs-st-ov">
     <div class="g2b">
       <div class="card">
@@ -1612,7 +1615,7 @@
 
   <!-- VWAP -->
   <div id="fs-st-vwap" style="display:none">
-    <div class="g2b" style="margin-bottom:10px">
+    <div class="g2b" style="margin-bottom:16px">
       <div class="card">
         <div class="cheader">
           <span class="ctitle">VWAP + Band (Harian)</span>
@@ -1662,7 +1665,7 @@
   <div class="ptitle">🏆 Ranking 30 Saham Terbesar IHSG</div>
   <div class="psub">Diurutkan berdasarkan skor akumulasi big money • Klik Lihat untuk analisa detail • <span style="color:#00e5a0">●</span> = data riil Yahoo &nbsp;·&nbsp; <span style="color:#ff3d5a">○ SIM</span> = data simulasi, harga tidak akurat — perbaiki di <a href="#" onclick="goPage('admin');return false" style="color:var(--accent)">🛠 Kelola Daftar Saham</a></div>
   <div class="card" style="margin-top:11px">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:11px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:18px">
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;flex:1" id="rk-sum"></div>
       <div style="display:flex;gap:7px">
         <select class="finput fsel" id="rk-sort" onchange="fsRenderRanking()" style="padding:4px 8px;font-size:11px">
@@ -1705,7 +1708,7 @@
         </select>
         <span style="font-size:11px;color:var(--text3)">Klik sel → analisa detail di FlowScan</span>
       </div>
-      <div id="hm-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-bottom:10px"></div>
+      <div id="hm-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-bottom:16px"></div>
       <div style="display:flex;gap:14px;font-size:11px;color:var(--text3);flex-wrap:wrap">
         <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(0,229,160,.12);border:1px solid rgba(0,229,160,.3);border-radius:2px"></span>Akumulasi</span>
         <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(255,61,90,.12);border:1px solid rgba(255,61,90,.3);border-radius:2px"></span>Distribusi</span>
@@ -1716,7 +1719,7 @@
 
   <!-- Factor Heatmap panel -->
   <div id="hm-panel-factor" style="display:none">
-    <div class="card" style="margin-bottom:10px">
+    <div class="card" style="margin-bottom:16px">
       <div class="cheader"><span class="ctitle">⚙️ Pengaturan</span><button class="btn btn-bb btn-xs" onclick="fhmRender()">🔄 Refresh</button></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <div class="fg">
@@ -1738,7 +1741,7 @@
         </div>
       </div>
     </div>
-    <div class="card" style="margin-bottom:10px">
+    <div class="card" style="margin-bottom:16px">
       <div class="cheader"><span class="ctitle" id="fhm-title">Factor Heatmap</span></div>
       <div id="fhm-grid" style="margin-bottom:12px"></div>
     </div>
@@ -1783,7 +1786,7 @@
 <!-- Watchlist -->
 <!-- ===== HARGA WAJAR (MoS Valuasi) ===== -->
 <div id="page-hargawajar" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap;gap:8px">
     <div>
       <div class="ptitle">💎 Harga Wajar — Valuasi MoS</div>
       <div class="psub">Input data keuangan historis → hitung Margin of Safety · metodologi: EPS-based IRR + Future Stock Price (9-step)</div>
@@ -1800,7 +1803,7 @@
     <!-- LEFT: Input Data Keuangan -->
     <div>
       <!-- Header input: ticker + parameter -->
-      <div class="card" style="margin-bottom:10px">
+      <div class="card" style="margin-bottom:16px">
         <div class="cheader"><span class="ctitle">⚙️ PARAMETER</span></div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
           <div style="min-width:120px">
@@ -1838,7 +1841,7 @@
       </div>
 
       <!-- Data table -->
-      <div class="card" style="margin-bottom:10px">
+      <div class="card" style="margin-bottom:16px">
         <div class="cheader">
           <span class="ctitle">📊 DATA KEUANGAN HISTORIS</span>
           <button class="btn" onclick="hw_addYear()" style="font-size:9px;padding:3px 8px;border-color:rgba(255,102,0,.3);color:var(--bb-orange)">+ Tambah Tahun</button>
@@ -1875,7 +1878,7 @@
       </div>
 
       <!-- Calculation Steps Display -->
-      <div class="card" id="hw-steps-card" style="margin-bottom:10px;display:none">
+      <div class="card" id="hw-steps-card" style="margin-bottom:16px;display:none">
         <div class="cheader"><span class="ctitle">🔬 LANGKAH KALKULASI MoS</span></div>
         <div id="hw-steps-body" style="display:grid;grid-template-columns:1fr 1fr;gap:6px"></div>
       </div>
@@ -1898,7 +1901,7 @@
     <!-- RIGHT: Result Panel -->
     <div>
       <!-- Main verdict card -->
-      <div class="card" id="hw-verdict-card" style="margin-bottom:10px;border-top-width:2px;border-top-color:var(--text3)">
+      <div class="card" id="hw-verdict-card" style="margin-bottom:16px;border-top-width:2px;border-top-color:var(--text3)">
         <div style="text-align:center;padding:10px 0">
           <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">VALUASI</div>
           <div id="hw-ticker-display" style="font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--bb-orange);margin-bottom:4px">—</div>
@@ -1939,7 +1942,7 @@
       </div>
 
       <!-- Metrics grid -->
-      <div class="card" style="margin-bottom:10px">
+      <div class="card" style="margin-bottom:16px">
         <div class="cheader"><span class="ctitle">📋 METRIC VALUASI</span></div>
         <div id="hw-metrics-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
           <div class="metric" id="hw-m-roe"><div class="mlabel">Avg ROE</div><div class="mval" id="hw-v-roe">—</div></div>
@@ -1968,7 +1971,7 @@
 
 <!-- ===== CANDLE ANALYSIS ===== -->
 <div id="page-candle" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap;gap:8px">
     <div>
       <div class="ptitle">🕯 Candle Analysis — Psikologi & Money Management</div>
       <div class="psub">Klasifikasi psikologi candle, sinyal entry/exit zona, position sizing &amp; backtest equity · saham aktif: <b style="color:var(--accent)" id="cd-ticker">ADMR</b></div>
@@ -1986,14 +1989,14 @@
     </div>
   </div>
   <!-- Quick load: saham di portofolio -->
-  <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:11px">
+  <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:18px">
     <span style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace">QUICK:</span>
     <div id="cd-chips" style="display:flex;flex-wrap:wrap;gap:5px"></div>
   </div>
   <!-- Catatan sumber data -->
-  <div id="cd-src-note" style="display:flex;align-items:flex-start;gap:8px;background:rgba(77,166,255,.06);border:1px solid rgba(77,166,255,.2);border-radius:8px;padding:7px 12px;margin-bottom:11px;font-size:11px;color:var(--text2);line-height:1.5"></div>
-  <div class="row5" id="cd-head" style="margin-bottom:11px"></div>
-  <div class="card" style="margin-bottom:11px">
+  <div id="cd-src-note" style="display:flex;align-items:flex-start;gap:8px;background:rgba(77,166,255,.06);border:1px solid rgba(77,166,255,.2);border-radius:8px;padding:7px 12px;margin-bottom:18px;font-size:11px;color:var(--text2);line-height:1.5"></div>
+  <div class="row5" id="cd-head" style="margin-bottom:18px"></div>
+  <div class="card" style="margin-bottom:18px">
     <div class="cheader"><span class="ctitle">Parameter Money Management & Zona Harga</span>
       <span style="font-size:10px;color:var(--text3)">Ubah nilai lalu klik “Hitung Ulang”</span></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px">
@@ -2012,7 +2015,7 @@
       <label class="cdset"><span>TP 3</span><input id="cd-tp3" type="number"></label>
     </div>
   </div>
-  <div class="row4" id="cd-metrics" style="margin-bottom:11px"></div>
+  <div class="row4" id="cd-metrics" style="margin-bottom:18px"></div>
   <div class="g2c">
     <div class="card">
       <div class="cheader"><span class="ctitle">Harga Close + Zona (TP / Stop / Entry)</span></div>
@@ -2023,7 +2026,7 @@
       <div class="cw" style="height:230px"><canvas id="cdEquity"></canvas></div>
     </div>
   </div>
-  <div class="card" style="margin-bottom:11px">
+  <div class="card" style="margin-bottom:18px">
     <div class="cheader"><span class="ctitle">Psikologi Candle — 3 Sesi Terakhir</span></div>
     <div id="cd-psyco" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
   </div>
@@ -2051,7 +2054,7 @@
   <div style="display:grid;grid-template-columns:300px 1fr;gap:12px;margin-top:12px">
     <!-- Sidebar config -->
     <div>
-      <div class="card" style="margin-bottom:10px">
+      <div class="card" style="margin-bottom:16px">
         <div class="cheader"><span class="ctitle">⚙️ Konfigurasi Strategi</span></div>
         <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
           <button class="pbtn on" id="bt-strat-ma" onclick="btSetStrat('ma',this)">MA Cross</button>
@@ -2135,14 +2138,14 @@
       </div>
       <div id="bt-results" style="display:none">
         <!-- Metrics row -->
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px" id="bt-metrics"></div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px" id="bt-metrics"></div>
         <!-- Equity chart -->
-        <div class="card" style="margin-bottom:10px">
+        <div class="card" style="margin-bottom:16px">
           <div class="cheader"><span class="ctitle">Equity Curve vs Buy &amp; Hold</span></div>
           <div style="position:relative;height:220px"><canvas id="bt-equity-chart"></canvas></div>
         </div>
         <!-- Signal chart (SVG) -->
-        <div class="card" style="margin-bottom:10px">
+        <div class="card" style="margin-bottom:16px">
           <div class="cheader">
             <span class="ctitle">Candlestick + Signal Overlay</span>
             <span class="badge b-gray" id="bt-candle-sub"></span>
@@ -2150,7 +2153,7 @@
           <svg id="bt-candle-svg" style="width:100%;display:block" viewBox="0 0 900 240"></svg>
         </div>
         <!-- Drawdown + Monthly return -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
           <div class="card">
             <div class="cheader"><span class="ctitle">Drawdown (%)</span></div>
             <div style="position:relative;height:180px"><canvas id="bt-dd-chart"></canvas></div>
@@ -2216,11 +2219,11 @@
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
     <div class="card">
       <div class="cheader"><span class="ctitle">⚙️ Konfigurasi</span><button class="btn btn-bb btn-xs" onclick="pairsFetch()">📡 Live</button></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
         <div class="fg"><div class="flabel">Saham A</div><input class="finput" id="pt-a" value="BBCA" style="text-transform:uppercase"></div>
         <div class="fg"><div class="flabel">Saham B</div><input class="finput" id="pt-b" value="BBRI" style="text-transform:uppercase"></div>
       </div>
-      <div class="fg" style="margin-bottom:10px">
+      <div class="fg" style="margin-bottom:16px">
         <div class="flabel">Window Korelasi</div>
         <select class="finput fsel" id="pt-window">
           <option value="90">90 Hari</option>
@@ -2269,7 +2272,7 @@
       </div>
     </div>
   </div>
-  <div class="card" style="margin-bottom:10px">
+  <div class="card" style="margin-bottom:16px">
     <div class="cheader"><span class="ctitle">Correlation Matrix — Top 10 LQ45</span></div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:11px;color:var(--text3)">
       <span style="color:var(--red)">-1.0</span>
@@ -2310,7 +2313,7 @@
       </div>
     </div>
   </div>
-  <div class="card" style="margin-bottom:10px">
+  <div class="card" style="margin-bottom:16px">
     <div class="cheader"><span class="ctitle" id="mr-title">Monthly Return Calendar</span></div>
     <div id="mr-heatmap"></div>
   </div>
