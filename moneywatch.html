@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23131324'/><path d='M7 21 L13 13 L18 17 L25 8' stroke='%2334d399' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/><circle cx='25' cy='8' r='2' fill='%2334d399'/></svg>">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/00-config.js?v=20260812a"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&display=swap" rel="stylesheet">
+<!-- Font sesuai invezgo.com: Figtree untuk judul/angka besar, Inter untuk isi — dibaca langsung dari computed style situsnya --><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Figtree:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -25,10 +25,10 @@
   <div class="auth-box">
     <div class="auth-logo" style="display:flex;align-items:center;justify-content:center;gap:10px">
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="2" width="20" height="20" rx="4" stroke="#818cf8" stroke-width="1.5"/>
-        <path d="M7 14 L10 10 L13 13 L17 8" stroke="#818cf8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="17" cy="8" r="1.5" fill="#818cf8"/>
-        <path d="M7 17 H17" stroke="#818cf8" stroke-width="1" stroke-dasharray="2 1.5" opacity="0.4"/>
+        <rect x="2" y="2" width="20" height="20" rx="4" stroke="#2f6af3" stroke-width="1.5"/>
+        <path d="M7 14 L10 10 L13 13 L17 8" stroke="#2f6af3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="17" cy="8" r="1.5" fill="#2f6af3"/>
+        <path d="M7 17 H17" stroke="#2f6af3" stroke-width="1" stroke-dasharray="2 1.5" opacity="0.4"/>
       </svg>
       Money<span>Watch</span>
     </div>
@@ -111,9 +111,9 @@
   <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="Buka/tutup menu navigasi">☰</button>
   <div class="logo" style="display:flex;align-items:center;gap:7px">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="2" width="20" height="20" rx="4" stroke="#818cf8" stroke-width="1.5"/>
-      <path d="M7 14 L10 10 L13 13 L17 8" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="17" cy="8" r="1.5" fill="#818cf8"/>
+      <rect x="2" y="2" width="20" height="20" rx="4" stroke="#2f6af3" stroke-width="1.5"/>
+      <path d="M7 14 L10 10 L13 13 L17 8" stroke="#2f6af3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="17" cy="8" r="1.5" fill="#2f6af3"/>
     </svg>
     <span class="logo" style="color:var(--text)">MW<span style="color:var(--border2)"> |</span> <span style="font-size:11px;letter-spacing:.3px;color:var(--text3);font-weight:400">PRO</span></span>
   </div>
@@ -125,7 +125,7 @@
       <button onclick="mwZoom(0.05)" title="Perbesar tampilan" aria-label="Perbesar tampilan">A+</button>
     </div>
     <div style="display:flex;align-items:center;gap:6px">
-      <span id="save-status-bar" role="status" aria-live="polite" style="font-size:9px;font-family:'IBM Plex Mono',monospace;transition:opacity .5s;opacity:0;color:var(--green);letter-spacing:.5px;text-transform:uppercase"></span>
+      <span id="save-status-bar" role="status" aria-live="polite" style="font-size:9px;font-family:var(--font-mono);transition:opacity .5s;opacity:0;color:var(--green);letter-spacing:.5px;text-transform:uppercase"></span>
       <button class="btn btn-ghost btn-xs" onclick="openBackupModal()" style="font-size:11px;gap:4px;display:flex;align-items:center;border-color:var(--border2);color:var(--text2);letter-spacing:0">
         💾 Backup
       </button>
@@ -148,7 +148,7 @@
     </div>
     <div class="clock" id="clock">--:--:--</div>
     <!-- Session info -->
-    <div id="session-info" style="display:none;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3)">
+    <div id="session-info" style="display:none;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10px;color:var(--text3)">
       <span style="color:var(--bb-orange)">◆</span>
       <span id="session-user" style="color:var(--text2)">—</span>
       <button onclick="authLogout()" title="Logout" style="background:none;border:1px solid rgba(242,54,69,.3);color:var(--red);cursor:pointer;font-size:10px;padding:2px 7px;border-radius:3px;font-family:'Inter',sans-serif;letter-spacing:0">Keluar</button>
@@ -255,7 +255,7 @@
 
   <div class="load-banner" id="dash-load-banner"><span class="load-dot"></span><span id="dash-load-text"></span></div>
   <div class="alert alert-warn" id="schema-warn-banner" style="display:none;align-items:center;gap:8px">
-    ⚠ Skema database belum diperbarui — beberapa data (Strategi per Emiten, override komisi, Daftar Saham) tidak ikut tersimpan ke cloud dan bisa hilang saat reload. Jalankan <code style="font-family:'IBM Plex Mono',monospace">sql/schema_migration.sql</code> sekali di Supabase SQL Editor untuk memperbaikinya.
+    ⚠ Skema database belum diperbarui — beberapa data (Strategi per Emiten, override komisi, Daftar Saham) tidak ikut tersimpan ke cloud dan bisa hilang saat reload. Jalankan <code style="font-family:var(--font-mono)">sql/schema_migration.sql</code> sekali di Supabase SQL Editor untuk memperbaikinya.
   </div>
 
   <!-- ROW 1: Total AUM hero — berdiri sendiri, jadi satu-satunya fokus utama layar -->
@@ -338,12 +338,12 @@
     <div class="metric" style="cursor:pointer" onclick="goPage('portofolio')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div>
-          <div style="font-size:10px;font-weight:700;color:var(--green);font-family:'IBM Plex Mono',monospace;letter-spacing:.5px">📈 SAHAM IDX</div>
+          <div style="font-size:10px;font-weight:700;color:var(--green);font-family:var(--font-mono);letter-spacing:.5px">📈 SAHAM IDX</div>
           <div class="mval" id="d-porto" style="color:var(--green);margin-top:4px">Rp 0</div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--green)" id="d-porto-bobot">0%</div>
-          <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace">dari AUM</div>
+          <div style="font-size:22px;font-weight:800;font-family:var(--font-mono);color:var(--green)" id="d-porto-bobot">0%</div>
+          <div style="font-size:9px;color:var(--text3);font-family:var(--font-mono)">dari AUM</div>
         </div>
       </div>
       <div class="prog"><div class="progf" id="d-porto-bar" style="width:0%;background:var(--green)"></div></div>
@@ -356,12 +356,12 @@
     <div class="metric" style="cursor:pointer" onclick="goPage('crypto')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div>
-          <div style="font-size:10px;font-weight:700;color:#f7931a;font-family:'IBM Plex Mono',monospace;letter-spacing:.5px">🪙 CRYPTO</div>
+          <div style="font-size:10px;font-weight:700;color:#f7931a;font-family:var(--font-mono);letter-spacing:.5px">🪙 CRYPTO</div>
           <div class="mval" id="d-crypto" style="color:#f7931a;margin-top:4px">Rp 0</div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:#f7931a" id="d-crypto-bobot">0%</div>
-          <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace">dari AUM</div>
+          <div style="font-size:22px;font-weight:800;font-family:var(--font-mono);color:#f7931a" id="d-crypto-bobot">0%</div>
+          <div style="font-size:9px;color:var(--text3);font-family:var(--font-mono)">dari AUM</div>
         </div>
       </div>
       <div class="prog"><div class="progf" id="d-crypto-bar" style="width:0%;background:#f7931a"></div></div>
@@ -374,12 +374,12 @@
     <div class="metric" style="cursor:pointer" onclick="goPage('etf')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div>
-          <div style="font-size:10px;font-weight:700;color:var(--accent);font-family:'IBM Plex Mono',monospace;letter-spacing:.5px">📊 ETF AMERIKA</div>
+          <div style="font-size:10px;font-weight:700;color:var(--accent);font-family:var(--font-mono);letter-spacing:.5px">📊 ETF AMERIKA</div>
           <div class="mval" id="d-etf" style="color:var(--accent);margin-top:4px">Rp 0</div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--accent)" id="d-etf-bobot">0%</div>
-          <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace">dari AUM</div>
+          <div style="font-size:22px;font-weight:800;font-family:var(--font-mono);color:var(--accent)" id="d-etf-bobot">0%</div>
+          <div style="font-size:9px;color:var(--text3);font-family:var(--font-mono)">dari AUM</div>
         </div>
       </div>
       <div class="prog"><div class="progf" id="d-etf-bar" style="width:0%;background:var(--accent)"></div></div>
@@ -392,12 +392,12 @@
     <div class="metric" style="cursor:pointer" onclick="goPage('reksadana')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div>
-          <div style="font-size:10px;font-weight:700;color:var(--purple);font-family:'IBM Plex Mono',monospace;letter-spacing:.5px">🏦 REKSA DANA</div>
+          <div style="font-size:10px;font-weight:700;color:var(--purple);font-family:var(--font-mono);letter-spacing:.5px">🏦 REKSA DANA</div>
           <div class="mval" id="d-rd" style="color:var(--purple);margin-top:4px">Rp 0</div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--purple)" id="d-rd-bobot">0%</div>
-          <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace">dari AUM</div>
+          <div style="font-size:22px;font-weight:800;font-family:var(--font-mono);color:var(--purple)" id="d-rd-bobot">0%</div>
+          <div style="font-size:9px;color:var(--text3);font-family:var(--font-mono)">dari AUM</div>
         </div>
       </div>
       <div class="prog"><div class="progf" id="d-rd-bar" style="width:0%;background:var(--purple)"></div></div>
@@ -416,8 +416,8 @@
       <div style="position:relative;width:130px;height:130px;margin:0 auto 10px">
         <canvas id="aumDonut"></canvas>
         <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">
-          <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace">4 KELAS</div>
-          <div style="font-size:11px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text)">ASET</div>
+          <div style="font-size:9px;color:var(--text3);font-family:var(--font-mono)">4 KELAS</div>
+          <div style="font-size:11px;font-weight:700;font-family:var(--font-mono);color:var(--text)">ASET</div>
         </div>
       </div>
       <div id="aum-leg" style="display:flex;flex-direction:column;gap:5px"></div>
@@ -427,7 +427,7 @@
       <div class="cheader">
         <div style="display:flex;align-items:center;gap:10px">
           <span class="ctitle">Pergerakan IHSG</span>
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--accent)" id="ihsg-close-disp">6.195,43</span>
+          <span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--accent)" id="ihsg-close-disp">6.195,43</span>
           <span class="badge b-up" id="ihsg-chg-disp">▲ 68,05 (+1,11%)</span>
         </div>
         <div style="display:flex;gap:4px">
@@ -440,20 +440,20 @@
       <div class="cw" style="height:200px;position:relative;background:#000;border-radius:8px;overflow:hidden"><svg id="ihsgChart" style="width:100%;height:100%;display:block"></svg></div>
       <!-- IHSG Stats Bar — Data Real 2 Jun 2026 -->
       <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-        <div style="text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Open</div><div id="ihsg-op" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">6.210,00</div></div>
-        <div style="text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">High</div><div id="ihsg-hi" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--green)">6.264,26</div></div>
-        <div style="text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Low</div><div id="ihsg-lo" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--red)">6.143,63</div></div>
-        <div style="text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Mkt Cap</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">11.020T</div></div>
-        <div style="text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">PER</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">14,47</div></div>
-        <div style="text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">PBV</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">1,82</div></div>
+        <div style="text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Open</div><div id="ihsg-op" style="font-family:var(--font-mono);font-size:11px;font-weight:600">6.210,00</div></div>
+        <div style="text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">High</div><div id="ihsg-hi" style="font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--green)">6.264,26</div></div>
+        <div style="text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Low</div><div id="ihsg-lo" style="font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--red)">6.143,63</div></div>
+        <div style="text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">Mkt Cap</div><div style="font-family:var(--font-mono);font-size:11px;font-weight:600">11.020T</div></div>
+        <div style="text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">PER</div><div style="font-family:var(--font-mono);font-size:11px;font-weight:600">14,47</div></div>
+        <div style="text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">PBV</div><div style="font-family:var(--font-mono);font-size:11px;font-weight:600">1,82</div></div>
       </div>
     </div>
     <!-- Top Movers -->
     <div class="card" style="display:flex;flex-direction:column">
       <div class="cheader" style="margin-bottom:6px"><span class="ctitle">Top Movers Saham</span></div>
-      <div style="font-size:9px;color:var(--green);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:3px">▲ GAINERS</div>
+      <div style="font-size:9px;color:var(--green);font-family:var(--font-mono);letter-spacing:1px;margin-bottom:3px">▲ GAINERS</div>
       <div id="gainers" style="flex:1"></div>
-      <div style="font-size:9px;color:var(--red);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-top:8px;margin-bottom:3px">▼ LOSERS</div>
+      <div style="font-size:9px;color:var(--red);font-family:var(--font-mono);letter-spacing:1px;margin-top:8px;margin-bottom:3px">▼ LOSERS</div>
       <div id="losers"></div>
     </div>
   </div>
@@ -500,10 +500,10 @@
     <div class="cheader">
       <span class="ctitle">📊 Modal vs Posisi Saat Ini (per Saham)</span>
       <div style="display:flex;gap:8px;align-items:center">
-        <span style="font-size:9px;color:var(--green);font-family:'IBM Plex Mono',monospace">■ Nilai Pasar</span>
-        <span style="font-size:9px;color:var(--accent);font-family:'IBM Plex Mono',monospace">■ Modal</span>
-        <span style="font-size:9px;color:var(--red);font-family:'IBM Plex Mono',monospace">■ Rugi / </span>
-        <span style="font-size:9px;color:var(--amber);font-family:'IBM Plex Mono',monospace">■ Untung</span>
+        <span style="font-size:9px;color:var(--green);font-family:var(--font-mono)">■ Nilai Pasar</span>
+        <span style="font-size:9px;color:var(--accent);font-family:var(--font-mono)">■ Modal</span>
+        <span style="font-size:9px;color:var(--red);font-family:var(--font-mono)">■ Rugi / </span>
+        <span style="font-size:9px;color:var(--amber);font-family:var(--font-mono)">■ Untung</span>
       </div>
     </div>
     <div class="cw" style="height:220px"><canvas id="modalPosisiChart"></canvas></div>
@@ -517,8 +517,8 @@
     </div>
     <div class="card">
       <div class="cheader"><span class="ctitle">Dividen Kumulatif 2018–2026</span></div>
-      <div style="font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--green);margin-bottom:4px" id="d-div-total">Rp 0</div>
-      <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:8px" id="d-div-info"></div>
+      <div style="font-size:22px;font-weight:800;font-family:var(--font-mono);color:var(--green);margin-bottom:4px" id="d-div-total">Rp 0</div>
+      <div style="font-size:9px;color:var(--text3);font-family:var(--font-mono);margin-bottom:8px" id="d-div-info"></div>
       <div id="d-dividen-list" style="max-height:130px;overflow-y:auto"></div>
     </div>
   </div>
@@ -531,7 +531,7 @@
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
         <div style="display:flex;gap:7px;align-items:center">
           <input id="wl-add-input" placeholder="Kode saham..."
-            style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:5px 10px;border-radius:7px;font-size:12px;outline:none;text-transform:uppercase;font-family:'IBM Plex Mono',monospace;width:120px"
+            style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:5px 10px;border-radius:7px;font-size:12px;outline:none;text-transform:uppercase;font-family:var(--font-mono);width:120px"
             onkeydown="if(event.key==='Enter')fsAddFromInput()"/>
           <button class="btn btn-blue" onclick="fsAddFromInput()" style="font-size:12px">+ Tambah</button>
         </div>
@@ -696,7 +696,7 @@
       <div class="cheader"><span class="ctitle">Ringkasan Saldo</span></div>
       <div id="rdn-summary"></div>
       <div class="sep"></div>
-      <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:8px">PENGATURAN SEKURITAS AKTIF</div>
+      <div style="font-size:9px;color:var(--text3);font-family:var(--font-mono);letter-spacing:1px;margin-bottom:8px">PENGATURAN SEKURITAS AKTIF</div>
       <div id="rdn-sec-info"></div>
     </div>
   </div>
@@ -782,11 +782,11 @@
     <button class="btn btn-blue" id="btn-beli2">+ Beli Saham</button>
   </div>
   <!-- Cash widget saham -->
-  <div style="background:rgba(0,0,0,.15);border:1px solid #00e5a033;border-radius:9px;padding:8px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-    <span style="font-size:10px;font-weight:700;color:#00e5a0;letter-spacing:.8px;white-space:nowrap">💰 KAS AKUN SAHAM (RDN)</span>
-    <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:#00e5a0" id="cash-saham-disp">Rp 0</span>
+  <div style="background:rgba(0,0,0,.15);border:1px solid #41f3a733;border-radius:9px;padding:8px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <span style="font-size:10px;font-weight:700;color:#41f3a7;letter-spacing:.8px;white-space:nowrap">💰 KAS AKUN SAHAM (RDN)</span>
+    <span style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:#41f3a7" id="cash-saham-disp">Rp 0</span>
     <input type="number" id="cash-saham-input" placeholder="Set kas..." class="finput" style="width:140px;padding:4px 9px;font-size:11px">
-    <button class="btn btn-ghost btn-xs" style="color:#00e5a0;border-color:#00e5a044" onclick="saveCashInput('saham')">💾 Simpan</button>
+    <button class="btn btn-ghost btn-xs" style="color:#41f3a7;border-color:#41f3a744" onclick="saveCashInput('saham')">💾 Simpan</button>
     <span style="font-size:10px;color:var(--text3);flex:1">Dana tersedia di rekening sekuritas untuk trading saham IDX</span>
   </div>
   <div class="row4">
@@ -986,7 +986,7 @@
     <!-- Batch input area -->
     <div id="di-batch-box" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
       <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Batch: Satu baris per pembayaran, format → <code style="background:rgba(255,255,255,.06);padding:2px 5px;border-radius:3px">TICKER,YYYY-MM-DD,DPS,LEMBAR,HARGA_BELI</code></div>
-      <textarea class="finput" id="di-batch-text" rows="6" style="font-family:'IBM Plex Mono',monospace;font-size:11px;resize:vertical;width:100%" placeholder="BBCA,2023-06-15,150,10000,9500&#10;TLKM,2023-08-10,100,5000,3800&#10;BMRI,2022-07-01,200,3000,5500"></textarea>
+      <textarea class="finput" id="di-batch-text" rows="6" style="font-family:var(--font-mono);font-size:11px;resize:vertical;width:100%" placeholder="BBCA,2023-06-15,150,10000,9500&#10;TLKM,2023-08-10,100,5000,3800&#10;BMRI,2022-07-01,200,3000,5500"></textarea>
       <button class="btn btn-amber btn-xs" style="margin-top:6px" onclick="saveDivBatch()">📥 Import Semua</button>
     </div>
   </div>
@@ -1051,7 +1051,7 @@
       </div>
       <div style="text-align:right">
         <div style="font-size:10px;color:var(--text3)">Total Proyeksi (Net setelah PPh 10%)</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;color:var(--green)" id="di-total-proj-disp">Rp 0</div>
+        <div style="font-family:var(--font-mono);font-size:16px;font-weight:700;color:var(--green)" id="di-total-proj-disp">Rp 0</div>
       </div>
     </div>
   </div>
@@ -1152,24 +1152,24 @@
           <div class="fg">
             <label class="flabel">PPN × Komisi (%)</label>
             <div style="display:flex;align-items:center;gap:7px">
-              <input class="finput" type="number" id="tax-ppn-input" step="1" min="0" max="20" style="font-family:'IBM Plex Mono',monospace" oninput="taxPreviewLive()" placeholder="12">
-              <span style="font-size:13px;font-weight:700;color:var(--amber);font-family:'IBM Plex Mono',monospace" id="tax-ppn-disp">12%</span>
+              <input class="finput" type="number" id="tax-ppn-input" step="1" min="0" max="20" style="font-family:var(--font-mono)" oninput="taxPreviewLive()" placeholder="12">
+              <span style="font-size:13px;font-weight:700;color:var(--amber);font-family:var(--font-mono)" id="tax-ppn-disp">12%</span>
             </div>
             <div style="font-size:9px;color:var(--text3);margin-top:3px">PMK 131/2024 — masukkan angka persen (mis: 12)</div>
           </div>
           <div class="fg">
             <label class="flabel">Levy BEI+KPEI+KSEI (%)</label>
             <div style="display:flex;align-items:center;gap:7px">
-              <input class="finput" type="number" id="tax-levy-input" step="0.001" min="0" max="1" style="font-family:'IBM Plex Mono',monospace" oninput="taxPreviewLive()" placeholder="0.043">
-              <span style="font-size:13px;font-weight:700;color:var(--cyan);font-family:'IBM Plex Mono',monospace" id="tax-levy-disp">0.043%</span>
+              <input class="finput" type="number" id="tax-levy-input" step="0.001" min="0" max="1" style="font-family:var(--font-mono)" oninput="taxPreviewLive()" placeholder="0.043">
+              <span style="font-size:13px;font-weight:700;color:var(--cyan);font-family:var(--font-mono)" id="tax-levy-disp">0.043%</span>
             </div>
             <div style="font-size:9px;color:var(--text3);margin-top:3px">Masukkan dalam % (mis: 0.043 = 0,043% = BEI 0,018%+KPEI 0,010%+KSEI 0,015%)</div>
           </div>
           <div class="fg">
             <label class="flabel">PPh Final Jual (%)</label>
             <div style="display:flex;align-items:center;gap:7px">
-              <input class="finput" type="number" id="tax-jual-input" step="0.01" min="0" max="5" style="font-family:'IBM Plex Mono',monospace" oninput="taxPreviewLive()" placeholder="0.10">
-              <span style="font-size:13px;font-weight:700;color:var(--red);font-family:'IBM Plex Mono',monospace" id="tax-jual-disp">0.10%</span>
+              <input class="finput" type="number" id="tax-jual-input" step="0.01" min="0" max="5" style="font-family:var(--font-mono)" oninput="taxPreviewLive()" placeholder="0.10">
+              <span style="font-size:13px;font-weight:700;color:var(--red);font-family:var(--font-mono)" id="tax-jual-disp">0.10%</span>
             </div>
             <div style="font-size:9px;color:var(--text3);margin-top:3px">PP 14/1997 — hanya atas penjualan saham</div>
           </div>
@@ -1183,7 +1183,7 @@
           </div>
         </div>
         <div class="taxbox" style="margin-top:10px">
-          <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:6px">PREVIEW TOTAL BIAYA (10 lot @ Rp 5.000, komisi Stockbit 0,15%/0,25%)</div>
+          <div style="font-size:9px;color:var(--text3);font-family:var(--font-mono);margin-bottom:6px">PREVIEW TOTAL BIAYA (10 lot @ Rp 5.000, komisi Stockbit 0,15%/0,25%)</div>
           <div class="taxrow"><span>Total Biaya Beli</span><span class="mono amb" id="tax-prev-beli">Rp 0</span></div>
           <div class="taxrow"><span>Total Biaya Jual</span><span class="mono dn" id="tax-prev-jual">Rp 0</span></div>
           <div class="taxrow tot"><span>Total Keduanya</span><span class="mono" id="tax-prev-diff">Rp 0</span></div>
@@ -1193,7 +1193,7 @@
       <div class="card">
         <div class="cheader"><span class="ctitle">🏦 Tarif PPh per Sekuritas</span><div style="display:flex;gap:5px"><button class="btn btn-ghost btn-xs" onclick="resetSekTax()">Reset</button><button class="btn btn-amber btn-xs" onclick="saveSekTax()">💾 Simpan</button></div></div>
         <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Override komisi per sekuritas jika berbeda dari SEKURITAS data. PPh Final (0,1%) dan Levy (0,043%) adalah tarif tetap — tidak bisa di-override per broker.</div>
-        <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:7px;font-size:9px;color:var(--text3);letter-spacing:.6px;font-family:'IBM Plex Mono',monospace;padding-bottom:4px;border-bottom:1px solid var(--border2)"><span>SEKURITAS</span><span>KOMISI BELI %</span><span>KOMISI JUAL %</span></div>
+        <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:7px;font-size:9px;color:var(--text3);letter-spacing:.6px;font-family:var(--font-mono);padding-bottom:4px;border-bottom:1px solid var(--border2)"><span>SEKURITAS</span><span>KOMISI BELI %</span><span>KOMISI JUAL %</span></div>
         <div id="sek-tax-rows" style="max-height:230px;overflow-y:auto"></div>
       </div>
       <!-- Kalkulator Real-time -->
@@ -1208,14 +1208,14 @@
           <div class="fg"><label class="flabel">Harga/Lembar (Rp)</label><input class="finput" type="number" id="sim-price" placeholder="8900" oninput="simCalcTax()"></div>
         </div>
         <div class="taxbox">
-          <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:7px">SIMULASI JUAL</div>
+          <div style="font-size:9px;color:var(--text3);font-family:var(--font-mono);margin-bottom:7px">SIMULASI JUAL</div>
           <div class="taxrow"><span>Nilai Kotor</span><span class="mono" id="s-gross">Rp 0</span></div>
           <div class="taxrow"><span id="s-pph-label">PPh Jual</span><span class="mono dn" id="s-pph">-Rp 0</span></div>
           <div class="taxrow"><span id="s-kom-label">Komisi Jual</span><span class="mono amb" id="s-kom">-Rp 0</span></div>
           <div class="taxrow tot"><span>Diterima Bersih</span><span class="mono up" id="s-net">Rp 0</span></div>
         </div>
         <div class="taxbox" style="margin-top:7px">
-          <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:7px">SIMULASI BELI</div>
+          <div style="font-size:9px;color:var(--text3);font-family:var(--font-mono);margin-bottom:7px">SIMULASI BELI</div>
           <div class="taxrow"><span>Nilai Beli</span><span class="mono" id="s-buy">Rp 0</span></div>
           <div class="taxrow"><span id="s-pph-beli-label">PPh/Levy Beli</span><span class="mono amb" id="s-pph-beli">-Rp 0</span></div>
           <div class="taxrow"><span id="s-bkom-label">Komisi Beli</span><span class="mono amb" id="s-bkom">-Rp 0</span></div>
@@ -1254,7 +1254,7 @@
     <!-- Cash widget crypto -->
   <div style="background:rgba(0,0,0,.15);border:1px solid #f7931a33;border-radius:9px;padding:8px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
     <span style="font-size:10px;font-weight:700;color:#f7931a;letter-spacing:.8px;white-space:nowrap">💰 KAS CRYPTO (WALLET/EXCHANGE)</span>
-    <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:#f7931a" id="cash-crypto-disp">Rp 0</span>
+    <span style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:#f7931a" id="cash-crypto-disp">Rp 0</span>
     <input type="number" id="cash-crypto-input" placeholder="Set kas..." class="finput" style="width:140px;padding:4px 9px;font-size:11px">
     <button class="btn btn-ghost btn-xs" style="color:#f7931a;border-color:#f7931a44" onclick="saveCashInput('crypto')">💾 Simpan</button>
     <span style="font-size:10px;color:var(--text3);flex:1">Saldo IDR di exchange crypto (Indodax, Tokocrypto, dll)</span>
@@ -1339,7 +1339,7 @@
     <!-- Cash widget etf -->
   <div style="background:rgba(0,0,0,.15);border:1px solid #00c8ff33;border-radius:9px;padding:8px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
     <span style="font-size:10px;font-weight:700;color:#00c8ff;letter-spacing:.8px;white-space:nowrap">💰 KAS ETF (USD ACCOUNT)</span>
-    <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:#00c8ff" id="cash-etf-disp">$ 0</span>
+    <span style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:#00c8ff" id="cash-etf-disp">$ 0</span>
     <input type="number" id="cash-etf-input" placeholder="Set kas..." class="finput" style="width:140px;padding:4px 9px;font-size:11px">
     <button class="btn btn-ghost btn-xs" style="color:#00c8ff;border-color:#00c8ff44" onclick="saveCashInput('etf')">💾 Simpan</button>
     <span style="font-size:10px;color:var(--text3);flex:1">Saldo USD di broker internasional (IBKR, dll)</span>
@@ -1435,11 +1435,11 @@
 
   <!-- Summary metrics -->
     <!-- Cash widget reksadana -->
-  <div style="background:rgba(0,0,0,.15);border:1px solid #a78bfa33;border-radius:9px;padding:8px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-    <span style="font-size:10px;font-weight:700;color:#a78bfa;letter-spacing:.8px;white-space:nowrap">💰 KAS REKSA DANA</span>
-    <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:#a78bfa" id="cash-reksadana-disp">Rp 0</span>
+  <div style="background:rgba(0,0,0,.15);border:1px solid #8070d233;border-radius:9px;padding:8px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <span style="font-size:10px;font-weight:700;color:#8070d2;letter-spacing:.8px;white-space:nowrap">💰 KAS REKSA DANA</span>
+    <span style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:#8070d2" id="cash-reksadana-disp">Rp 0</span>
     <input type="number" id="cash-reksadana-input" placeholder="Set kas..." class="finput" style="width:140px;padding:4px 9px;font-size:11px">
-    <button class="btn btn-ghost btn-xs" style="color:#a78bfa;border-color:#a78bfa44" onclick="saveCashInput('reksadana')">💾 Simpan</button>
+    <button class="btn btn-ghost btn-xs" style="color:#8070d2;border-color:#8070d244" onclick="saveCashInput('reksadana')">💾 Simpan</button>
     <span style="font-size:10px;color:var(--text3);flex:1">Saldo IDR di platform reksa dana</span>
   </div>
   <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:18px">
@@ -1541,7 +1541,7 @@
       <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:4px 10px">
         <i class="ti ti-search" style="color:var(--text3);font-size:13px"></i>
         <input id="fs-ticker-input" placeholder="Cari kode saham..." value="BBCA"
-          style="background:none;border:none;outline:none;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;text-transform:uppercase;width:140px;letter-spacing:.8px"
+          style="background:none;border:none;outline:none;color:var(--text);font-family:var(--font-mono);font-size:12px;text-transform:uppercase;width:140px;letter-spacing:.8px"
           onkeydown="if(event.key==='Enter')fsRunAnalysis()"/>
       </div>
       <div style="display:flex;gap:3px;background:var(--bg);border-radius:7px;padding:3px">
@@ -1663,7 +1663,7 @@
 <!-- Ranking -->
 <div id="page-ranking" class="page">
   <div class="ptitle">🏆 Ranking 30 Saham Terbesar IHSG</div>
-  <div class="psub">Diurutkan berdasarkan skor akumulasi big money • Klik Lihat untuk analisa detail • <span style="color:#00e5a0">●</span> = data riil Yahoo &nbsp;·&nbsp; <span style="color:#ff3d5a">○ SIM</span> = data simulasi, harga tidak akurat — perbaiki di <a href="#" onclick="goPage('admin');return false" style="color:var(--accent)">🛠 Kelola Daftar Saham</a></div>
+  <div class="psub">Diurutkan berdasarkan skor akumulasi big money • Klik Lihat untuk analisa detail • <span style="color:#41f3a7">●</span> = data riil Yahoo &nbsp;·&nbsp; <span style="color:#e21d48">○ SIM</span> = data simulasi, harga tidak akurat — perbaiki di <a href="#" onclick="goPage('admin');return false" style="color:var(--accent)">🛠 Kelola Daftar Saham</a></div>
   <div class="card" style="margin-top:11px">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:18px">
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;flex:1" id="rk-sum"></div>
@@ -1809,30 +1809,30 @@
           <div style="min-width:120px">
             <div style="font-size:9px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px">Kode Saham</div>
             <input id="hw-ticker-input" type="text" placeholder="e.g. BBCA" maxlength="6"
-              style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:5px 8px;width:100%;border-radius:2px;text-transform:uppercase"
+              style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:13px;padding:5px 8px;width:100%;border-radius:2px;text-transform:uppercase"
               oninput="this.value=this.value.toUpperCase()">
           </div>
           <div style="min-width:140px">
             <div style="font-size:9px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px">Harga Saham Saat Ini (Rp)</div>
             <input id="hw-current-price" type="number" placeholder="e.g. 9500" step="50"
-              style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:5px 8px;width:100%;border-radius:2px"
+              style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:13px;padding:5px 8px;width:100%;border-radius:2px"
               >
           </div>
           <div style="min-width:120px">
             <div style="font-size:9px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px">Min Return (%/thn)</div>
             <input id="hw-min-return" type="number" value="6" step="1" min="1" max="30"
-              style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:5px 8px;width:100%;border-radius:2px"
+              style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:13px;padding:5px 8px;width:100%;border-radius:2px"
               >
           </div>
           <div style="min-width:120px">
             <div style="font-size:9px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px">Proyeksi (tahun)</div>
             <input id="hw-proj-years" type="number" value="5" step="1" min="1" max="15"
-              style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:5px 8px;width:100%;border-radius:2px"
+              style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:13px;padding:5px 8px;width:100%;border-radius:2px"
               >
           </div>
           <div style="display:flex;align-items:flex-end;padding-bottom:0">
             <button onclick="hw_recalc()" id="hw-hitung-btn"
-              style="height:38px;padding:0 22px;background:var(--bb-orange);border:none;border-radius:2px;color:#0a0a0f;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.5px;white-space:nowrap;transition:opacity .15s"
+              style="height:38px;padding:0 22px;background:var(--bb-orange);border:none;border-radius:2px;color:#0a0a0f;font-family:var(--font-mono);font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.5px;white-space:nowrap;transition:opacity .15s"
               onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
               ⚡ HITUNG
             </button>
@@ -1866,7 +1866,7 @@
         <!-- Panduan unit -->
         <div style="margin-top:10px;background:var(--bg3);border-radius:2px;padding:10px 12px;border-left:3px solid rgba(255,102,0,.5)">
           <div style="font-size:9px;color:var(--bb-orange);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;font-weight:700">📌 PANDUAN INPUT — SATUAN WAJIB</div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px 16px;font-size:9px;font-family:'IBM Plex Mono',monospace">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px 16px;font-size:9px;font-family:var(--font-mono)">
             <div><span style="color:var(--text3)">EPS &amp; DPS</span><br><b style="color:var(--text)">Rupiah per saham</b><br><span style="color:var(--text3)">contoh: 179 = Rp 179/saham</span></div>
             <div><span style="color:var(--text3)">Total Equity &amp; Net Income</span><br><b style="color:var(--text)">Miliar Rupiah</b><br><span style="color:var(--text3)">contoh: 150537 = Rp 150,5 Triliun</span></div>
             <div><span style="color:var(--text3)">Shares</span><br><b style="color:var(--text)">Juta lembar saham</b><br><span style="color:var(--text3)">contoh: 99062 = 99,06 miliar lembar</span></div>
@@ -1904,25 +1904,25 @@
       <div class="card" id="hw-verdict-card" style="margin-bottom:16px;border-top-width:2px;border-top-color:var(--text3)">
         <div style="text-align:center;padding:10px 0">
           <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">VALUASI</div>
-          <div id="hw-ticker-display" style="font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--bb-orange);margin-bottom:4px">—</div>
-          <div id="hw-verdict-badge" style="display:inline-block;padding:4px 14px;border-radius:2px;font-size:11px;font-weight:700;font-family:'IBM Plex Mono',monospace;background:var(--bg4);color:var(--text3);border:1px solid var(--border)">BELUM DIHITUNG</div>
+          <div id="hw-ticker-display" style="font-size:22px;font-weight:700;font-family:var(--font-mono);color:var(--bb-orange);margin-bottom:4px">—</div>
+          <div id="hw-verdict-badge" style="display:inline-block;padding:4px 14px;border-radius:2px;font-size:11px;font-weight:700;font-family:var(--font-mono);background:var(--bg4);color:var(--text3);border:1px solid var(--border)">BELUM DIHITUNG</div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
           <div style="background:var(--bg3);border-radius:2px;padding:8px;text-align:center">
             <div style="font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Harga Wajar</div>
-            <div id="hw-fair-price" style="font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--amber)">—</div>
+            <div id="hw-fair-price" style="font-size:18px;font-weight:700;font-family:var(--font-mono);color:var(--amber)">—</div>
           </div>
           <div style="background:var(--bg3);border-radius:2px;padding:8px;text-align:center">
             <div style="font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Harga Saat Ini</div>
-            <div id="hw-current-display" style="font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text)">—</div>
+            <div id="hw-current-display" style="font-size:18px;font-weight:700;font-family:var(--font-mono);color:var(--text)">—</div>
           </div>
           <div style="background:var(--bg3);border-radius:2px;padding:8px;text-align:center">
             <div style="font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Margin of Safety</div>
-            <div id="hw-mos-pct" style="font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text3)">—</div>
+            <div id="hw-mos-pct" style="font-size:18px;font-weight:700;font-family:var(--font-mono);color:var(--text3)">—</div>
           </div>
           <div style="background:var(--bg3);border-radius:2px;padding:8px;text-align:center">
             <div style="font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Initial IRR</div>
-            <div id="hw-irr-display" style="font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text3)">—</div>
+            <div id="hw-irr-display" style="font-size:18px;font-weight:700;font-family:var(--font-mono);color:var(--text3)">—</div>
           </div>
         </div>
         <!-- MoS gauge bar -->
@@ -1937,7 +1937,7 @@
         <!-- Kesimpulan -->
         <div id="hw-conclusion" style="display:none;margin-top:12px;padding:10px;background:var(--bg3);border-radius:2px;border-left:3px solid var(--text3)">
           <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">KESIMPULAN</div>
-          <div id="hw-conclusion-text" style="font-size:10px;color:var(--text2);font-family:'IBM Plex Mono',monospace;line-height:1.7"></div>
+          <div id="hw-conclusion-text" style="font-size:10px;color:var(--text2);font-family:var(--font-mono);line-height:1.7"></div>
         </div>
       </div>
 
@@ -1980,7 +1980,7 @@
       <div style="display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:4px 10px">
         <i class="ti ti-search" style="color:var(--text3);font-size:13px"></i>
         <input id="cd-tk-input" placeholder="Kode saham..." value="ADMR"
-          style="background:none;border:none;outline:none;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;text-transform:uppercase;width:110px;letter-spacing:.8px"
+          style="background:none;border:none;outline:none;color:var(--text);font-family:var(--font-mono);font-size:12px;text-transform:uppercase;width:110px;letter-spacing:.8px"
           onkeydown="if(event.key==='Enter')cdLoadInput()"/>
       </div>
       <button class="btn btn-blue" onclick="cdLoadInput()" style="font-size:12px">Muat ↗</button>
@@ -1990,7 +1990,7 @@
   </div>
   <!-- Quick load: saham di portofolio -->
   <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:18px">
-    <span style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace">QUICK:</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">QUICK:</span>
     <div id="cd-chips" style="display:flex;flex-wrap:wrap;gap:5px"></div>
   </div>
   <!-- Catatan sumber data -->
@@ -2067,7 +2067,7 @@
             <input class="finput" id="bt-ticker" value="BBCA" style="flex:1;text-transform:uppercase" placeholder="BBCA, TLKM...">
             <button class="btn btn-bb btn-xs" onclick="btFetchLive()" title="Ambil data live Yahoo Finance">📡</button>
           </div>
-          <div style="font-size:9px;color:var(--text3);margin-top:3px;font-family:'IBM Plex Mono',monospace">Tambahkan .JK otomatis · Tekan 📡 untuk data live</div>
+          <div style="font-size:9px;color:var(--text3);margin-top:3px;font-family:var(--font-mono)">Tambahkan .JK otomatis · Tekan 📡 untuk data live</div>
         </div>
         <div class="fg" style="margin-bottom:8px">
           <div class="flabel">Periode Backtest</div>
@@ -2114,13 +2114,13 @@
         </div>
         <button class="btn btn-blue" style="width:100%;justify-content:center" onclick="runBacktest()">▶ Jalankan Backtest</button>
         <!-- Data status -->
-        <div id="bt-data-status" style="margin-top:8px;font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace;text-align:center">Status: —</div>
+        <div id="bt-data-status" style="margin-top:8px;font-size:9px;color:var(--text3);font-family:var(--font-mono);text-align:center">Status: —</div>
       </div>
 
       <!-- Live data panel -->
       <div class="card">
         <div class="cheader"><span class="ctitle">📡 Data Sumber</span></div>
-        <div id="bt-datasrc" style="font-size:10px;color:var(--text2);font-family:'IBM Plex Mono',monospace;line-height:1.8">
+        <div id="bt-datasrc" style="font-size:10px;color:var(--text2);font-family:var(--font-mono);line-height:1.8">
           <div>Sumber: <span id="bt-src-label" style="color:var(--amber)">Simulasi</span></div>
           <div>Ticker: <span id="bt-src-ticker" style="color:var(--bb-orange)">BBCA.JK</span></div>
           <div>Data poin: <span id="bt-src-count" style="color:var(--text)">—</span></div>
@@ -2198,7 +2198,7 @@
     </div>
     <div style="margin-top:8px">
       <button class="btn btn-green" onclick="scRunFilter()">🔍 Scan Sekarang</button>
-      <span style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-left:10px" id="sc-status">—</span>
+      <span style="font-size:9px;color:var(--text3);font-family:var(--font-mono);margin-left:10px" id="sc-status">—</span>
     </div>
   </div>
   <div class="card">
@@ -2235,7 +2235,7 @@
     </div>
     <div class="card">
       <div class="cheader"><span class="ctitle">Statistik Pairs</span></div>
-      <div id="pt-stats" style="font-size:11px;color:var(--text2);font-family:'IBM Plex Mono',monospace;line-height:2">Belum dianalisa</div>
+      <div id="pt-stats" style="font-size:11px;color:var(--text2);font-family:var(--font-mono);line-height:2">Belum dianalisa</div>
     </div>
   </div>
   <div class="card" style="margin-top:10px">
@@ -2347,7 +2347,7 @@
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div>
         <div style="font-size:15px;font-weight:700;color:var(--accent)">💾 Backup &amp; Restore</div>
-        <div style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-top:2px">Kelola data jurnal investasimu</div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">Kelola data jurnal investasimu</div>
       </div>
       <button onclick="closeBackupModal()" aria-label="Tutup dialog Backup" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;line-height:1;padding:4px">✕</button>
     </div>

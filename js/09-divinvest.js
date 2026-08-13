@@ -230,13 +230,13 @@ function diAnalyze(){
       rating='NONE'; ratingLabel='⬜ Tidak Bayar'; ratingColor='#4a5e82';
       ratingNote='Belum pernah membagikan dividen';
     } else if(score>=62 && consistency>=0.55 && yom>=2){
-      rating='HIGH'; ratingLabel='🏆 High'; ratingColor='#00e5a0';
+      rating='HIGH'; ratingLabel='🏆 High'; ratingColor='#41f3a7';
       ratingNote='Pembayar konsisten, yield & pertumbuhan baik';
     } else if(score>=38 && consistency>=0.35){
       rating='MODERATE'; ratingLabel='⚖️ Moderate'; ratingColor='#ffc107';
       ratingNote='Pembayar moderat, perlu monitoring berkala';
     } else {
-      rating='LOW'; ratingLabel='📉 Low'; ratingColor='#ff3d5a';
+      rating='LOW'; ratingLabel='📉 Low'; ratingColor='#e21d48';
       ratingNote='Konsistensi rendah atau yield tidak menarik';
     }
 
@@ -356,18 +356,18 @@ function renderDivInvest(){
         +'</div>'
         // Porto live data
         +(r.inPortfolio?'<div style="background:rgba(255,255,255,.03);border-radius:6px;padding:6px 8px;margin-bottom:7px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px">'
-          +'<div style="font-size:9px;color:var(--text3)">Harga Pasar<br><span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--text)">Rp '+fmt(r.currentPrice)+'</span></div>'
-          +'<div style="font-size:9px;color:var(--text3)">Avg Beli<br><span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--amber)">Rp '+fmt(Math.round(r.avgPrice))+'</span></div>'
-          +'<div style="font-size:9px;color:var(--text3)">Unrealized<br><span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:'+pnlColor+'">'+pnlSign+r.unrealRet.toFixed(1)+'%</span></div>'
+          +'<div style="font-size:9px;color:var(--text3)">Harga Pasar<br><span style="font-family:var(--font-mono);font-size:11px;color:var(--text)">Rp '+fmt(r.currentPrice)+'</span></div>'
+          +'<div style="font-size:9px;color:var(--text3)">Avg Beli<br><span style="font-family:var(--font-mono);font-size:11px;color:var(--amber)">Rp '+fmt(Math.round(r.avgPrice))+'</span></div>'
+          +'<div style="font-size:9px;color:var(--text3)">Unrealized<br><span style="font-family:var(--font-mono);font-size:11px;color:'+pnlColor+'">'+pnlSign+r.unrealRet.toFixed(1)+'%</span></div>'
         +'</div>':'')
         // Metrics grid
         +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:7px">'
-          +'<div style="font-size:9px;color:var(--text3)">Yield Pasar<br><span style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;font-weight:600;color:var(--text)">'+r.yom.toFixed(2)+'%</span></div>'
-          +'<div style="font-size:9px;color:var(--text3)">Yield on Cost<br><span style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;font-weight:600;color:var(--amber)">'+r.yoc.toFixed(2)+'%</span></div>'
-          +'<div style="font-size:9px;color:var(--text3)">CAGR DPS<br><span style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;font-weight:600;color:'+cagrColor+'">'+cagrPct+'%/th</span></div>'
-          +'<div style="font-size:9px;color:var(--text3)">Konsistensi<br><span style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;font-weight:600">'+Math.round(r.consistency*100)+'%</span></div>'
-          +'<div style="font-size:9px;color:var(--text3)">Total Realisasi<br><span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px">Rp '+fmtK(r.totalNet)+'</span></div>'
-          +'<div style="font-size:9px;color:var(--text3)">Streak Bayar<br><span style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;font-weight:600;color:var(--accent)">'+proj.streak+' th</span></div>'
+          +'<div style="font-size:9px;color:var(--text3)">Yield Pasar<br><span style="font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--text)">'+r.yom.toFixed(2)+'%</span></div>'
+          +'<div style="font-size:9px;color:var(--text3)">Yield on Cost<br><span style="font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--amber)">'+r.yoc.toFixed(2)+'%</span></div>'
+          +'<div style="font-size:9px;color:var(--text3)">CAGR DPS<br><span style="font-family:var(--font-mono);font-size:12px;font-weight:600;color:'+cagrColor+'">'+cagrPct+'%/th</span></div>'
+          +'<div style="font-size:9px;color:var(--text3)">Konsistensi<br><span style="font-family:var(--font-mono);font-size:12px;font-weight:600">'+Math.round(r.consistency*100)+'%</span></div>'
+          +'<div style="font-size:9px;color:var(--text3)">Total Realisasi<br><span style="font-family:var(--font-mono);font-size:11px">Rp '+fmtK(r.totalNet)+'</span></div>'
+          +'<div style="font-size:9px;color:var(--text3)">Streak Bayar<br><span style="font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--accent)">'+proj.streak+' th</span></div>'
         +'</div>'
         // History bars
         +'<div style="margin-bottom:8px">'
@@ -382,7 +382,7 @@ function renderDivInvest(){
               +'<div style="width:'+Math.round(proj.probPay*100)+'%;height:100%;background:'+r.ratingColor+';border-radius:2px"></div>'
             +'</div>'
           +'</div>'
-          +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:14px;font-weight:700;color:var(--green)">Rp '+fmtK(proj.expNet)+' <span style="font-size:10px;font-weight:400;color:var(--text3)">net</span></div>'
+          +'<div style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:var(--green)">Rp '+fmtK(proj.expNet)+' <span style="font-size:10px;font-weight:400;color:var(--text3)">net</span></div>'
           +'<div style="font-size:9px;color:var(--text3);margin-top:2px">CI 80%: Rp '+fmtK(proj.ci80Low)+' – Rp '+fmtK(proj.ci80High)+'</div>'
           +'<div style="font-size:9px;color:var(--text3)">Est.DPS Rp '+fmt(Math.round(proj.expDPS))+' × '+(r.currentShares).toLocaleString('id-ID')+' lbr</div>'
           +'<div style="font-size:9px;margin-top:3px;padding:3px 6px;border-radius:5px;background:'+r.ratingColor+'11;color:'+r.ratingColor+'">'+r.ratingNote+'</div>'
@@ -407,7 +407,7 @@ function renderDivInvest(){
           +'<div style="width:56px;height:5px;background:rgba(255,255,255,.08);border-radius:3px">'
             +'<div style="width:'+Math.round(r.consistency*100)+'%;height:100%;background:'+r.ratingColor+';border-radius:3px"></div>'
           +'</div>'
-          +'<span style="font-size:10px;font-family:\'IBM Plex Mono\',monospace">'+Math.round(r.consistency*100)+'%</span>'
+          +'<span style="font-size:10px;font-family:var(--font-mono)">'+Math.round(r.consistency*100)+'%</span>'
         +'</div></td>'
       +'</tr>';
     }).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:14px">Belum ada data dividen</td></tr>';
@@ -425,7 +425,7 @@ function renderDivInvest(){
           +'<div style="font-size:9px;color:var(--text3);margin-top:1px">'+r.sector+'</div>'
         +'</div>'
         +'<div style="text-align:right">'
-          +'<div style="font-size:11px;font-family:\'IBM Plex Mono\',monospace">'+r.currentLot+' lot · Rp '+fmtK(r.currentMV)+'</div>'
+          +'<div style="font-size:11px;font-family:var(--font-mono)">'+r.currentLot+' lot · Rp '+fmtK(r.currentMV)+'</div>'
           +'<div style="font-size:10px;color:'+(r.unrealPnl>=0?'var(--green)':'var(--red)')+'">'+
             (r.unrealPnl>=0?'+':'')+fmtK(r.unrealPnl)+' ('+r.unrealRet.toFixed(1)+'%)</div>'
           +'<span style="font-size:9px;padding:1px 7px;border-radius:8px;background:rgba(74,94,130,.25);color:var(--text3)">⬜ Belum ada dividen</span>'

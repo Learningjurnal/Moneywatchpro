@@ -434,7 +434,7 @@ function runBacktest(){
       QT.btCharts['eq'] = new Chart(ctx,{type:'line',data:{labels:sampDates,datasets:[
         {label:'Strategi',data:sampEq,borderColor:'#00d4aa',borderWidth:2,fill:true,backgroundColor:grd,tension:.3,pointRadius:0},
         {label:'Buy & Hold',data:sampBah,borderColor:'rgba(255,102,0,.6)',borderWidth:1.5,borderDash:[5,3],fill:false,tension:.3,pointRadius:0}
-      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#b8bdd4',font:{family:'IBM Plex Mono',size:10}}},tooltip:{backgroundColor:'rgba(10,10,20,.92)',titleColor:'#ff6600',bodyColor:'#c0c0d8'}},scales:{x:{ticks:{color:'#8a90ad',font:{size:9},maxTicksLimit:10},grid:{color:'rgba(255,102,0,.05)'}},y:{ticks:{color:'#8a90ad',font:{size:9},callback:function(v){return 'Rp'+fmtK(v);}},grid:{color:'rgba(255,102,0,.05)'}}}}});
+      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#b8bdd4',font:{family:'Menlo',size:10}}},tooltip:{backgroundColor:'rgba(10,10,20,.92)',titleColor:'#ff6600',bodyColor:'#c0c0d8'}},scales:{x:{ticks:{color:'#8a90ad',font:{size:9},maxTicksLimit:10},grid:{color:'rgba(255,102,0,.05)'}},y:{ticks:{color:'#8a90ad',font:{size:9},callback:function(v){return 'Rp'+fmtK(v);}},grid:{color:'rgba(255,102,0,.05)'}}}}});
     }
 
     // Drawdown chart
@@ -490,7 +490,7 @@ function runBacktest(){
         mrets[y][m] = (close[i]-close[Math.max(0,i-22)])/close[Math.max(0,i-22)]*100;
       });
       var years = Object.keys(mrets).sort();
-      var html='<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:9px;font-family:IBM Plex Mono,monospace">';
+      var html='<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:9px;font-family:Menlo,monospace">';
       html+='<tr><th style="padding:3px 6px;color:var(--text3)"></th>'+QT_MONTHS.map(function(m){return '<th style="padding:3px 5px;color:var(--text3)">'+m+'</th>';}).join('')+'</tr>';
       years.forEach(function(y){
         html+='<tr><td style="padding:3px 6px;font-weight:700;color:var(--text2)">'+y+'</td>';
@@ -662,8 +662,8 @@ function fhmRender(){
     else if(factor==='vol'){bg='rgba(155,127,232,'+(0.15+norm*0.7)+')';col='var(--purple)';}
     else{bg=v>=0?'rgba(0,212,170,'+(0.15+norm*0.7)+')':'rgba(255,34,68,'+(0.15+(1-norm)*0.7)+')';col=v>=0?'var(--green)':'var(--red)';}
     return '<div style="background:'+bg+';border-radius:3px;padding:8px 6px;border:1px solid rgba(255,255,255,.06)">'
-      +'<div style="font-size:11px;font-weight:700;color:var(--text);font-family:IBM Plex Mono,monospace">'+s.t+'</div>'
-      +'<div style="font-size:12px;font-weight:600;color:'+col+';font-family:IBM Plex Mono,monospace;margin-top:2px">'+(factor!=='rsi'&&v>=0?'+':'')+v.toFixed(factor==='score'?0:1)+'</div>'
+      +'<div style="font-size:11px;font-weight:700;color:var(--text);font-family:Menlo,monospace">'+s.t+'</div>'
+      +'<div style="font-size:12px;font-weight:600;color:'+col+';font-family:Menlo,monospace;margin-top:2px">'+(factor!=='rsi'&&v>=0?'+':'')+v.toFixed(factor==='score'?0:1)+'</div>'
       +'</div>';
   };
 
@@ -712,7 +712,7 @@ function corrRender(){
         if(i===j){bg='rgba(255,255,255,.08)';col='var(--text3)';}
         else if(v>0){var int2=Math.min(1,v/.8);bg='rgba(0,212,170,'+(0.15+int2*.65)+')';col='var(--green)';}
         else{var int3=Math.min(1,Math.abs(v)/.8);bg='rgba(255,34,68,'+(0.15+int3*.65)+')';col='var(--red)';}
-        h+='<div style="background:'+bg+';color:'+col+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;border-radius:2px;height:30px;margin:1px;font-family:IBM Plex Mono,monospace" title="'+a+' vs '+b+': '+v.toFixed(3)+'">'+(i===j?'1.00':v.toFixed(2))+'</div>';
+        h+='<div style="background:'+bg+';color:'+col+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;border-radius:2px;height:30px;margin:1px;font-family:Menlo,monospace" title="'+a+' vs '+b+': '+v.toFixed(3)+'">'+(i===j?'1.00':v.toFixed(2))+'</div>';
       });
     });
     h+='</div></div>';
@@ -726,9 +726,9 @@ function corrRender(){
     var top=pairs2.slice(0,5), bot=pairs2.slice(-5).reverse();
     pEl.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
       +'<div><div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:8px">Korelasi Tertinggi — kandidat pairs trading</div>'
-      +top.map(function(p){return '<div style="display:flex;justify-content:space-between;padding:6px 9px;background:var(--bg3);border-radius:2px;margin-bottom:4px;border:1px solid var(--border)"><span style="font-family:IBM Plex Mono,monospace;color:var(--text);font-size:12px">'+p.a+' / '+p.b+'</span><span style="color:var(--green);font-weight:700;font-family:IBM Plex Mono,monospace">+'+p.v.toFixed(3)+'</span></div>';}).join('')+'</div>'
+      +top.map(function(p){return '<div style="display:flex;justify-content:space-between;padding:6px 9px;background:var(--bg3);border-radius:2px;margin-bottom:4px;border:1px solid var(--border)"><span style="font-family:Menlo,monospace;color:var(--text);font-size:12px">'+p.a+' / '+p.b+'</span><span style="color:var(--green);font-weight:700;font-family:Menlo,monospace">+'+p.v.toFixed(3)+'</span></div>';}).join('')+'</div>'
       +'<div><div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:8px">Korelasi Terendah — kandidat diversifikasi</div>'
-      +bot.map(function(p){return '<div style="display:flex;justify-content:space-between;padding:6px 9px;background:var(--bg3);border-radius:2px;margin-bottom:4px;border:1px solid var(--border)"><span style="font-family:IBM Plex Mono,monospace;color:var(--text);font-size:12px">'+p.a+' / '+p.b+'</span><span style="color:'+(p.v>=0?'var(--amber)':'var(--red)')+';font-weight:700;font-family:IBM Plex Mono,monospace">'+(p.v>=0?'+':'')+p.v.toFixed(3)+'</span></div>';}).join('')+'</div>'
+      +bot.map(function(p){return '<div style="display:flex;justify-content:space-between;padding:6px 9px;background:var(--bg3);border-radius:2px;margin-bottom:4px;border:1px solid var(--border)"><span style="font-family:Menlo,monospace;color:var(--text);font-size:12px">'+p.a+' / '+p.b+'</span><span style="color:'+(p.v>=0?'var(--amber)':'var(--red)')+';font-weight:700;font-family:Menlo,monospace">'+(p.v>=0?'+':'')+p.v.toFixed(3)+'</span></div>';}).join('')+'</div>'
       +'</div>';
   }
 }
@@ -766,7 +766,7 @@ function mrRender(){
   if(hmEl){
     var years2=[]; var now2=new Date();
     for(var y=startY;y<=now2.getFullYear();y++) years2.push(y);
-    var h='<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:13px;font-family:IBM Plex Mono,monospace">';
+    var h='<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:13px;font-family:Menlo,monospace">';
     h+='<tr><th style="padding:6px 10px;color:var(--text3);text-align:left;font-size:11px">Tahun</th>'+QT_MONTHS.map(function(m){return '<th style="padding:6px 8px;color:var(--text3);font-size:11px">'+m+'</th>';}).join('')+'<th style="padding:6px 8px;color:var(--text3);font-size:11px">YTD</th></tr>';
     years2.forEach(function(y){
       h+='<tr><td style="padding:6px 10px;font-weight:700;color:var(--text2)">'+y+'</td>';
@@ -870,7 +870,7 @@ function pairsAnalyzeWith(a,b,dataA,dataB){
       {data:sampZ.map(function(){return 2;}),borderColor:'rgba(255,34,68,.4)',borderWidth:1,borderDash:[5,3],fill:false,pointRadius:0,label:'+2σ'},
       {data:sampZ.map(function(){return -2;}),borderColor:'rgba(0,212,170,.4)',borderWidth:1,borderDash:[5,3],fill:false,pointRadius:0,label:'-2σ'},
       {data:sampZ.map(function(){return 0;}),borderColor:'rgba(255,255,255,.15)',borderWidth:1,fill:false,pointRadius:0,label:'Mean'}
-    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#b8bdd4',font:{family:'IBM Plex Mono',size:9}}}},scales:{x:{ticks:{color:'#8a90ad',font:{size:9},maxTicksLimit:10},grid:{color:'rgba(255,102,0,.05)'}},y:{ticks:{color:'#8a90ad',font:{size:9}},grid:{color:'rgba(255,102,0,.05)'}}}}}); 
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#b8bdd4',font:{family:'Menlo',size:9}}}},scales:{x:{ticks:{color:'#8a90ad',font:{size:9},maxTicksLimit:10},grid:{color:'rgba(255,102,0,.05)'}},y:{ticks:{color:'#8a90ad',font:{size:9}},grid:{color:'rgba(255,102,0,.05)'}}}}}); 
   }
 
   // Price chart normalized
@@ -882,7 +882,7 @@ function pairsAnalyzeWith(a,b,dataA,dataB){
     QT.btCharts['pt-price']=new Chart(cvP.getContext('2d'),{type:'line',data:{labels:sD,datasets:[
       {data:sNA,borderColor:'#00d4aa',borderWidth:2,fill:false,tension:.3,pointRadius:0,label:a},
       {data:sNB,borderColor:'#ff6600',borderWidth:2,fill:false,tension:.3,pointRadius:0,label:b}
-    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#b8bdd4',font:{family:'IBM Plex Mono',size:10}}}},scales:{x:{ticks:{color:'#8a90ad',font:{size:9},maxTicksLimit:10},grid:{color:'rgba(255,102,0,.05)'}},y:{ticks:{color:'#8a90ad',font:{size:9},callback:function(v){return v.toFixed(0);}},grid:{color:'rgba(255,102,0,.05)'}}}}});
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#b8bdd4',font:{family:'Menlo',size:10}}}},scales:{x:{ticks:{color:'#8a90ad',font:{size:9},maxTicksLimit:10},grid:{color:'rgba(255,102,0,.05)'}},y:{ticks:{color:'#8a90ad',font:{size:9},callback:function(v){return v.toFixed(0);}},grid:{color:'rgba(255,102,0,.05)'}}}}});
   }
 }
 

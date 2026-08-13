@@ -49,8 +49,8 @@ function renderDashboard(){
   // ── Hero AUM ──
   el('d-aum').textContent = 'Rp '+fmtK(AUM);
   el('d-aum-sub').innerHTML =
-    '<span class="'+(totalUnreal>=0?'up':'dn')+'" style="font-family:\'IBM Plex Mono\',monospace;font-size:11px">'+(totalUnreal>=0?'▲ +':'▼ ')+'Rp '+fmtK(totalUnreal)+' ('+aumPct+'%)</span>'+
-    '<span style="color:var(--text3);font-size:10px;font-family:\'IBM Plex Mono\',monospace;margin-left:8px">dari total modal Rp '+fmtK(totalCost)+'</span>';
+    '<span class="'+(totalUnreal>=0?'up':'dn')+'" style="font-family:var(--font-mono);font-size:11px">'+(totalUnreal>=0?'▲ +':'▼ ')+'Rp '+fmtK(totalUnreal)+' ('+aumPct+'%)</span>'+
+    '<span style="color:var(--text3);font-size:10px;font-family:var(--font-mono);margin-left:8px">dari total modal Rp '+fmtK(totalCost)+'</span>';
   el('d-aum-badges').innerHTML =
     '<span class="badge b-up">'+porto.length+' Saham</span>'+
     '<span class="badge" style="background:rgba(247,147,26,.12);color:#f7931a">'+cryptoPorto.length+' Crypto</span>'+
@@ -111,7 +111,7 @@ function renderDashboard(){
         labels:['Saham IDX','Crypto','ETF AS','Reksa Dana','Kas RDN'],
         datasets:[{
           data:[sahamMV,crMV,etfMV,rdMV,Math.max(0,rdn)],
-          backgroundColor:['#00e5a0','#f7931a','#00c8ff','#a78bfa','#ffc107'],
+          backgroundColor:['#41f3a7','#f7931a','#00c8ff','#8070d2','#ffc107'],
           borderWidth:0,hoverOffset:5
         }]
       },
@@ -128,18 +128,18 @@ function renderDashboard(){
   }
   // Legend AUM
   var aumItems=[
-    {label:'Saham IDX', val:sahamMV, pct:wSaham,  color:'#00e5a0'},
+    {label:'Saham IDX', val:sahamMV, pct:wSaham,  color:'#41f3a7'},
     {label:'Crypto',    val:crMV,    pct:wCrypto,  color:'#f7931a'},
     {label:'ETF AS',    val:etfMV,   pct:wEtf,     color:'#00c8ff'},
-    {label:'Reksa Dana',val:rdMV,    pct:wRd,      color:'#a78bfa'},
+    {label:'Reksa Dana',val:rdMV,    pct:wRd,      color:'#8070d2'},
     {label:'Kas RDN',   val:Math.max(0,rdn), pct:wKas, color:'#ffc107'},
   ];
   el('aum-leg').innerHTML=aumItems.map(function(it){
     return '<div style="display:flex;align-items:center;gap:6px">'+
       '<div style="width:7px;height:7px;border-radius:2px;background:'+it.color+';flex-shrink:0"></div>'+
       '<span style="font-size:10px;color:var(--text2);flex:1">'+it.label+'</span>'+
-      '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;font-weight:600;color:'+it.color+'">'+it.pct.toFixed(1)+'%</span>'+
-      '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:var(--text3);min-width:60px;text-align:right">'+fmtK(it.val)+'</span>'+
+      '<span style="font-family:var(--font-mono);font-size:10px;font-weight:600;color:'+it.color+'">'+it.pct.toFixed(1)+'%</span>'+
+      '<span style="font-family:var(--font-mono);font-size:9px;color:var(--text3);min-width:60px;text-align:right">'+fmtK(it.val)+'</span>'+
     '</div>';
   }).join('');
   el('d-aum-total-badge').textContent='Rp '+fmtK(AUM);
@@ -169,7 +169,7 @@ function renderDashboard(){
   // ── Tabel ringkasan semua aset ──
   var allRows=[];
   porto.forEach(function(p){
-    allRows.push({name:p.ticker,desc:p.info.name,kelas:'Saham IDX',lot:p.lot||0,mv:p.mv,cost:p.cost,pnl:p.unreal,ret:p.ret,color:'#00e5a0'});
+    allRows.push({name:p.ticker,desc:p.info.name,kelas:'Saham IDX',lot:p.lot||0,mv:p.mv,cost:p.cost,pnl:p.unreal,ret:p.ret,color:'#41f3a7'});
   });
   cryptoPorto.forEach(function(p){
     allRows.push({name:p.coin,desc:p.info.name,kelas:'Crypto',lot:p.qty||0,mv:p.mv,cost:p.cost,pnl:p.unreal,ret:p.ret,color:'#f7931a'});
@@ -178,7 +178,7 @@ function renderDashboard(){
     allRows.push({name:p.ticker,desc:p.info.name,kelas:'ETF AS',lot:p.qty||0,mv:p.mvIdr,cost:p.costIdr,pnl:p.unrIdr,ret:p.ret,color:'#00c8ff'});
   });
   rdPorto.forEach(function(p){
-    allRows.push({name:p.code,desc:p.info.name,kelas:'Reksa Dana',lot:0,mv:p.mv,cost:p.cost,pnl:p.unreal,ret:p.ret,color:'#a78bfa'});
+    allRows.push({name:p.code,desc:p.info.name,kelas:'Reksa Dana',lot:0,mv:p.mv,cost:p.cost,pnl:p.unreal,ret:p.ret,color:'#8070d2'});
   });
   // apply sort
   (function(){
@@ -227,9 +227,9 @@ function renderDashboard(){
       '<div style="display:flex;align-items:center;gap:6px">'+
         '<span class="badge '+(isBuy?'b-up':'b-dn')+'">'+tx.type+'</span>'+
         '<div><div class="mono" style="font-size:10px">'+tx.ticker+' · '+tx.lot+' lot</div>'+
-        '<div style="font-size:9px;color:var(--text3);font-family:\'IBM Plex Mono\',monospace">'+tx.date+'</div></div>'+
+        '<div style="font-size:9px;color:var(--text3);font-family:var(--font-mono)">'+tx.date+'</div></div>'+
       '</div>'+
-      '<div style="text-align:right;font-family:\'IBM Plex Mono\',monospace;font-size:10px">'+
+      '<div style="text-align:right;font-family:var(--font-mono);font-size:10px">'+
         '<div style="color:'+(isBuy?'var(--red)':'var(--green)')+'">'+(isBuy?'-':'+')+' Rp '+fmtK(tx.net)+'</div>'+
         '<div style="font-size:9px;color:var(--text3)">'+tx.sekuritas+'</div>'+
       '</div></div>';
@@ -250,7 +250,7 @@ function renderDashboard(){
     '<div style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px">'+
     '<div class="taxrow tot"><span style="font-weight:600;font-size:11px">Total Kas</span><span class="mono up" style="font-size:12px;font-weight:700">Rp '+fmtK(totalCashAll)+'</span></div>'+
     '<div class="prog" style="margin-top:4px"><div class="progf" style="width:'+Math.min(totalCashAll/(AUMsafe||1)*100,100).toFixed(1)+'%;background:var(--amber)"></div></div>'+
-    '<div style="font-size:9px;color:var(--text3);font-family:\'IBM Plex Mono\',monospace;margin-top:4px">'+
+    '<div style="font-size:9px;color:var(--text3);font-family:var(--font-mono);margin-top:4px">'+
       (totalCashAll/(AUMsafe||1)<0.05?'⚠️ Kas total rendah':totalCashAll/(AUMsafe||1)>0.30?'ℹ️ Kas tinggi':'✅ Likuiditas proporsional')+
     '</div></div>';
 
@@ -275,7 +275,7 @@ function renderDashboard(){
             '<span style="font-size:11px;display:flex;align-items:center;gap:5px">'+
               '<span style="width:7px;height:7px;border-radius:50%;background:'+col+';display:inline-block"></span>'+
               e[0]+'</span>'+
-            '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px">'+
+            '<span style="font-family:var(--font-mono);font-size:10px">'+
               '<span style="color:'+col+';font-weight:700">'+pct.toFixed(1)+'%</span>'+
               ' <span style="color:var(--text3)">'+fmtK(e[1])+'</span>'+
             '</span>'+
@@ -302,7 +302,7 @@ function renderDashboard(){
     ? topDiv.map(function(e){
         return '<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid var(--border)">'+
           '<span class="tp" style="font-size:10px">'+e[0]+'</span>'+
-          '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--green)">+'+fmtK(e[1])+'</span>'+
+          '<span style="font-family:var(--font-mono);font-size:10px;color:var(--green)">+'+fmtK(e[1])+'</span>'+
         '</div>';
       }).join('')
     : '<div style="color:var(--text3);font-size:11px;padding:8px 0">Belum ada dividen tercatat</div>';
@@ -365,7 +365,7 @@ function renderRdn(){
     +'<div class="taxrow" style="padding:5px 0"><span style="color:var(--text2)">Hasil Jual Saham</span><span class="mono up">+ Rp '+fmtK(transactions.filter(function(t){return t.type==='SELL'}).reduce(function(a,t){return a+t.net},0))+'</span></div>'
     +'<div class="taxrow" style="padding:5px 0"><span style="color:var(--text2)">Penerimaan Dividen</span><span class="mono up">+ Rp '+fmtK(dividends.filter(function(d){return d._src!=='lampiran'}).reduce(function(a,d){return a+d.net},0))+'</span></div>'
     +(totalFee>0?'<div class="taxrow" style="padding:5px 0"><span style="color:var(--text2)">Biaya & Fee ('+(feeMuts.length+' catatan')+')</span><span class="mono dn">- Rp '+fmtK(totalFee)+'</span></div>':'')
-    +'<div style="border-top:1px solid var(--border2);margin-top:6px;padding-top:8px;display:flex;justify-content:space-between;font-family:\'IBM Plex Mono\',monospace;font-weight:600;font-size:13px"><span>Saldo Aktif</span><span class="up">Rp '+fmtK(rdn)+'</span></div>';
+    +'<div style="border-top:1px solid var(--border2);margin-top:6px;padding-top:8px;display:flex;justify-content:space-between;font-family:var(--font-mono);font-weight:600;font-size:13px"><span>Saldo Aktif</span><span class="up">Rp '+fmtK(rdn)+'</span></div>';
 
   // Deteksi sekuritas dari portofolio
   var detectedSek = detectActiveSekuritas();
@@ -395,14 +395,14 @@ function renderRdn(){
   el('rdn-sec-info').innerHTML=
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
     +'<div><span style="font-size:13px;font-weight:600;color:var(--accent)">'+detectedSek+'</span>'
-    +'<span style="font-size:9px;color:var(--text3);margin-left:6px;font-family:\'IBM Plex Mono\',monospace">auto-detect dari portofolio</span></div>'
+    +'<span style="font-size:9px;color:var(--text3);margin-left:6px;font-family:var(--font-mono)">auto-detect dari portofolio</span></div>'
     +'<button class="btn btn-ghost btn-xs" onclick="openModal(\'sec\')">Ganti</button></div>'
     +'<div class="taxrow"><span>Komisi Beli</span><span class="mono amb">'+bFee.toFixed(3)+'%</span></div>'
     +'<div class="taxrow"><span>Komisi Jual</span><span class="mono amb">'+jFee.toFixed(3)+'%</span></div>'
     +'<div class="taxrow"><span>PPh Final Jual</span><span class="mono dn">'+(TAX_SETTINGS.pphJual*100).toFixed(1)+'%</span></div>'
     +'<div class="taxrow"><span>PPN × Komisi</span><span class="mono dn">'+(TAX_SETTINGS.ppn*100).toFixed(0)+'%</span></div>'
     +'<div class="taxrow"><span>Levy BEI+KPEI+KSEI</span><span class="mono dn">'+(TAX_SETTINGS.levy*100).toFixed(3)+'%</span></div>'
-    +'<div style="border-top:1px solid var(--border2);margin-top:8px;padding-top:8px;font-size:9px;color:var(--text3);letter-spacing:.6px;font-family:\'IBM Plex Mono\',monospace;margin-bottom:5px">DISTRIBUSI SEKURITAS</div>'
+    +'<div style="border-top:1px solid var(--border2);margin-top:8px;padding-top:8px;font-size:9px;color:var(--text3);letter-spacing:.6px;font-family:var(--font-mono);margin-bottom:5px">DISTRIBUSI SEKURITAS</div>'
     +sekRows;
 
   var filter=el('rdn-filter')?el('rdn-filter').value:'all';
@@ -493,7 +493,7 @@ function renderTransaksi(){
         +'<button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="delTx('+tx.id+')" title="Hapus transaksi" aria-label="Hapus transaksi '+tx.type+' '+tx.ticker+' '+tx.date+'">✕</button>'
       +'</td>'
       +'</tr>';
-  }).join('')||'<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:16px;font-family:\'IBM Plex Mono\',monospace">Belum ada transaksi</td></tr>';
+  }).join('')||'<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:16px;font-family:var(--font-mono)">Belum ada transaksi</td></tr>';
 }
 
 function renderPortofolio(){
@@ -560,8 +560,8 @@ function renderPortofolio(){
     var alloc=p.alloc, sig=p.sig;
     var sigCls=sig==='BUY'?'sig-buy':sig==='SELL'?'sig-sell':'sig-hold';
     var secColor=sectorColor(p.info.sector);
-    return '<tr><td><span class="tp" style="border-color:'+COLORS[i%12]+'">'+p.ticker+'</span></td><td style="font-size:11px;color:var(--text2)">'+p.info.name+'</td><td><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:\'IBM Plex Mono\',monospace;color:var(--text2)"><span class="sec-dot" style="background:'+secColor+'"></span>'+p.info.sector+'</span></td><td class="mono">'+p.lot+'</td><td class="mono">'+p.shares+'</td><td class="mono">Rp '+fmt(p.avg)+'</td><td class="mono" style="color:var(--accent)">Rp '+fmt(p.mp)+'</td><td class="mono">Rp '+fmtK(p.mv)+'</td><td class="mono" style="color:var(--text2)">Rp '+fmtK(p.cost)+'</td><td class="mono '+(p.unreal>=0?'up':'dn')+'">'+(p.unreal>=0?'+':'')+'Rp '+fmtK(p.unreal)+'</td><td class="mono '+(p.ret>=0?'up':'dn')+'">'+(p.ret>=0?'+':'')+p.ret.toFixed(2)+'%</td><td><div class="prog" style="width:70px"><div class="progf" style="width:'+alloc.toFixed(1)+'%;background:'+COLORS[i%12]+'"></div></div><div style="font-size:9px;color:var(--text3);font-family:\'IBM Plex Mono\',monospace;margin-top:2px">'+alloc.toFixed(1)+'%</div></td><td><span class="sig '+sigCls+'">'+sig+'</span></td></tr>';
-  }).join('')||'<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:16px;font-family:\'IBM Plex Mono\',monospace">'+(porto.length?'Tidak ada saham yang cocok dengan filter':'Belum ada posisi aktif')+'</td></tr>';
+    return '<tr><td><span class="tp" style="border-color:'+COLORS[i%12]+'">'+p.ticker+'</span></td><td style="font-size:11px;color:var(--text2)">'+p.info.name+'</td><td><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:var(--font-mono);color:var(--text2)"><span class="sec-dot" style="background:'+secColor+'"></span>'+p.info.sector+'</span></td><td class="mono">'+p.lot+'</td><td class="mono">'+p.shares+'</td><td class="mono">Rp '+fmt(p.avg)+'</td><td class="mono" style="color:var(--accent)">Rp '+fmt(p.mp)+'</td><td class="mono">Rp '+fmtK(p.mv)+'</td><td class="mono" style="color:var(--text2)">Rp '+fmtK(p.cost)+'</td><td class="mono '+(p.unreal>=0?'up':'dn')+'">'+(p.unreal>=0?'+':'')+'Rp '+fmtK(p.unreal)+'</td><td class="mono '+(p.ret>=0?'up':'dn')+'">'+(p.ret>=0?'+':'')+p.ret.toFixed(2)+'%</td><td><div class="prog" style="width:70px"><div class="progf" style="width:'+alloc.toFixed(1)+'%;background:'+COLORS[i%12]+'"></div></div><div style="font-size:9px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">'+alloc.toFixed(1)+'%</div></td><td><span class="sig '+sigCls+'">'+sig+'</span></td></tr>';
+  }).join('')||'<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:16px;font-family:var(--font-mono)">'+(porto.length?'Tidak ada saham yang cocok dengan filter':'Belum ada posisi aktif')+'</td></tr>';
 }
 
 // ── Toolbar Performa per Saham — realized + unrealized P&L tiap kode,
@@ -619,7 +619,7 @@ function renderStockPerformance(){
       +'<td class="mono" style="font-weight:700;'+(r.total>=0?'color:var(--green)':'color:var(--red)')+'">'+(r.total>=0?'+':'')+'Rp '+fmtK(r.total)+'</td>'
       +'<td style="font-size:10px;color:var(--text3)">'+r.txCount+'x · '+r.firstDate+' → '+r.lastDate+'</td>'
     +'</tr>';
-  }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:16px;font-family:\'IBM Plex Mono\',monospace">Belum ada transaksi saham</td></tr>';
+  }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:16px;font-family:var(--font-mono)">Belum ada transaksi saham</td></tr>';
 }
 
 var _divSelected = new Set();
@@ -689,7 +689,7 @@ function renderDividen(){
     var val=projVals[i]; var pct=((val-baseYr)/baseYr*100).toFixed(0);
     return '<div style="background:rgba(0,229,160,.06);border:1px solid rgba(0,229,160,.15);border-radius:9px;padding:10px;text-align:center">'+
       '<div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:4px">'+y+'</div>'+
-      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:13px;font-weight:600">Rp '+fmtK(val)+'</div>'+
+      '<div style="font-family:var(--font-mono);font-size:13px;font-weight:600">Rp '+fmtK(val)+'</div>'+
       '<div style="font-size:10px;color:var(--text3);margin-top:2px">+'+pct+'% vs base</div>'+
     '</div>';
   }).join('');
@@ -698,7 +698,7 @@ function renderDividen(){
   if(cvP){
     charts['divProj'] = new Chart(cvP, {type:'line',
       data:{labels:projYears.map(String),datasets:[
-        {data:projVals, borderColor:'#00e5a0', borderWidth:2, fill:true, tension:.4, pointRadius:4,
+        {data:projVals, borderColor:'#41f3a7', borderWidth:2, fill:true, tension:.4, pointRadius:4,
          backgroundColor:'rgba(0,229,160,.08)'},
         {data:projYears.map(function(){return baseYr}), borderColor:'rgba(255,255,255,.15)',
          borderWidth:1, borderDash:[4,3], fill:false, pointRadius:0}
@@ -866,7 +866,7 @@ function renderSektoral(){
           +'<span class="sec-dot" style="background:'+sInfo.color+'"></span>'
           +'<span style="font-size:12px;font-weight:600">'+s+'</span>'
         +'</div>'
-        +'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;font-weight:700;color:'+sInfo.color+'">'+alloc.toFixed(1)+'%</span>'
+        +'<span style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:'+sInfo.color+'">'+alloc.toFixed(1)+'%</span>'
       +'</div>'
       +'<div class="prog" style="height:6px;border-radius:99px;overflow:hidden"><div class="progf" style="width:'+alloc+'%;background:'+sInfo.color+';border-radius:99px"></div></div>'
       +'<div style="font-size:10px;color:var(--text3);margin-top:3px">'+sv.stocks.length+' saham · Rp '+fmtK(sv.mv)+'</div>'
@@ -982,7 +982,7 @@ function renderRisiko(){
     var varStock=p.mv*beta*0.25/Math.sqrt(252)*1.645;
     var rLevel=beta>=1.3?'Tinggi':beta>=1.0?'Sedang':'Rendah';
     var rCls=beta>=1.3?'b-dn':beta>=1.0?'b-amb':'b-up';
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)"><div style="display:flex;align-items:center;gap:8px"><span class="tp" style="border-color:'+COLORS[i%12]+'">'+p.ticker+'</span><div><div style="font-size:10px;color:var(--text2);font-family:\'IBM Plex Mono\',monospace">β='+beta.toFixed(2)+' · Vol '+vol+'%/yr</div><div style="font-size:9px;color:var(--text3);font-family:\'IBM Plex Mono\',monospace">Bobot '+weight+'% · VaR95: -Rp '+fmtK(varStock)+'</div></div></div><span class="badge '+rCls+'">'+rLevel+'</span></div>';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)"><div style="display:flex;align-items:center;gap:8px"><span class="tp" style="border-color:'+COLORS[i%12]+'">'+p.ticker+'</span><div><div style="font-size:10px;color:var(--text2);font-family:var(--font-mono)">β='+beta.toFixed(2)+' · Vol '+vol+'%/yr</div><div style="font-size:9px;color:var(--text3);font-family:var(--font-mono)">Bobot '+weight+'% · VaR95: -Rp '+fmtK(varStock)+'</div></div></div><span class="badge '+rCls+'">'+rLevel+'</span></div>';
   }).join('')||'<div style="color:var(--text3);text-align:center;padding:16px">Belum ada posisi</div>';
 
   // Stress test
@@ -996,7 +996,7 @@ function renderRisiko(){
   el('stress-test').innerHTML=scenarios.map(function(sc){
     var impact=totalMV*(sc.shock*portoBeta);
     var newVal=totalMV+impact;
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)"><div><div style="font-size:11px;font-weight:600">'+sc.name+'</div><div style="font-size:10px;color:var(--text3);font-family:\'IBM Plex Mono\',monospace">Nilai portofolio → Rp '+fmtK(newVal)+'</div></div><span style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:'+sc.color+';font-weight:600">'+(sc.shock>=0?'+':'')+fmt(Math.round(impact))+'</span></div>';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)"><div><div style="font-size:11px;font-weight:600">'+sc.name+'</div><div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">Nilai portofolio → Rp '+fmtK(newVal)+'</div></div><span style="font-family:var(--font-mono);font-size:12px;color:'+sc.color+';font-weight:600">'+(sc.shock>=0?'+':'')+fmt(Math.round(impact))+'</span></div>';
   }).join('');
 
   // Recommendations

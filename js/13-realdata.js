@@ -251,7 +251,7 @@ function rdRenderVerdict(tk, fetching){
     '<div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">'+
       '<div style="text-align:center;min-width:130px">'+
         '<div class="mlabel">🎯 VERDICT GABUNGAN</div>'+
-        '<div style="font-size:40px;font-weight:800;font-family:\'Share Tech Mono\',monospace;color:'+colr+';line-height:1.1">'+total+'</div>'+
+        '<div style="font-size:40px;font-weight:800;font-family:\'Menlo\',monospace;color:'+colr+';line-height:1.1">'+total+'</div>'+
         '<div style="font-size:12px;font-weight:700;color:'+colr+'">'+label+'</div>'+
         '<div style="margin-top:6px">'+srcBadge+'</div>'+
       '</div>'+
@@ -261,7 +261,7 @@ function rdRenderVerdict(tk, fetching){
           return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">'+
             '<span style="width:130px;font-size:11.5px;color:var(--text2);flex-shrink:0">'+p.label+'</span>'+
             '<div style="flex:1;height:7px;border-radius:99px;background:var(--bg4);overflow:hidden"><div style="height:100%;width:'+p.score+'%;background:'+c2+';border-radius:99px"></div></div>'+
-            '<span style="width:30px;text-align:right;font-size:11.5px;font-family:\'Share Tech Mono\',monospace;color:'+c2+'">'+p.score+'</span>'+
+            '<span style="width:30px;text-align:right;font-size:11.5px;font-family:\'Menlo\',monospace;color:'+c2+'">'+p.score+'</span>'+
             '<span style="width:230px;font-size:10.5px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+p.detail+'">'+p.detail+'</span>'+
           '</div>';
         }).join('')+
@@ -431,7 +431,7 @@ corrRender = function(){
         if(i===j){ bg='rgba(255,255,255,.08)'; col='var(--text3)'; }
         else if(v>0){ var i2=Math.min(1,v/.8); bg='rgba(0,212,170,'+(0.15+i2*.65)+')'; col='var(--green)'; }
         else { var i3=Math.min(1,Math.abs(v)/.8); bg='rgba(255,34,68,'+(0.15+i3*.65)+')'; col='var(--red)'; }
-        h += '<div style="background:'+bg+';color:'+col+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;border-radius:2px;height:30px;margin:1px;font-family:IBM Plex Mono,monospace" title="'+a+' vs '+b+': '+v.toFixed(3)+'">'+(i===j?'1.00':v.toFixed(2))+'</div>';
+        h += '<div style="background:'+bg+';color:'+col+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;border-radius:2px;height:30px;margin:1px;font-family:Menlo,monospace" title="'+a+' vs '+b+': '+v.toFixed(3)+'">'+(i===j?'1.00':v.toFixed(2))+'</div>';
       });
     });
     h += '</div></div>';
@@ -443,7 +443,7 @@ corrRender = function(){
   var pEl = el('corr-pairs');
   if(pEl){
     var top = pairs2.slice(0,5), bot = pairs2.slice(-5).reverse();
-    var row = function(p, colr){ return '<div style="display:flex;justify-content:space-between;padding:6px 9px;background:var(--bg3);border-radius:2px;margin-bottom:4px;border:1px solid var(--border)"><span style="font-family:IBM Plex Mono,monospace;color:var(--text);font-size:12px">'+p.a+' / '+p.b+'</span><span style="color:'+colr+';font-weight:700;font-family:IBM Plex Mono,monospace">'+(p.v>=0?'+':'')+p.v.toFixed(3)+'</span></div>'; };
+    var row = function(p, colr){ return '<div style="display:flex;justify-content:space-between;padding:6px 9px;background:var(--bg3);border-radius:2px;margin-bottom:4px;border:1px solid var(--border)"><span style="font-family:Menlo,monospace;color:var(--text);font-size:12px">'+p.a+' / '+p.b+'</span><span style="color:'+colr+';font-weight:700;font-family:Menlo,monospace">'+(p.v>=0?'+':'')+p.v.toFixed(3)+'</span></div>'; };
     pEl.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
       +'<div><div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:8px">Korelasi Tertinggi — kandidat pairs trading</div>'+top.map(function(p){ return row(p,'var(--green)'); }).join('')+'</div>'
       +'<div><div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:8px">Korelasi Terendah — kandidat diversifikasi</div>'+bot.map(function(p){ return row(p, p.v>=0?'var(--amber)':'var(--red)'); }).join('')+'</div>'

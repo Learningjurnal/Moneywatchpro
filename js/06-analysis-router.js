@@ -91,9 +91,9 @@ function cdRenderPsyco(R){
     var b=PSY_BADGE[r.psy];
     return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:11px">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">'
-      +'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--text2)">'+cd_dateStr(r.d)+'</span>'
+      +'<span style="font-family:var(--font-mono);font-size:11px;color:var(--text2)">'+cd_dateStr(r.d)+'</span>'
       +'<span class="badge '+b+'">'+r.psy+'</span></div>'
-      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:11px;font-family:\'IBM Plex Mono\',monospace">'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:11px;font-family:var(--font-mono)">'
       +'<span style="color:var(--text3)">Body</span><span style="text-align:right">'+r.body+'</span>'
       +'<span style="color:var(--text3)">Upper Shadow</span><span style="text-align:right">'+r.up+'</span>'
       +'<span style="color:var(--text3)">Lower Shadow</span><span style="text-align:right">'+r.low+'</span>'
@@ -106,18 +106,18 @@ function cdRenderTable(R){
     var b=PSY_BADGE[r.psy], sc=SIG_CLS[r.sig]||'sig-hold';
     var pnl = r.pnl!=null ? '<span class="'+(r.pnl>=0?'up':'dn')+'">'+(r.pnl>=0?'+':'')+(r.pnl*100).toFixed(2)+'%</span>' : '<span style="color:var(--text3)">—</span>';
     return '<tr>'
-      +'<td style="font-family:\'IBM Plex Mono\',monospace;font-size:11px">'+cd_dateStr(r.d)+'</td>'
-      +'<td style="font-family:\'IBM Plex Mono\',monospace">'+r.o+'</td><td style="font-family:\'IBM Plex Mono\',monospace">'+r.h+'</td>'
-      +'<td style="font-family:\'IBM Plex Mono\',monospace">'+r.l+'</td>'
-      +'<td style="font-family:\'IBM Plex Mono\',monospace;font-weight:600;color:'+(r.c>=r.o?'var(--green)':'var(--red)')+'">'+r.c+'</td>'
-      +'<td style="font-family:\'IBM Plex Mono\',monospace;color:var(--text2)">'+fmtK(r.v)+'</td>'
-      +'<td style="font-family:\'IBM Plex Mono\',monospace">'+r.body+'</td>'
-      +'<td style="font-family:\'IBM Plex Mono\',monospace;color:var(--text3)">'+r.up+'</td>'
-      +'<td style="font-family:\'IBM Plex Mono\',monospace;color:var(--text3)">'+r.low+'</td>'
+      +'<td style="font-family:var(--font-mono);font-size:11px">'+cd_dateStr(r.d)+'</td>'
+      +'<td style="font-family:var(--font-mono)">'+r.o+'</td><td style="font-family:var(--font-mono)">'+r.h+'</td>'
+      +'<td style="font-family:var(--font-mono)">'+r.l+'</td>'
+      +'<td style="font-family:var(--font-mono);font-weight:600;color:'+(r.c>=r.o?'var(--green)':'var(--red)')+'">'+r.c+'</td>'
+      +'<td style="font-family:var(--font-mono);color:var(--text2)">'+fmtK(r.v)+'</td>'
+      +'<td style="font-family:var(--font-mono)">'+r.body+'</td>'
+      +'<td style="font-family:var(--font-mono);color:var(--text3)">'+r.up+'</td>'
+      +'<td style="font-family:var(--font-mono);color:var(--text3)">'+r.low+'</td>'
       +'<td><span class="badge '+b+'">'+r.psy+'</span></td>'
       +'<td><span class="sig '+sc+'" style="font-size:9px">'+r.sig+'</span></td>'
       +'<td><span class="badge '+(r.pos==='IN'?'b-up':'b-gray')+'">'+r.pos+'</span></td>'
-      +'<td style="font-family:\'IBM Plex Mono\',monospace">'+pnl+'</td></tr>';
+      +'<td style="font-family:var(--font-mono)">'+pnl+'</td></tr>';
   }).join('');
 }
 function cdRenderCharts(R,s){
@@ -141,7 +141,7 @@ function cdRenderCharts(R,s){
     var eq=R.rows.map(function(r){return Math.round(r.equity)});
     var g=ce.getContext('2d').createLinearGradient(0,0,0,230);
     g.addColorStop(0,'rgba(0,229,160,.25)');g.addColorStop(1,'rgba(0,229,160,0)');
-    charts['cdEquity']=new Chart(ce,{type:'line',data:{labels:labels,datasets:[{data:eq,borderColor:'#00e5a0',borderWidth:2,backgroundColor:g,fill:true,tension:.3,pointRadius:0,pointHoverRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:Object.assign({},TT,{callbacks:{label:function(c){return 'Equity: Rp '+fmt(c.parsed.y)}}})},scales:{x:{grid:{color:GC},ticks:Object.assign({},TC,{maxTicksLimit:9})},y:{grid:{color:GC},ticks:Object.assign({},TC,{callback:function(v){return 'Rp '+fmtK(v)}}),position:'right'}}}});
+    charts['cdEquity']=new Chart(ce,{type:'line',data:{labels:labels,datasets:[{data:eq,borderColor:'#41f3a7',borderWidth:2,backgroundColor:g,fill:true,tension:.3,pointRadius:0,pointHoverRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:Object.assign({},TT,{callbacks:{label:function(c){return 'Equity: Rp '+fmt(c.parsed.y)}}})},scales:{x:{grid:{color:GC},ticks:Object.assign({},TC,{maxTicksLimit:9})},y:{grid:{color:GC},ticks:Object.assign({},TC,{callback:function(v){return 'Rp '+fmtK(v)}}),position:'right'}}}});
   }
 }
 function cdRecalc(){
@@ -273,7 +273,7 @@ function renderCandle(){
 // STRATEGI PER-EMITEN + RISK STRIP + SARAN AI + PROBABILITAS FLOWSCAN
 // ============================================================
 var TRADE_TYPES=['Core Long','Swing Trade','Fast Trade'];
-var TRADE_COLOR={'Core Long':'#00c8ff','Swing Trade':'#a78bfa','Fast Trade':'#ffc107'};
+var TRADE_COLOR={'Core Long':'#00c8ff','Swing Trade':'#8070d2','Fast Trade':'#ffc107'};
 function stratOf(tk){ if(tradeStrategy[tk]) return tradeStrategy[tk]; return (DB[tk]&&DB[tk].tradeType)||'Core Long'; }
 function setStockStrategy(tk,val){ tradeStrategy[tk]=val; if(typeof saveData==='function')saveData(); renderStrategyPanel(); }
 function renderStrategyPanel(){
@@ -289,24 +289,24 @@ function renderStrategyPanel(){
   porto.forEach(function(p){var s=stratOf(p.ticker); agg[s]=(agg[s]||0)+p.mv;});
   var totalMV=sahamMV||1;
   var legend=TRADE_TYPES.map(function(n){var pct=agg[n]/totalMV*100;
-    return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px"><span style="width:9px;height:9px;border-radius:2px;background:'+TRADE_COLOR[n]+'"></span><span style="font-size:11px;color:var(--text2);flex:1">'+n+'</span><span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px"><b style="color:'+TRADE_COLOR[n]+'">'+pct.toFixed(1)+'%</b> <span style="color:var(--text3);font-size:9px">'+fmtK(agg[n])+'</span></span></div>';
+    return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px"><span style="width:9px;height:9px;border-radius:2px;background:'+TRADE_COLOR[n]+'"></span><span style="font-size:11px;color:var(--text2);flex:1">'+n+'</span><span style="font-family:var(--font-mono);font-size:11px"><b style="color:'+TRADE_COLOR[n]+'">'+pct.toFixed(1)+'%</b> <span style="color:var(--text3);font-size:9px">'+fmtK(agg[n])+'</span></span></div>';
   }).join('');
-  var asset=function(lbl,v,c){return '<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0"><span style="color:var(--text3)">'+lbl+'</span><span style="font-family:\'IBM Plex Mono\',monospace;color:'+c+'">Rp '+fmtK(v)+'</span></div>';};
-  var ringkasan='<div style="margin-top:10px;padding-top:9px;border-top:1px solid var(--border2)"><div style="font-size:9px;color:var(--text3);letter-spacing:.6px;font-family:\'IBM Plex Mono\',monospace;margin-bottom:5px">RINGKASAN SEMUA ASET</div>'
+  var asset=function(lbl,v,c){return '<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0"><span style="color:var(--text3)">'+lbl+'</span><span style="font-family:var(--font-mono);color:'+c+'">Rp '+fmtK(v)+'</span></div>';};
+  var ringkasan='<div style="margin-top:10px;padding-top:9px;border-top:1px solid var(--border2)"><div style="font-size:9px;color:var(--text3);letter-spacing:.6px;font-family:var(--font-mono);margin-bottom:5px">RINGKASAN SEMUA ASET</div>'
     +asset('📈 Saham',sahamMV,'var(--green)')+asset('🪙 Crypto',cryptoMV,'#f7931a')+asset('📊 ETF',etfMV,'var(--accent)')+asset('🏦 Reksa Dana',rdMV,'var(--purple)')
-    +'<div style="display:flex;justify-content:space-between;font-size:11px;padding:5px 0 0;margin-top:3px;border-top:1px solid var(--border);font-weight:700"><span>Total Aset</span><span style="font-family:\'IBM Plex Mono\',monospace">Rp '+fmtK(grand)+'</span></div></div>';
+    +'<div style="display:flex;justify-content:space-between;font-size:11px;padding:5px 0 0;margin-top:3px;border-top:1px solid var(--border);font-weight:700"><span>Total Aset</span><span style="font-family:var(--font-mono)">Rp '+fmtK(grand)+'</span></div></div>';
   var rows=porto.slice().sort(function(a,b){return b.mv-a.mv}).map(function(p){
     var cur=stratOf(p.ticker);
     var opts=TRADE_TYPES.map(function(t){return '<option value="'+t+'"'+(t===cur?' selected':'')+'>'+t+'</option>'}).join('');
-    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border)"><div style="display:flex;align-items:center;gap:7px;min-width:0"><span style="font-weight:700;color:var(--accent);font-size:11px">'+p.ticker+'</span><span style="font-size:9px;color:var(--text3);font-family:\'IBM Plex Mono\',monospace">'+(p.mv/totalMV*100).toFixed(1)+'%</span></div><select class="finput fsel" style="width:118px;padding:3px 7px;font-size:10px;border-color:'+TRADE_COLOR[cur]+'" onchange="setStockStrategy(\''+p.ticker+'\',this.value)">'+opts+'</select></div>';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border)"><div style="display:flex;align-items:center;gap:7px;min-width:0"><span style="font-weight:700;color:var(--accent);font-size:11px">'+p.ticker+'</span><span style="font-size:9px;color:var(--text3);font-family:var(--font-mono)">'+(p.mv/totalMV*100).toFixed(1)+'%</span></div><select class="finput fsel" style="width:118px;padding:3px 7px;font-size:10px;border-color:'+TRADE_COLOR[cur]+'" onchange="setStockStrategy(\''+p.ticker+'\',this.value)">'+opts+'</select></div>';
   }).join('');
   box.innerHTML='<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">'
     +'<div style="flex:1;min-width:220px">'
-      +'<div style="display:flex;gap:12px;align-items:center"><div style="position:relative;width:100px;height:100px;flex-shrink:0"><canvas id="stratPie"></canvas></div><div style="flex:1;min-width:0"><div style="font-size:9px;color:var(--text3);letter-spacing:.6px;font-family:\'IBM Plex Mono\',monospace;margin-bottom:6px">ALOKASI STRATEGI (saham)</div>'+legend+'</div></div>'
+      +'<div style="display:flex;gap:12px;align-items:center"><div style="position:relative;width:100px;height:100px;flex-shrink:0"><canvas id="stratPie"></canvas></div><div style="flex:1;min-width:0"><div style="font-size:9px;color:var(--text3);letter-spacing:.6px;font-family:var(--font-mono);margin-bottom:6px">ALOKASI STRATEGI (saham)</div>'+legend+'</div></div>'
       +ringkasan
     +'</div>'
     +'<div style="flex:1.3;min-width:240px;border-left:1px solid var(--border2);padding-left:16px">'
-      +'<div style="font-size:9px;color:var(--text3);font-family:\'IBM Plex Mono\',monospace;letter-spacing:.6px;margin-bottom:6px">STRATEGI PER EMITEN — atur manual</div>'
+      +'<div style="font-size:9px;color:var(--text3);font-family:var(--font-mono);letter-spacing:.6px;margin-bottom:6px">STRATEGI PER EMITEN — atur manual</div>'
       +'<div style="max-height:260px;overflow-y:auto">'+rows+'</div>'
     +'</div>'
   +'</div>';
@@ -460,25 +460,25 @@ function aiMacroWatch(bySec){
 }
 function aiFmtRatio(v, goodMin, okMin){
   if(v===null||v===undefined||!isFinite(v)) return '<span style="color:var(--text3)">—</span>';
-  var cls = v>=goodMin?'#00e5a0':(v>=okMin?'#ffc107':'#ff3d5a');
+  var cls = v>=goodMin?'#41f3a7':(v>=okMin?'#ffc107':'#e21d48');
   return '<b style="color:'+cls+'">'+v.toFixed(2)+'</b>';
 }
 function aiHeuristicHtml(ctx){
   var m=ctx.m, hf=ctx.hf;
   var retPct=(m.totalReturn*100);
-  var c=retPct>=0?'#00e5a0':'#ff3d5a';
+  var c=retPct>=0?'#41f3a7':'#e21d48';
   var sec=function(t,b){return '<div style="margin-bottom:11px;padding-bottom:11px;border-bottom:1px solid rgba(255,255,255,.05)"><div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">'+t+'</div><div style="font-size:12px;color:#c8d8ea;line-height:1.7">'+b+'</div></div>';};
 
   // 01 — Ringkasan Eksekutif
   var verdict;
   if(!hf.historyTooShort && hf.sharpe!==null){
-    verdict = hf.sharpe>=1 ? 'Kinerja tersesuaikan risiko <b style="color:#00e5a0">baik</b> — return yang dihasilkan sepadan dengan risiko yang diambil.' :
+    verdict = hf.sharpe>=1 ? 'Kinerja tersesuaikan risiko <b style="color:#41f3a7">baik</b> — return yang dihasilkan sepadan dengan risiko yang diambil.' :
               hf.sharpe>=0 ? 'Kinerja tersesuaikan risiko <b style="color:#ffc107">cukup</b> — return positif tapi belum optimal relatif terhadap volatilitas.' :
-              'Kinerja tersesuaikan risiko <b style="color:#ff3d5a">kurang baik</b> — volatilitas yang ditanggung belum terbayar oleh return.';
+              'Kinerja tersesuaikan risiko <b style="color:#e21d48">kurang baik</b> — volatilitas yang ditanggung belum terbayar oleh return.';
   } else {
     verdict = 'Riwayat ekuitas harian baru <b>'+hf.historyLen+' hari</b> — belum cukup untuk menghitung Sharpe/Sortino/Calmar yang andal (idealnya ≥30 hari, tercatat otomatis tiap Anda buka aplikasi). Metrik ini akan makin akurat seiring waktu; sementara memakai estimasi berbasis beta di bawah.';
   }
-  var ringkasan='Total return portofolio <b style="color:'+c+'">'+(retPct>=0?'+':'')+retPct.toFixed(1)+'%</b> dari modal Rp '+fmtK(m.totalCost)+' ('+m.n+' emiten, realized <b>'+(m.real>=0?'+':'')+'Rp '+fmtK(m.real)+'</b>, unrealized <b style="color:'+(m.unreal>=0?'#00e5a0':'#ff3d5a')+'">'+(m.unreal>=0?'+':'')+'Rp '+fmtK(m.unreal)+'</b>). '+verdict;
+  var ringkasan='Total return portofolio <b style="color:'+c+'">'+(retPct>=0?'+':'')+retPct.toFixed(1)+'%</b> dari modal Rp '+fmtK(m.totalCost)+' ('+m.n+' emiten, realized <b>'+(m.real>=0?'+':'')+'Rp '+fmtK(m.real)+'</b>, unrealized <b style="color:'+(m.unreal>=0?'#41f3a7':'#e21d48')+'">'+(m.unreal>=0?'+':'')+'Rp '+fmtK(m.unreal)+'</b>). '+verdict;
 
   // 02 — Return & Kinerja Tersesuaikan Risiko
   var perf;
@@ -494,16 +494,16 @@ function aiHeuristicHtml(ctx){
   // 03 — Drawdown & Risiko Penurunan
   var dd;
   if(!hf.historyTooShort){
-    dd='Max Drawdown (penurunan puncak-ke-lembah terburuk) <b style="color:'+(hf.maxDD>20?'#ff3d5a':hf.maxDD>10?'#ffc107':'#00e5a0')+'">-'+hf.maxDD.toFixed(1)+'%</b>. '+
+    dd='Max Drawdown (penurunan puncak-ke-lembah terburuk) <b style="color:'+(hf.maxDD>20?'#e21d48':hf.maxDD>10?'#ffc107':'#41f3a7')+'">-'+hf.maxDD.toFixed(1)+'%</b>. '+
       'Calmar Ratio '+aiFmtRatio(hf.calmar,3,1)+' — CAGR dibagi Max Drawdown, ukuran favorit alokator yang mengutamakan pelestarian modal (konvensi rolling 3 tahun; di sini memakai seluruh riwayat yang tercatat). '+
-      'Hari terbaik <b style="color:#00e5a0">+'+hf.bestDay.toFixed(1)+'%</b>, hari terburuk <b style="color:#ff3d5a">'+hf.worstDay.toFixed(1)+'%</b>.';
+      'Hari terbaik <b style="color:#41f3a7">+'+hf.bestDay.toFixed(1)+'%</b>, hari terburuk <b style="color:#e21d48">'+hf.worstDay.toFixed(1)+'%</b>.';
   } else {
-    dd='VaR 95% harian ~ <b style="color:#ff3d5a">-Rp '+fmtK(m.var95)+'</b> (estimasi dari beta — potensi rugi dalam 1 hari pada kondisi pasar normal, 95% dari waktu).';
+    dd='VaR 95% harian ~ <b style="color:#e21d48">-Rp '+fmtK(m.var95)+'</b> (estimasi dari beta — potensi rugi dalam 1 hari pada kondisi pasar normal, 95% dari waktu).';
   }
 
   // 04 — Konsentrasi & Diversifikasi
   var conc='Herfindahl-Hirschman Index (HHI) <b>'+hf.hhi.toFixed(3)+'</b> → setara <b>'+hf.effectiveN.toFixed(1)+' posisi efektif</b> dari '+m.n+' emiten yang dimiliki secara nominal';
-  conc += (hf.effectiveN < m.n*0.6 && m.n>0) ? ' — <b style="color:#ff3d5a">jauh lebih terkonsentrasi</b> dari yang terlihat sekilas; sebagian kecil posisi mendominasi bobot portofolio.' : ' — bobot relatif merata antar posisi.';
+  conc += (hf.effectiveN < m.n*0.6 && m.n>0) ? ' — <b style="color:#e21d48">jauh lebih terkonsentrasi</b> dari yang terlihat sekilas; sebagian kecil posisi mendominasi bobot portofolio.' : ' — bobot relatif merata antar posisi.';
   if(m.topSecPct>50) conc+=' Sektor '+m.topSec+' sendiri '+m.topSecPct.toFixed(0)+'% dari nilai pasar — risiko konsentrasi sektoral tinggi.';
   else if(m.topSecPct>35) conc+=' Sektor '+m.topSec+' dominan ('+m.topSecPct.toFixed(0)+'%).';
   conc+=' Kas '+ctx.cashPct.toFixed(0)+'% dari aset '+(ctx.cashPct<5?'(amat kering — ruang manuver kecil)':ctx.cashPct>30?'(menumpuk — pertimbangkan deploy bertahap)':'(wajar)')+'.';
@@ -513,7 +513,7 @@ function aiHeuristicHtml(ctx){
   if(m.porto.length){
     var byContrib=m.porto.slice().sort(function(a,b){return (b.unreal/m.totalCost)-(a.unreal/m.totalCost);});
     var topC=byContrib[0], botC=byContrib[byContrib.length-1];
-    attrib='Kontributor terbesar ke <i>return portofolio</i> (bukan sekadar return sendiri): <b style="color:#00e5a0">'+topC.ticker+'</b> menyumbang <b>'+((topC.unreal/m.totalCost)*100>=0?'+':'')+((topC.unreal/m.totalCost)*100).toFixed(1)+' poin%</b> dari total return (posisi ini sendiri '+(topC.ret>=0?'+':'')+topC.ret.toFixed(0)+'%). Penekan terbesar: <b style="color:#ff3d5a">'+botC.ticker+'</b> ('+((botC.unreal/m.totalCost)*100).toFixed(1)+' poin%).';
+    attrib='Kontributor terbesar ke <i>return portofolio</i> (bukan sekadar return sendiri): <b style="color:#41f3a7">'+topC.ticker+'</b> menyumbang <b>'+((topC.unreal/m.totalCost)*100>=0?'+':'')+((topC.unreal/m.totalCost)*100).toFixed(1)+' poin%</b> dari total return (posisi ini sendiri '+(topC.ret>=0?'+':'')+topC.ret.toFixed(0)+'%). Penekan terbesar: <b style="color:#e21d48">'+botC.ticker+'</b> ('+((botC.unreal/m.totalCost)*100).toFixed(1)+' poin%).';
   }
   if(hf.sells>0){
     attrib+=' Dari <b>'+hf.sells+' transaksi jual</b> yang sudah direalisasikan: win rate <b>'+hf.winRate.toFixed(0)+'%</b>, profit factor <b>'+(hf.profitFactor===Infinity?'∞':hf.profitFactor.toFixed(2))+'</b> (total untung ÷ total rugi — &gt;1 berarti disiplin exit sudah menguntungkan secara agregat).';
@@ -714,7 +714,7 @@ function fsRenderProb(a){
     return '<div style="margin-bottom:6px">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">'
       +'<span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px">'+label+'</span>'
-      +'<span style="font-size:9px;font-weight:700;color:'+col+';font-family:\'IBM Plex Mono\',monospace">'+Math.round(score)+'</span>'
+      +'<span style="font-size:9px;font-weight:700;color:'+col+';font-family:var(--font-mono)">'+Math.round(score)+'</span>'
       +'</div>'
       +pBar(score,col)
       +'<div style="font-size:9px;color:var(--text3);margin-top:2px">'+detail+'</div></div>';
@@ -726,27 +726,27 @@ function fsRenderProb(a){
     +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)">'
     // Signal box
     +'<div style="text-align:center;padding:8px 0">'
-    +'<div style="font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;font-family:\'IBM Plex Mono\',monospace;margin-bottom:4px">ARAH SINYAL</div>'
-    +'<div style="font-size:22px;font-weight:800;color:'+c+';font-family:\'IBM Plex Mono\',monospace;letter-spacing:2px">'+emo+' '+p.dir+'</div>'
+    +'<div style="font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;font-family:var(--font-mono);margin-bottom:4px">ARAH SINYAL</div>'
+    +'<div style="font-size:22px;font-weight:800;color:'+c+';font-family:var(--font-mono);letter-spacing:2px">'+emo+' '+p.dir+'</div>'
     +'<span class="badge '+(p.dir==='BULLISH'?'b-up':p.dir==='BEARISH'?'b-dn':'b-amb')+'" style="margin-top:3px">'+p.strg+'</span>'
     +'</div>'
     // Probability box
     +'<div style="text-align:center;padding:8px 0;border-left:1px solid var(--border);border-right:1px solid var(--border)">'
-    +'<div style="font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;font-family:\'IBM Plex Mono\',monospace;margin-bottom:4px">PROB. BELI</div>'
-    +'<div style="font-size:26px;font-weight:800;color:'+c+';font-family:\'IBM Plex Mono\',monospace">'+probBuy+'<span style="font-size:14px">%</span></div>'
+    +'<div style="font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;font-family:var(--font-mono);margin-bottom:4px">PROB. BELI</div>'
+    +'<div style="font-size:26px;font-weight:800;color:'+c+';font-family:var(--font-mono)">'+probBuy+'<span style="font-size:14px">%</span></div>'
     +'<div style="font-size:9px;color:var(--text3);margin-top:2px">Keyakinan akumulasi</div>'
     +'</div>'
     // Score box
     +'<div style="text-align:center;padding:8px 0">'
-    +'<div style="font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;font-family:\'IBM Plex Mono\',monospace;margin-bottom:4px">SKOR KOMPOSIT</div>'
-    +'<div style="font-size:26px;font-weight:800;color:'+c+';font-family:\'IBM Plex Mono\',monospace">'+composite+'<span style="font-size:14px">/100</span></div>'
+    +'<div style="font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;font-family:var(--font-mono);margin-bottom:4px">SKOR KOMPOSIT</div>'
+    +'<div style="font-size:26px;font-weight:800;color:'+c+';font-family:var(--font-mono)">'+composite+'<span style="font-size:14px">/100</span></div>'
     +'<div style="font-size:9px;color:var(--text3);margin-top:2px">5-faktor weighted</div>'
     +'</div>'
     +'</div>'
 
     // ── Composite probability bar ──
     +'<div style="margin-bottom:12px">'
-    +'<div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:9px;font-family:\'IBM Plex Mono\',monospace">'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:9px;font-family:var(--font-mono)">'
     +'<span style="color:var(--green)">BELI '+probBuy+'%</span><span style="color:var(--red)">JUAL '+probSell+'%</span></div>'
     +'<div style="height:10px;background:rgba(255,34,68,.25);border-radius:1px;overflow:hidden">'
     +'<div style="width:'+probBuy+'%;height:100%;background:var(--green);border-radius:1px;transition:width .6s"></div></div>'
@@ -756,7 +756,7 @@ function fsRenderProb(a){
     // ── Indicator breakdown ──
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">'
     +'<div>'
-    +'<div style="font-size:9px;color:var(--bb-orange);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;font-family:\'IBM Plex Mono\',monospace;border-bottom:1px solid rgba(255,102,0,.2);padding-bottom:4px">BOBOT INDIKATOR</div>'
+    +'<div style="font-size:9px;color:var(--bb-orange);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;font-family:var(--font-mono);border-bottom:1px solid rgba(255,102,0,.2);padding-bottom:4px">BOBOT INDIKATOR</div>'
     +indRow('CMF-20 (30%)',cmfScore,'CMF: '+(a.cl||0).toFixed?(a.cl*100).toFixed(1)+'%':'—')
     +indRow('RSI-14 (20%)',rsiScore,'RSI: '+(a.rl||50).toFixed(1)+' · '+(a.rl>70?'Overbought':a.rl<30?'Oversold':'Netral'))
     +indRow('MA Cross (20%)',maScore,'Harga vs MA20: '+(a.ma20&&a.ma20.length?(last.c>a.ma20[a.ma20.length-1]?'Above ▲':'Below ▼'):'—'))
@@ -766,13 +766,13 @@ function fsRenderProb(a){
 
     // ── Statistical analysis ──
     +'<div>'
-    +'<div style="font-size:9px;color:var(--bb-orange);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;font-family:\'IBM Plex Mono\',monospace;border-bottom:1px solid rgba(255,102,0,.2);padding-bottom:4px">STATISTIK HARGA</div>'
+    +'<div style="font-size:9px;color:var(--bb-orange);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;font-family:var(--font-mono);border-bottom:1px solid rgba(255,102,0,.2);padding-bottom:4px">STATISTIK HARGA</div>'
     +'<div style="display:flex;flex-direction:column;gap:5px">'
-    +'<div style="display:flex;justify-content:space-between;font-family:\'IBM Plex Mono\',monospace;font-size:10px"><span style="color:var(--text3)">Volatilitas/th</span><span style="color:var(--amber)">'+volAnn+'%</span></div>'
-    +'<div style="display:flex;justify-content:space-between;font-family:\'IBM Plex Mono\',monospace;font-size:10px"><span style="color:var(--text3)">Win Rate (% hari +)</span><span style="color:'+(parseInt(winRate)>=55?'var(--green)':'var(--text2)')+'">'+winRate+'%</span></div>'
-    +'<div style="display:flex;justify-content:space-between;font-family:\'IBM Plex Mono\',monospace;font-size:10px"><span style="color:var(--text3)">Skewness</span><span style="color:'+(parseFloat(skew)>0?'var(--green)':parseFloat(skew)<0?'var(--red)':'var(--text2)')+'">'+skew+'</span></div>'
-    +'<div style="display:flex;justify-content:space-between;font-family:\'IBM Plex Mono\',monospace;font-size:10px"><span style="color:var(--text3)">Expected Move (±1σ)</span><span>±'+parseInt(em1).toLocaleString('id-ID')+'</span></div>'
-    +'<div style="display:flex;justify-content:space-between;font-family:\'IBM Plex Mono\',monospace;font-size:10px"><span style="color:var(--text3)">Expected Move (±2σ)</span><span style="color:var(--text2)">±'+parseInt(em2).toLocaleString('id-ID')+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px"><span style="color:var(--text3)">Volatilitas/th</span><span style="color:var(--amber)">'+volAnn+'%</span></div>'
+    +'<div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px"><span style="color:var(--text3)">Win Rate (% hari +)</span><span style="color:'+(parseInt(winRate)>=55?'var(--green)':'var(--text2)')+'">'+winRate+'%</span></div>'
+    +'<div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px"><span style="color:var(--text3)">Skewness</span><span style="color:'+(parseFloat(skew)>0?'var(--green)':parseFloat(skew)<0?'var(--red)':'var(--text2)')+'">'+skew+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px"><span style="color:var(--text3)">Expected Move (±1σ)</span><span>±'+parseInt(em1).toLocaleString('id-ID')+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px"><span style="color:var(--text3)">Expected Move (±2σ)</span><span style="color:var(--text2)">±'+parseInt(em2).toLocaleString('id-ID')+'</span></div>'
     +'<div style="margin-top:5px;padding-top:5px;border-top:1px solid var(--border)">'
     +'<div style="font-size:9px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.8px">SKENARIO GERAK</div>'
     +'<div style="font-size:10px;color:var(--green)">Bull target: '+fsP(last.c*(1+stdR*2))+'</div>'
@@ -783,7 +783,7 @@ function fsRenderProb(a){
     +'</div>'
 
     // ── Footer disclaimer ──
-    +'<div style="font-size:9px;color:var(--text3);line-height:1.5;border-top:1px solid var(--border);padding-top:8px;font-family:\'IBM Plex Mono\',monospace">'
+    +'<div style="font-size:9px;color:var(--text3);line-height:1.5;border-top:1px solid var(--border);padding-top:8px;font-family:var(--font-mono)">'
     +'⚠ Analisa otomatis berbasis indikator teknikal. Bukan rekomendasi investasi. Lakukan riset mandiri sebelum mengambil keputusan.'
     +'</div>'
     +'</div>';
@@ -847,8 +847,8 @@ function renderSekTaxPanel(){
     var custom=(o.beli!=null||o.jual!=null);
     return '<div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:7px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">'
       +'<div style="display:flex;align-items:center;gap:6px;min-width:0"><span style="width:7px;height:7px;border-radius:2px;background:'+sf.color+';flex-shrink:0"></span><span style="font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+s+'</span>'+(custom?' <span class="badge b-amb" style="font-size:8px">custom</span>':'')+'</div>'
-      +'<input class="finput" type="number" step="0.001" min="0" max="5" id="sktx-b-'+btoa(s).replace(/=/g,'')+'" value="'+beli+'" style="padding:4px 7px;font-size:11px;font-family:\'IBM Plex Mono\',monospace">'
-      +'<input class="finput" type="number" step="0.001" min="0" max="5" id="sktx-j-'+btoa(s).replace(/=/g,'')+'" value="'+jual+'" style="padding:4px 7px;font-size:11px;font-family:\'IBM Plex Mono\',monospace">'
+      +'<input class="finput" type="number" step="0.001" min="0" max="5" id="sktx-b-'+btoa(s).replace(/=/g,'')+'" value="'+beli+'" style="padding:4px 7px;font-size:11px;font-family:var(--font-mono)">'
+      +'<input class="finput" type="number" step="0.001" min="0" max="5" id="sktx-j-'+btoa(s).replace(/=/g,'')+'" value="'+jual+'" style="padding:4px 7px;font-size:11px;font-family:var(--font-mono)">'
       +'</div>';
   }).join('');
 }

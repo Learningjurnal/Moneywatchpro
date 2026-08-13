@@ -7,8 +7,8 @@ var SEKURITAS = {
   'Mirae Asset':      {buyFee:0.0015, sellFee:0.0025, color:'#00c8ff'},
   'BCA Sekuritas':    {buyFee:0.0018, sellFee:0.0028, color:'#4da6ff'},
   'Mandiri Sekuritas':{buyFee:0.0017, sellFee:0.0027, color:'#ffc107'},
-  'BRI Danareksa':    {buyFee:0.0015, sellFee:0.0025, color:'#00e5a0'},
-  'Phillip Sekuritas':{buyFee:0.0013, sellFee:0.0023, color:'#a78bfa'},
+  'BRI Danareksa':    {buyFee:0.0015, sellFee:0.0025, color:'#41f3a7'},
+  'Phillip Sekuritas':{buyFee:0.0013, sellFee:0.0023, color:'#8070d2'},
   'Stockbit':         {buyFee:0.0015, sellFee:0.0025, color:'#ff6b6b'},  // resmi: 0.15%/0.25%
   'Indo Premier':     {buyFee:0.0019, sellFee:0.0029, color:'#2dd4bf'},
   'CGS-CIMB':         {buyFee:0.0018, sellFee:0.0028, color:'#fb923c'},
@@ -143,10 +143,10 @@ function parsePrice(val){
 
 // ── KAS PER AKUN PORTOFOLIO ──
 var CASH_ACCOUNTS = {
-  saham:     {label:'Kas Saham (RDN)',     color:'#00e5a0', balance:0},
+  saham:     {label:'Kas Saham (RDN)',     color:'#41f3a7', balance:0},
   crypto:    {label:'Kas Crypto (Wallet)', color:'#f7931a', balance:0},
   etf:       {label:'Kas ETF (USD)',       color:'#00c8ff', balance:0, isUsd:true},
-  reksadana: {label:'Kas Reksa Dana',      color:'#a78bfa', balance:0},
+  reksadana: {label:'Kas Reksa Dana',      color:'#8070d2', balance:0},
 };
 function saveCashAccounts(){ try{ localStorage.setItem('ihsg_cash_v1', JSON.stringify(CASH_ACCOUNTS)); }catch(e){} }
 function setCash(account, amount){ if(!CASH_ACCOUNTS[account]) return; CASH_ACCOUNTS[account].balance=parseFloat(amount)||0; saveCashAccounts(); }

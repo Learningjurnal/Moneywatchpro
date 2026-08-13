@@ -39,7 +39,7 @@ function hw_renderTable() {
   if (!hwData.rows || !hwData.rows.length) hwData.rows = hw_defaultRows();
   // Use DOM API to avoid any attribute escaping issues
   tbody.innerHTML = '';
-  var inpStyle = 'background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:"IBM Plex Mono",monospace;font-size:11px;padding:3px 5px;border-radius:1px;box-sizing:border-box;width:100%';
+  var inpStyle = 'background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:"Menlo",monospace;font-size:11px;padding:3px 5px;border-radius:1px;box-sizing:border-box;width:100%';
   var placeholders = {year:'e.g. 2024',eps:'e.g. 350',equity:'e.g. 150537',shares:'e.g. 99062',dps:'e.g. 168',per:'e.g. 16.5',netIncome:'e.g. 33948'};
   var widths = {year:'70px',eps:'100px',equity:'130px',shares:'120px',dps:'100px',per:'80px',netIncome:'130px'};
   // Validation rules: warn if value seems wrong unit
@@ -202,7 +202,7 @@ function hw_recalc() {
     if (!wEl) {
       wEl = document.createElement('div');
       wEl.id = 'hw-data-warnings';
-      wEl.style.cssText = 'margin-top:8px;padding:8px 12px;background:rgba(255,34,68,.08);border-left:3px solid var(--red);border-radius:2px;font-size:9px;font-family:"IBM Plex Mono",monospace';
+      wEl.style.cssText = 'margin-top:8px;padding:8px 12px;background:rgba(255,34,68,.08);border-left:3px solid var(--red);border-radius:2px;font-size:9px;font-family:"Menlo",monospace';
       var tableCard = document.querySelector('#page-hargawajar .card:nth-child(2)');
       if (tableCard) tableCard.appendChild(wEl);
     }
@@ -356,7 +356,7 @@ function hw_recalc() {
     stepsBody.innerHTML = steps.map(function(s) {
       return '<div style="background:var(--bg3);border-radius:2px;padding:7px 9px;border-left:2px solid ' + (s.ok ? 'var(--green)' : 'var(--red)') + '">'
         + '<div style="font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">' + s.label + '</div>'
-        + '<div style="font-size:13px;font-weight:700;font-family:\'IBM Plex Mono\',monospace;color:var(--text);margin:2px 0">' + s.val + '</div>'
+        + '<div style="font-size:13px;font-weight:700;font-family:var(--font-mono);color:var(--text);margin:2px 0">' + s.val + '</div>'
         + '<div style="font-size:9px;color:var(--text3)">' + s.desc + '</div>'
         + '</div>';
     }).join('');
@@ -408,9 +408,9 @@ function hw_renderChart(rows) {
   if (!ctx) return;
   if (hwHistChart) { hwHistChart.destroy(); hwHistChart = null; }
   var labels = rows.map(function(r){ return r.year; });
-  var tickStyle = { color: '#b8bdd4', font: { size: 9, family: 'IBM Plex Mono' } };
+  var tickStyle = { color: '#b8bdd4', font: { size: 9, family: 'Menlo' } };
   var gridStyle = { color: 'rgba(255,255,255,.05)' };
-  var legendOpts = { labels: { color: '#b8bdd4', font: { family: 'IBM Plex Mono', size: 9 }, boxWidth: 10, padding: 10 } };
+  var legendOpts = { labels: { color: '#b8bdd4', font: { family: 'Menlo', size: 9 }, boxWidth: 10, padding: 10 } };
 
   var datasets, scales;
   if (hwChartMode === 'eps') {
@@ -455,8 +455,8 @@ function hw_renderChart(rows) {
           bodyColor: '#c0c0d8',
           borderColor: 'rgba(255,102,0,.3)',
           borderWidth: 1,
-          titleFont: { family: 'IBM Plex Mono', size: 10 },
-          bodyFont: { family: 'IBM Plex Mono', size: 9 },
+          titleFont: { family: 'Menlo', size: 10 },
+          bodyFont: { family: 'Menlo', size: 9 },
           callbacks: {
             label: function(ctx) {
               var v = ctx.parsed.y;
@@ -520,8 +520,8 @@ function hw_renderHistoryList() {
       var mos = h.mosPct || 0;
       var col = mos > 20 ? 'var(--green)' : mos > 0 ? 'var(--amber)' : 'var(--red)';
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-bottom:1px solid var(--border);cursor:pointer" onclick="hw_loadHistory(this)" data-h=\''+JSON.stringify(h)+'\' style="transition:.1s" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'transparent\'">'
-        + '<div><span style="font-weight:700;font-family:\'IBM Plex Mono\',monospace;color:var(--bb-orange);font-size:11px">'+h.ticker+'</span> <span style="font-size:9px;color:var(--text3)">'+h.date+'</span></div>'
-        + '<div style="text-align:right"><div style="font-size:10px;color:var(--text);font-family:\'IBM Plex Mono\',monospace">Rp '+Math.round(h.fairValue||0).toLocaleString('id-ID')+'</div>'
+        + '<div><span style="font-weight:700;font-family:var(--font-mono);color:var(--bb-orange);font-size:11px">'+h.ticker+'</span> <span style="font-size:9px;color:var(--text3)">'+h.date+'</span></div>'
+        + '<div style="text-align:right"><div style="font-size:10px;color:var(--text);font-family:var(--font-mono)">Rp '+Math.round(h.fairValue||0).toLocaleString('id-ID')+'</div>'
         + '<div style="font-size:9px;color:'+col+'">'+(mos>=0?'+':'')+mos.toFixed(1)+'% MoS</div></div>'
         + '</div>';
     }).join('');

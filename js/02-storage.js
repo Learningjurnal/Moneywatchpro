@@ -528,15 +528,15 @@ function openBackupModal(){
   el('backup-modal-body').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center">
-        <div style="font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--accent)">${txTotal}</div>
+        <div style="font-size:22px;font-weight:800;font-family:var(--font-mono);color:var(--accent)">${txTotal}</div>
         <div style="font-size:10px;color:var(--text3);margin-top:2px;letter-spacing:.8px;text-transform:uppercase">Total Transaksi</div>
       </div>
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center">
-        <div style="font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--green)">${kbSize} KB</div>
+        <div style="font-size:22px;font-weight:800;font-family:var(--font-mono);color:var(--green)">${kbSize} KB</div>
         <div style="font-size:10px;color:var(--text3);margin-top:2px;letter-spacing:.8px;text-transform:uppercase">Ukuran Data</div>
       </div>
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center">
-        <div style="font-size:11px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text2);line-height:1.4">${lastSave}</div>
+        <div style="font-size:11px;font-weight:700;font-family:var(--font-mono);color:var(--text2);line-height:1.4">${lastSave}</div>
         <div style="font-size:10px;color:var(--text3);margin-top:2px;letter-spacing:.8px;text-transform:uppercase">Terakhir Simpan</div>
       </div>
     </div>

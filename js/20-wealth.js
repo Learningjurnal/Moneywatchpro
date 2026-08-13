@@ -188,7 +188,7 @@ function wRenderNet(){
       '<div class="w-ring"><svg width="84" height="84" style="transform:rotate(-90deg)">'+
         '<circle cx="42" cy="42" r="34" fill="none" stroke="var(--bg4)" stroke-width="7"/>'+
         '<circle cx="42" cy="42" r="34" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round" stroke-dasharray="'+ring+'" stroke-dashoffset="'+(ring*(1-a.score/100))+'"/>'+
-      '</svg><div class="w-ring-center"><div style="font-size:19px;font-weight:700;font-family:\'Share Tech Mono\',monospace">'+a.score+'</div><div style="font-size:9px;color:var(--text3)">score</div></div></div>'+
+      '</svg><div class="w-ring-center"><div style="font-size:19px;font-weight:700;font-family:\'Menlo\',monospace">'+a.score+'</div><div style="font-size:9px;color:var(--text3)">score</div></div></div>'+
       '<div><div class="mlabel">Wealth Score</div><span class="badge '+gradeCls+'">'+grade+'</span>'+
       '<div class="msub neu" style="margin-top:6px">FIRE '+firePct.toFixed(1)+'%</div></div>'+
     '</div>'+
@@ -225,7 +225,7 @@ function wRenderNet(){
   // Donut alokasi
   wKillChart('alloc');
   var items = [
-    {l:'Saham IDX', v:a.inv.saham,  c:'#818cf8'},
+    {l:'Saham IDX', v:a.inv.saham,  c:'#2f6af3'},
     {l:'Crypto',    v:a.inv.crypto, c:'#f7931a'},
     {l:'ETF AS',    v:a.inv.etf,    c:'#38bdf8'},
     {l:'Reksa Dana',v:a.inv.rd,     c:'#c084fc'},
@@ -300,7 +300,7 @@ function wRenderBank(){
     (WEALTH.bank.length ? WEALTH.bank.map(function(b,i){
       return '<div class="w-bank-card" style="background:'+grads[i%grads.length]+'">'+
         '<div style="display:flex;justify-content:space-between;align-items:flex-start">'+
-          '<div><div style="font-size:10px;opacity:.65;margin-bottom:4px">Saldo Rekening</div><div style="font-size:21px;font-weight:700;font-family:\'Share Tech Mono\',monospace">'+wRp(b.saldo)+'</div></div>'+
+          '<div><div style="font-size:10px;opacity:.65;margin-bottom:4px">Saldo Rekening</div><div style="font-size:21px;font-weight:700;font-family:\'Menlo\',monospace">'+wRp(b.saldo)+'</div></div>'+
           '<div style="text-align:right"><div style="font-size:11px;opacity:.75">'+(b.type||'Tabungan')+' · '+(b.no||'—')+'</div>'+
           '<div style="display:flex;gap:4px;margin-top:8px;justify-content:flex-end">'+
             '<button class="btn btn-xs" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.25);color:#fff" onclick="wModalBank('+b.id+')">✎</button>'+
@@ -393,7 +393,7 @@ function wRenderPiutang(){
   var piu = WEALTH.piutang;
   var tP = piu.reduce(function(s,x){return s+(x.pokok||0)},0);
   var tT = piu.reduce(function(s,x){return s+(x.terbayar||0)},0);
-  var colors = {'Lancar':['rgba(129,140,248,.15)','#818cf8'],'Lunas':['rgba(52,211,153,.15)','#34d399'],'Telat':['rgba(251,191,36,.15)','#fbbf24'],'Macet':['rgba(248,113,113,.15)','#f87171']};
+  var colors = {'Lancar':['rgba(129,140,248,.15)','#2f6af3'],'Lunas':['rgba(52,211,153,.15)','#34d399'],'Telat':['rgba(251,191,36,.15)','#fbbf24'],'Macet':['rgba(248,113,113,.15)','#f87171']};
 
   el('page-wpiutang').innerHTML =
   '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">'+
@@ -421,7 +421,7 @@ function wRenderPiutang(){
           '<div style="font-size:10px;color:var(--text3);margin-top:3px">'+pct.toFixed(0)+'% terbayar · '+wRp(x.terbayar)+' dari '+wRp(x.pokok)+'</div></div>'+
         '</div>'+
         '<div style="text-align:right;flex-shrink:0">'+
-          '<div style="font-size:13px;font-weight:700;font-family:\'Share Tech Mono\',monospace">'+wRp(sisa)+'</div>'+
+          '<div style="font-size:13px;font-weight:700;font-family:\'Menlo\',monospace">'+wRp(sisa)+'</div>'+
           '<div style="font-size:9px;color:var(--text3)">sisa</div>'+
           '<span class="badge '+badgeCls+'" style="margin-top:4px;display:inline-block">'+x.status+'</span>'+
           '<div style="display:flex;gap:4px;margin-top:6px;justify-content:flex-end">'+
@@ -514,7 +514,7 @@ function wProjRecalc(){
     fy.innerHTML = [3,5,10,15].map(function(m){
       var nw2 = a.net, yr = 0;
       if(target>0){ while(nw2<target && yr<50){ nw2 = nw2*(1+cagr) + m*1e6*12; yr++; } }
-      return '<div class="w-mini"><span style="color:var(--text3)">Investasi '+m+' jt/bln</span><b style="color:var(--accent);font-family:\'Share Tech Mono\',monospace">'+(target<=0?'—':(yr<50?(y0+yr):'> '+(y0+50)))+'</b></div>';
+      return '<div class="w-mini"><span style="color:var(--text3)">Investasi '+m+' jt/bln</span><b style="color:var(--accent);font-family:\'Menlo\',monospace">'+(target<=0?'—':(yr<50?(y0+yr):'> '+(y0+50)))+'</b></div>';
     }).join('');
   }
 
@@ -522,7 +522,7 @@ function wProjRecalc(){
   var cv = el('w-proj-chart');
   if(cv && typeof Chart!=='undefined'){
     var ds = [
-      {label:'Nominal', data:nominal, borderColor:'#818cf8', backgroundColor:'rgba(129,140,248,.08)', fill:true, tension:.3, pointRadius:0, borderWidth:2},
+      {label:'Nominal', data:nominal, borderColor:'#2f6af3', backgroundColor:'rgba(129,140,248,.08)', fill:true, tension:.3, pointRadius:0, borderWidth:2},
       {label:'Riil (setelah inflasi)', data:riil, borderColor:'#34d399', fill:false, tension:.3, pointRadius:0, borderWidth:1.5, borderDash:[5,3]}
     ];
     if(target>0) ds.push({label:'FIRE Number', data:years.map(function(){return target}), borderColor:'rgba(251,191,36,.6)', fill:false, pointRadius:0, borderWidth:1, borderDash:[2,3]});

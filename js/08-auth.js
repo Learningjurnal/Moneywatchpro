@@ -65,7 +65,7 @@ function authStartTimeoutBar(){
     var remaining = s.exp - Date.now();
     var pct = Math.max(0, (remaining / AUTH.SESSION_MS) * 100);
     bar.style.width = pct + '%';
-    bar.style.background = pct < 20 ? '#ff3d5a' : pct < 50 ? '#ffc107' : 'var(--accent)';
+    bar.style.background = pct < 20 ? '#e21d48' : pct < 50 ? '#ffc107' : 'var(--accent)';
   }, 1000);
 }
 

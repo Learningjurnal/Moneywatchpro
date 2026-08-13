@@ -66,7 +66,7 @@ function fsV(n){if(!n||isNaN(n))return'—';if(n>=1e9)return(n/1e9).toFixed(2)+'
 function fsP(n){if(!n||isNaN(n))return'—';return'Rp '+(n<100?n.toFixed(2):Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
 function fsD(d){return new Date(d).toLocaleDateString('id-ID',{day:'2-digit',month:'short'});}
 function fsPct(n){return(n>=0?'▲':'▼')+Math.abs(n).toFixed(2)+'%';}
-function fsScColor(s){return s>=58?'#00e5a0':s<=42?'#ff3d5a':'#8fa3c8';}
+function fsScColor(s){return s>=58?'#41f3a7':s<=42?'#e21d48':'#8fa3c8';}
 function fsMkBdg(sig,sm){
   var cls=sig==='AKUMULASI'?'b-up':sig==='DISTRIBUSI'?'b-dn':'b-neu';
   var ic=sig==='AKUMULASI'?'ti-trending-up':sig==='DISTRIBUSI'?'ti-trending-down':'ti-minus';
@@ -272,7 +272,7 @@ function fsRenderCharts(){
 
   var GC2='rgba(255,255,255,.04)',TC2={color:'#4a5e82',font:{size:10}};
   var bo={responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(6,11,23,.95)',borderColor:'rgba(255,255,255,.08)',borderWidth:1,titleColor:'#8fa3c8',bodyColor:'#dce8ff',bodyFont:{family:'IBM Plex Mono',size:11}}},
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(6,11,23,.95)',borderColor:'rgba(255,255,255,.08)',borderWidth:1,titleColor:'#8fa3c8',bodyColor:'#dce8ff',bodyFont:{family:'Menlo',size:11}}},
     scales:{x:{ticks:Object.assign({maxTicksLimit:8,autoSkip:true},TC2),grid:{display:false},border:{display:false}},
             y:{ticks:TC2,grid:{color:GC2},border:{display:false}}}};
   function mo(extra){return Object.assign({},bo,extra);}
@@ -295,7 +295,7 @@ function fsRenderCharts(){
 
   var cvRs=document.getElementById('fsCRs');
   if(cvRs) FS_CHARTS.rs=new Chart(cvRs,{type:'line',data:{labels:lb,datasets:[
-    {data:rs,borderColor:'#a78bfa',borderWidth:1.5,pointRadius:0,fill:false,tension:0.3},
+    {data:rs,borderColor:'#8070d2',borderWidth:1.5,pointRadius:0,fill:false,tension:0.3},
     {data:Array(rs.length).fill(70),borderColor:'rgba(255,61,90,.3)',borderWidth:1,pointRadius:0,fill:false,borderDash:[3,3]},
     {data:Array(rs.length).fill(30),borderColor:'rgba(0,229,160,.3)',borderWidth:1,pointRadius:0,fill:false,borderDash:[3,3]}
   ]},options:mo({scales:Object.assign({},bo.scales,{y:Object.assign({},bo.scales.y,{min:0,max:100})})})}); 
@@ -313,18 +313,18 @@ function fsRenderInd(){
   var volLabel = 'Vol Ratio vs MA'+(a.maFP||20);
   var bvLabel  = 'Big Vol Days ('+lookback+'h)';
   var items=[
-    {n:'On-Balance Volume',v:(last.obv>=0?'+':'')+fsV(last.obv),d:a.obvT?'OBV naik → Big money masuk':'OBV turun → Tekanan jual dominan',p:a.obvT?72:28,c:a.obvT?'#00e5a0':'#ff3d5a'},
-    {n:cmfLabel,v:(a.cl*100).toFixed(2)+'%',d:a.cl>0.1?'Tekanan beli kuat':a.cl>0?'Tekanan beli lemah':a.cl>-0.1?'Tekanan jual lemah':'Tekanan jual kuat',p:Math.min(100,Math.max(0,(a.cl+0.3)*167)),c:a.cl>0?'#00e5a0':'#ff3d5a'},
-    {n:volLabel,v:last.vr.toFixed(2)+'×',d:last.vr>2?'Anomali institusional >2×':last.vr>1.5?'Volume di atas normal':last.vr>0.8?'Volume normal':'Volume sepi',p:Math.min(100,last.vr*40),c:last.vr>1.5?'#00e5a0':'#8fa3c8'},
-    {n:'A/D Line',v:a.adT?'Naik':'Turun',d:a.adT?'A/D naik — akumulasi berlanjut':'A/D turun — distribusi berlanjut',p:a.adT?72:28,c:a.adT?'#00e5a0':'#ff3d5a'},
-    {n:rsiLabel,v:a.rl.toFixed(1),d:a.rl>70?'Overbought':a.rl<30?'Oversold':a.rl>50?'Momentum positif':'Momentum negatif',p:a.rl,c:a.rl>70?'#ff3d5a':a.rl<30?'#00e5a0':'#8fa3c8'},
-    {n:bvLabel,v:a.bu+' naik / '+a.bd+' turun',d:a.bu>a.bd?'Big vol dominan hari naik → Akumulasi':a.bu<a.bd?'Big vol dominan hari turun → Distribusi':'Imbang',p:a.bu+a.bd>0?Math.min(100,a.bu/(a.bu+a.bd)*100):50,c:a.bu>a.bd?'#00e5a0':a.bu<a.bd?'#ff3d5a':'#8fa3c8'}
+    {n:'On-Balance Volume',v:(last.obv>=0?'+':'')+fsV(last.obv),d:a.obvT?'OBV naik → Big money masuk':'OBV turun → Tekanan jual dominan',p:a.obvT?72:28,c:a.obvT?'#41f3a7':'#e21d48'},
+    {n:cmfLabel,v:(a.cl*100).toFixed(2)+'%',d:a.cl>0.1?'Tekanan beli kuat':a.cl>0?'Tekanan beli lemah':a.cl>-0.1?'Tekanan jual lemah':'Tekanan jual kuat',p:Math.min(100,Math.max(0,(a.cl+0.3)*167)),c:a.cl>0?'#41f3a7':'#e21d48'},
+    {n:volLabel,v:last.vr.toFixed(2)+'×',d:last.vr>2?'Anomali institusional >2×':last.vr>1.5?'Volume di atas normal':last.vr>0.8?'Volume normal':'Volume sepi',p:Math.min(100,last.vr*40),c:last.vr>1.5?'#41f3a7':'#8fa3c8'},
+    {n:'A/D Line',v:a.adT?'Naik':'Turun',d:a.adT?'A/D naik — akumulasi berlanjut':'A/D turun — distribusi berlanjut',p:a.adT?72:28,c:a.adT?'#41f3a7':'#e21d48'},
+    {n:rsiLabel,v:a.rl.toFixed(1),d:a.rl>70?'Overbought':a.rl<30?'Oversold':a.rl>50?'Momentum positif':'Momentum negatif',p:a.rl,c:a.rl>70?'#e21d48':a.rl<30?'#41f3a7':'#8fa3c8'},
+    {n:bvLabel,v:a.bu+' naik / '+a.bd+' turun',d:a.bu>a.bd?'Big vol dominan hari naik → Akumulasi':a.bu<a.bd?'Big vol dominan hari turun → Distribusi':'Imbang',p:a.bu+a.bd>0?Math.min(100,a.bu/(a.bu+a.bd)*100):50,c:a.bu>a.bd?'#41f3a7':a.bu<a.bd?'#e21d48':'#8fa3c8'}
   ];
   var grid=document.getElementById('fs-ind-grid');
   if(grid) grid.innerHTML=items.map(function(x){
     return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px">'+
       '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">'+x.n+'</div>'+
-      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:16px;font-weight:500;margin-bottom:3px;color:'+x.c+'">'+x.v+'</div>'+
+      '<div style="font-family:var(--font-mono);font-size:16px;font-weight:500;margin-bottom:3px;color:'+x.c+'">'+x.v+'</div>'+
       '<div style="font-size:11px;color:var(--text2);line-height:1.45">'+x.d+'</div>'+
       '<div style="height:3px;background:var(--bg5);border-radius:2px;margin-top:8px;overflow:hidden">'+
         '<div style="width:'+x.p+'%;height:100%;border-radius:2px;background:'+x.c+'"></div></div></div>';
@@ -339,9 +339,9 @@ function fsRenderDailyTable(){
   tbody.innerHTML='';
   data.slice(-60).reverse().forEach(function(d){
     var chg=d.o>0?((d.c-d.o)/d.o*100):0;
-    var vc=d.vr>=2?'#00e5a0':d.vr>=1.5?'rgba(0,229,160,.7)':d.vr<0.7?'#ff3d5a':'#8fa3c8';
+    var vc=d.vr>=2?'#41f3a7':d.vr>=1.5?'rgba(0,229,160,.7)':d.vr<0.7?'#e21d48':'#8fa3c8';
     var sig=d.sig==='ACC'?'<span class="badge b-up"><i class="ti ti-trending-up"></i> Akumulasi</span>':d.sig==='DIST'?'<span class="badge b-dn"><i class="ti ti-trending-down"></i> Distribusi</span>':'';
-    var cc=d.cmf>0.1?'#00e5a0':d.cmf<-0.1?'#ff3d5a':'#8fa3c8';
+    var cc=d.cmf>0.1?'#41f3a7':d.cmf<-0.1?'#e21d48':'#8fa3c8';
     var tr=document.createElement('tr');
     if(d.sig==='ACC')tr.style.background='rgba(0,229,160,.04)';
     if(d.sig==='DIST')tr.style.background='rgba(255,61,90,.04)';
@@ -403,7 +403,7 @@ function fsRenderVWAP(){
   var boV={responsive:true,maintainAspectRatio:false,
     plugins:{legend:{display:true,position:'top',labels:{color:'#4a5e82',font:{size:9},boxWidth:16}},
       tooltip:{backgroundColor:'rgba(6,11,23,.95)',borderColor:'rgba(255,255,255,.08)',borderWidth:1,
-        titleColor:'#8fa3c8',bodyColor:'#dce8ff',bodyFont:{family:'IBM Plex Mono',size:10},
+        titleColor:'#8fa3c8',bodyColor:'#dce8ff',bodyFont:{family:'Menlo',size:10},
         callbacks:{label:function(c){return c.dataset.label+': '+fsP(c.parsed.y);}}}},
     scales:{x:{ticks:{maxTicksLimit:8,autoSkip:true,color:'#4a5e82',font:{size:9}},grid:{display:false},border:{display:false}},
             y:{ticks:{color:'#4a5e82',font:{size:9}},grid:{color:'rgba(255,255,255,.04)'},border:{display:false}}}};
@@ -420,7 +420,7 @@ function fsRenderVWAP(){
   if(cv2) FS_CHARTS.vwapM=new Chart(cv2,{type:'line',data:{labels:labels,datasets:[
     {label:'Harga',data:closes,borderColor:'rgba(77,166,255,.7)',borderWidth:1.5,pointRadius:0,fill:false,tension:.3},
     {label:'VWAP-1D',data:vwap,borderColor:'#ffc107',borderWidth:2,pointRadius:0,fill:false,tension:.3},
-    {label:'VWAP-5H',data:vwap5,borderColor:'#a78bfa',borderWidth:1.5,pointRadius:0,fill:false,tension:.3,borderDash:[4,2]},
+    {label:'VWAP-5H',data:vwap5,borderColor:'#8070d2',borderWidth:1.5,pointRadius:0,fill:false,tension:.3,borderDash:[4,2]},
     {label:'VWAP-20H',data:vwap20,borderColor:'#ff6b6b',borderWidth:1.5,pointRadius:0,fill:false,tension:.3,borderDash:[6,3]},
   ]},options:boV});
   // Level cards
@@ -428,22 +428,22 @@ function fsRenderVWAP(){
   var pctV=((last.c-vL)/vL*100).toFixed(2);
   var lvls=[
     {label:'VWAP Harian',val:vL,color:'#ffc107',desc:'Harga rata-rata berbobot volume'},
-    {label:'Upper Band +'+sigma+'σ',val:uL,color:'#ff3d5a',desc:'Resistance / overbought zona'},
-    {label:'Lower Band −'+sigma+'σ',val:lL,color:'#00e5a0',desc:'Support / oversold zona'},
-    {label:'Harga Terakhir',val:last.c,color:aboveV?'#00e5a0':'#ff3d5a',desc:(aboveV?'Di atas':'Di bawah')+' VWAP ('+pctV+'%)'},
+    {label:'Upper Band +'+sigma+'σ',val:uL,color:'#e21d48',desc:'Resistance / overbought zona'},
+    {label:'Lower Band −'+sigma+'σ',val:lL,color:'#41f3a7',desc:'Support / oversold zona'},
+    {label:'Harga Terakhir',val:last.c,color:aboveV?'#41f3a7':'#e21d48',desc:(aboveV?'Di atas':'Di bawah')+' VWAP ('+pctV+'%)'},
   ];
   var lvlEl=document.getElementById('vwap-levels');
   if(lvlEl) lvlEl.innerHTML=lvls.map(function(l){
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--bg3);border-radius:7px;border-left:3px solid '+l.color+'">'+
       '<div><div style="font-size:10px;color:var(--text3)">'+l.label+'</div><div style="font-size:10px;color:var(--text2);margin-top:1px">'+l.desc+'</div></div>'+
-      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:13px;font-weight:700;color:'+l.color+'">'+fsP(l.val)+'</div></div>';
+      '<div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:'+l.color+'">'+fsP(l.val)+'</div></div>';
   }).join('');
   // Signal text
   var sig='';
-  if(last.c>uL) sig='<span style="color:#ff3d5a">⚠️ Di atas Upper Band (+'+sigma+'σ)</span><br>Kondisi <strong>overbought</strong>. Potensi pullback ke VWAP ('+fsP(vL)+').';
-  else if(last.c<lL) sig='<span style="color:#00e5a0">🎯 Di bawah Lower Band (−'+sigma+'σ)</span><br>Kondisi <strong>oversold</strong>. Zona akumulasi, potensi bounce ke VWAP.';
-  else if(last.c>vL) sig='<span style="color:#00e5a0">✅ Di atas VWAP</span><br>Tren <strong>bullish</strong>. VWAP '+fsP(vL)+' sebagai support dinamis.';
-  else sig='<span style="color:#ff3d5a">📉 Di bawah VWAP</span><br>Tren <strong>bearish</strong>. VWAP '+fsP(vL)+' sebagai resistance.';
+  if(last.c>uL) sig='<span style="color:#e21d48">⚠️ Di atas Upper Band (+'+sigma+'σ)</span><br>Kondisi <strong>overbought</strong>. Potensi pullback ke VWAP ('+fsP(vL)+').';
+  else if(last.c<lL) sig='<span style="color:#41f3a7">🎯 Di bawah Lower Band (−'+sigma+'σ)</span><br>Kondisi <strong>oversold</strong>. Zona akumulasi, potensi bounce ke VWAP.';
+  else if(last.c>vL) sig='<span style="color:#41f3a7">✅ Di atas VWAP</span><br>Tren <strong>bullish</strong>. VWAP '+fsP(vL)+' sebagai support dinamis.';
+  else sig='<span style="color:#e21d48">📉 Di bawah VWAP</span><br>Tren <strong>bearish</strong>. VWAP '+fsP(vL)+' sebagai resistance.';
   var v5L=vwap5[vwap5.length-1],v20L=vwap20[vwap20.length-1];
   if(last.c>vL&&last.c>v5L&&last.c>v20L) sig+='<br><br>🔥 <strong>Triple VWAP Confluence Bullish</strong> — buyer dominan di semua timeframe.';
   if(last.c<vL&&last.c<v5L&&last.c<v20L) sig+='<br><br>❄️ <strong>Triple VWAP Confluence Bearish</strong> — seller dominan di semua timeframe.';
@@ -465,8 +465,8 @@ function fsRenderRanking(){
   var avg=Math.round(FS_RD.reduce(function(s,r){return s+r.a.sc;},0)/FS_RD.length);
   var rkSum=document.getElementById('rk-sum');
   if(rkSum) rkSum.innerHTML=[
-    {v:acc,l:'Akumulasi',c:'rgba(0,229,160,.1)',bc:'rgba(0,229,160,.2)',tc:'#00e5a0'},
-    {v:dist,l:'Distribusi',c:'rgba(255,61,90,.1)',bc:'rgba(255,61,90,.2)',tc:'#ff3d5a'},
+    {v:acc,l:'Akumulasi',c:'rgba(0,229,160,.1)',bc:'rgba(0,229,160,.2)',tc:'#41f3a7'},
+    {v:dist,l:'Distribusi',c:'rgba(255,61,90,.1)',bc:'rgba(255,61,90,.2)',tc:'#e21d48'},
     {v:neut,l:'Netral',c:'var(--bg3)',bc:'var(--border)',tc:'var(--text2)'},
     {v:avg,l:'Avg Skor',c:'rgba(0,200,255,.08)',bc:'rgba(0,200,255,.2)',tc:'var(--accent)'},
   ].map(function(x){return '<div style="background:'+x.c+';border:.5px solid '+x.bc+';border-radius:8px;padding:10px 12px;text-align:center"><div class="mono" style="font-size:20px;font-weight:600;color:'+x.tc+'">'+x.v+'</div><div style="font-size:10px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.8px">'+x.l+'</div></div>';}).join('');
@@ -480,7 +480,7 @@ function fsRenderRanking(){
             datasets:[{data:top.map(function(r){return r.a.sc;}),
               backgroundColor:top.map(function(r){return r.a.sig==='AKUMULASI'?'rgba(0,229,160,.75)':r.a.sig==='DISTRIBUSI'?'rgba(255,61,90,.75)':'rgba(60,75,95,.8)';}),borderWidth:0,borderRadius:3}]},
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-        scales:{x:{ticks:{color:'#4a5e82',font:{family:'IBM Plex Mono',size:10}},grid:{display:false},border:{display:false}},
+        scales:{x:{ticks:{color:'#4a5e82',font:{family:'Menlo',size:10}},grid:{display:false},border:{display:false}},
                 y:{min:0,max:100,ticks:{color:'#4a5e82',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'},border:{display:false}}}}});
   }
 
@@ -493,8 +493,8 @@ function fsRenderRanking(){
     // tampil identik dengan harga riil (sumber "kesalahan penafsiran saham").
     var isReal = typeof rdIsReal === 'function' ? rdIsReal(r.t) : false;
     var srcDot = isReal
-      ? '<span title="Data riil Yahoo Finance" style="color:#00e5a0;font-size:9px;margin-left:4px">●</span>'
-      : '<span title="⚠ SIMULASI — data acak, bukan harga pasar. Klik Refresh di Kelola Daftar Saham." style="color:#ff3d5a;font-size:9px;margin-left:4px;cursor:help">○ SIM</span>';
+      ? '<span title="Data riil Yahoo Finance" style="color:#41f3a7;font-size:9px;margin-left:4px">●</span>'
+      : '<span title="⚠ SIMULASI — data acak, bukan harga pasar. Klik Refresh di Kelola Daftar Saham." style="color:#e21d48;font-size:9px;margin-left:4px;cursor:help">○ SIM</span>';
     return '<tr style="'+(r.a.sig==='AKUMULASI'?'background:rgba(0,229,160,.03)':r.a.sig==='DISTRIBUSI'?'background:rgba(255,61,90,.03)':'')+(isReal?'':';outline:1px solid rgba(255,61,90,.15)')+'">'
       +'<td class="mono" style="color:var(--text3)">'+(i+1)+'</td>'
       +'<td class="mono" style="font-weight:600;cursor:pointer;color:var(--accent)" onclick="fsQuickLoad(\''+r.t+'\')">'+r.t+'</td>'
@@ -504,8 +504,8 @@ function fsRenderRanking(){
       +'<td class="mono" style="color:var(--text2)">'+r.cap+'T</td>'
       +'<td><div style="display:flex;align-items:center;gap:5px"><span class="mono" style="color:'+fsScColor(r.a.sc)+';min-width:22px;font-weight:600">'+r.a.sc+'</span><div class="prog" style="width:50px"><div class="progf" style="width:'+r.a.sc+'%;background:'+fsScColor(r.a.sc)+'"></div></div></div></td>'
       +'<td>'+fsMkBdg(r.a.sig,true)+'</td>'
-      +'<td class="mono" style="color:'+(r.a.cl>0?'#00e5a0':'#ff3d5a')+'">'+(r.a.cl*100).toFixed(1)+'%</td>'
-      +'<td class="mono" style="color:'+(r.a.rl>70?'#ff3d5a':r.a.rl<30?'#00e5a0':'var(--text2)')+'">'+r.a.rl.toFixed(1)+'</td>'
+      +'<td class="mono" style="color:'+(r.a.cl>0?'#41f3a7':'#e21d48')+'">'+(r.a.cl*100).toFixed(1)+'%</td>'
+      +'<td class="mono" style="color:'+(r.a.rl>70?'#e21d48':r.a.rl<30?'#41f3a7':'var(--text2)')+'">'+r.a.rl.toFixed(1)+'</td>'
       +'<td><button class="btn btn-ghost btn-xs '+(inWl?'b-up':'')+'" onclick="fsTgWl(\''+r.t+'\');fsRenderRanking()" style="font-size:10px">'+(inWl?'★':'☆')+'</button></td>'
       +'<td><button class="btn btn-ghost btn-xs" onclick="fsQuickLoad(\''+r.t+'\')" style="font-size:10px">Lihat</button></td>'
       +'</tr>';
@@ -538,12 +538,12 @@ function fsRenderHeatmap(){
     else if(m==='cmf'){val=r.a.cl;disp=(val*100).toFixed(1)+'%';}
     else{val=r.a.chgPct;disp=fsPct(val);}
     var cls=r.a.sig==='AKUMULASI'?'fs-hm-acc':r.a.sig==='DISTRIBUSI'?'fs-hm-dist':'fs-hm-neut';
-    var vc=r.a.sig==='AKUMULASI'?'#00e5a0':r.a.sig==='DISTRIBUSI'?'#ff3d5a':'#8fa3c8';
+    var vc=r.a.sig==='AKUMULASI'?'#41f3a7':r.a.sig==='DISTRIBUSI'?'#e21d48':'#8fa3c8';
     var inWl=FS_WL.some(function(w){return w.t===r.t;});
     return '<div class="fs-hm-cell '+cls+'" onclick="fsQuickLoad(\''+r.t+'\')" title="'+(inWl?'★ ':'')+r.n+' — '+r.a.sig+'">'
       +'<div class="mono" style="font-size:13px;font-weight:600;color:var(--text)">'+(inWl?'★ ':'')+r.t+'</div>'
       +'<div class="mono" style="font-size:17px;font-weight:700;margin-top:3px;color:'+vc+'">'+disp+'</div>'
-      +'<div class="mono" style="font-size:12px;margin-top:3px;color:'+(r.a.chgPct>=0?'#00e5a0':'#ff3d5a')+'">'+fsPct(r.a.chgPct)+'</div>'
+      +'<div class="mono" style="font-size:12px;margin-top:3px;color:'+(r.a.chgPct>=0?'#41f3a7':'#e21d48')+'">'+fsPct(r.a.chgPct)+'</div>'
       +'</div>';
   }).join('');
 }
@@ -571,8 +571,8 @@ function fsRunScanner(){
         +'</div>'
         +'<div style="font-size:11px;color:var(--text2);margin-bottom:5px">'+r.n.split(' ').slice(0,3).join(' ')+'</div>'
         +'<div style="display:flex;justify-content:space-between;margin-bottom:5px">'
-        +'<span class="mono" style="font-size:10px;color:'+(r.a.cl>0?'#00e5a0':'#ff3d5a')+'">CMF '+(r.a.cl*100).toFixed(1)+'%</span>'
-        +'<span class="mono" style="font-size:10px;color:'+(last.vr>1.5?'#00e5a0':'var(--text2)')+'">'+last.vr.toFixed(1)+'×</span>'
+        +'<span class="mono" style="font-size:10px;color:'+(r.a.cl>0?'#41f3a7':'#e21d48')+'">CMF '+(r.a.cl*100).toFixed(1)+'%</span>'
+        +'<span class="mono" style="font-size:10px;color:'+(last.vr>1.5?'#41f3a7':'var(--text2)')+'">'+last.vr.toFixed(1)+'×</span>'
         +'</div>'+fsMkBdg(r.a.sig,true)+'</div>';
     }).join('')+'</div>';
 }
@@ -646,9 +646,9 @@ function fsRenderWlPage(){
         +'<td class="mono '+(chg>=0?'up':'dn')+'">'+fsPct(chg)+'</td>'
         +'<td><div style="display:flex;align-items:center;gap:5px"><span class="mono" style="color:'+fsScColor(w.a.sc)+';min-width:22px;font-weight:600">'+w.a.sc+'</span><div class="prog" style="width:50px"><div class="progf" style="width:'+w.a.sc+'%;background:'+fsScColor(w.a.sc)+'"></div></div></div></td>'
         +'<td>'+fsMkBdg(w.a.sig,true)+'</td>'
-        +'<td class="mono" style="color:'+(w.a.cl>0?'#00e5a0':'#ff3d5a')+'">'+(w.a.cl*100).toFixed(1)+'%</td>'
-        +'<td class="mono" style="color:'+(last.vr>1.5?'#00e5a0':'var(--text2)')+'">'+last.vr.toFixed(2)+'×</td>'
-        +'<td class="mono" style="color:'+(w.a.rl>70?'#ff3d5a':w.a.rl<30?'#00e5a0':'var(--text2)')+'">'+w.a.rl.toFixed(1)+'</td>'
+        +'<td class="mono" style="color:'+(w.a.cl>0?'#41f3a7':'#e21d48')+'">'+(w.a.cl*100).toFixed(1)+'%</td>'
+        +'<td class="mono" style="color:'+(last.vr>1.5?'#41f3a7':'var(--text2)')+'">'+last.vr.toFixed(2)+'×</td>'
+        +'<td class="mono" style="color:'+(w.a.rl>70?'#e21d48':w.a.rl<30?'#41f3a7':'var(--text2)')+'">'+w.a.rl.toFixed(1)+'</td>'
         +'<td><button class="btn btn-red btn-xs" onclick="fsTgWl(\''+w.t+'\');fsRenderWlPage()" style="font-size:10px">✕</button></td>'
         +'</tr>';
     }).join('')+'</tbody></table></div>';
@@ -685,17 +685,17 @@ function fsRunAI(){
     var s1,s2,s3,s4,s5;
     // reuse logic from index.html adapted
     if(a.sig==='AKUMULASI'){
-      s1='Saham <strong>'+tk+'</strong> ('+info.s+') menunjukkan pola <strong style="color:#00e5a0">akumulasi institusional</strong> yang '+(a.sc>=70?'sangat kuat':'cukup signifikan')+' dengan skor '+a.sc+'/100. Dalam 20 hari terakhir, tercatat <strong>'+a.bu+' hari big volume pada hari harga naik</strong> vs '+a.bd+' hari big volume turun. CMF-20 di <strong style="color:#00e5a0">+'+(a.cl*100).toFixed(1)+'%</strong> mengkonfirmasi aliran uang besar masuk secara konsisten.';
+      s1='Saham <strong>'+tk+'</strong> ('+info.s+') menunjukkan pola <strong style="color:#41f3a7">akumulasi institusional</strong> yang '+(a.sc>=70?'sangat kuat':'cukup signifikan')+' dengan skor '+a.sc+'/100. Dalam 20 hari terakhir, tercatat <strong>'+a.bu+' hari big volume pada hari harga naik</strong> vs '+a.bd+' hari big volume turun. CMF-20 di <strong style="color:#41f3a7">+'+(a.cl*100).toFixed(1)+'%</strong> mengkonfirmasi aliran uang besar masuk secara konsisten.';
       s4='<strong>Skenario Bullish</strong>: CMF tetap positif + volume beli dominan — target resistance sekitar <strong>'+fsP(last.h*1.03)+'</strong>.<br><br><strong>Skenario Bearish</strong>: Jika CMF berbalik negatif di bawah -10%, waspadai exit institusi. Break MA20 ke bawah adalah sinyal peringatan.';
     } else if(a.sig==='DISTRIBUSI'){
-      s1='Analisa volume flow <strong>'+tk+'</strong> ('+info.s+') mengungkap <strong style="color:#ff3d5a">distribusi institusional</strong>. Tercatat <strong>'+a.bd+' hari big volume pada hari harga turun</strong> vs '+a.bu+' hari naik. CMF-20 di <strong style="color:#ff3d5a">'+(a.cl*100).toFixed(1)+'%</strong> mengkonfirmasi aliran uang keluar.';
+      s1='Analisa volume flow <strong>'+tk+'</strong> ('+info.s+') mengungkap <strong style="color:#e21d48">distribusi institusional</strong>. Tercatat <strong>'+a.bd+' hari big volume pada hari harga turun</strong> vs '+a.bu+' hari naik. CMF-20 di <strong style="color:#e21d48">'+(a.cl*100).toFixed(1)+'%</strong> mengkonfirmasi aliran uang keluar.';
       s4='<strong>Skenario Bearish</strong>: Distribusi dapat mendorong harga ke support MA50 '+fsP(ma50L||last.c*.92)+'.<br><br><strong>Skenario Reversal</strong>: Big volume bullish + CMF berbalik positif bisa tanda akumulasi baru dimulai.';
     } else {
       s1='Saham <strong>'+tk+'</strong> ('+info.s+') berada dalam <strong>fase konsolidasi netral</strong> (skor '+a.sc+'/100). Big volume hampir seimbang: '+a.bu+' hari naik vs '+a.bd+' hari turun. CMF '+(a.cl*100).toFixed(1)+'% belum memberikan sinyal arah yang jelas.';
       s4='<strong>Skenario Breakout</strong>: Big volume >2× + harga tembus resistance + CMF >+10% → sinyal akumulasi.<br><br><strong>Skenario Breakdown</strong>: Big vol hari turun + CMF <-10% → distribusi tahap awal.';
     }
-    s2='Net volume beli institusional 20 hari: <span style="color:'+(net>=0?'#00e5a0':'#ff3d5a')+'">'+(net>=0?'+':'')+fsV(Math.abs(net))+(net>=0?' (net beli)':' (net jual)')+'</span>. '+(a.obvT?'OBV naik — tekanan beli dominan.':'OBV turun — tekanan jual masih dominan.')+' '+(a.adT?'A/D Line naik — uang kumulatif masuk.':'A/D Line turun — distribusi berlangsung.');
-    s3='Harga '+fsP(last.c)+' berada <strong style="color:'+(p20>0?'#00e5a0':'#ff3d5a')+'">'+Math.abs(p20).toFixed(1)+'% '+(p20>0?'di atas':'di bawah')+'</strong> MA20 ('+fsP(ma20L)+') dan <strong style="color:'+(p50>0?'#00e5a0':'#ff3d5a')+'">'+Math.abs(p50).toFixed(1)+'% '+(p50>0?'di atas':'di bawah')+'</strong> MA50 ('+fsP(ma50L)+'). RSI-14: '+(a.rl>70?'<span style="color:#ff3d5a">overbought ('+a.rl.toFixed(1)+')</span>':a.rl<30?'<span style="color:#00e5a0">oversold ('+a.rl.toFixed(1)+')</span>':'<span>'+a.rl.toFixed(1)+'</span>')+'.';
+    s2='Net volume beli institusional 20 hari: <span style="color:'+(net>=0?'#41f3a7':'#e21d48')+'">'+(net>=0?'+':'')+fsV(Math.abs(net))+(net>=0?' (net beli)':' (net jual)')+'</span>. '+(a.obvT?'OBV naik — tekanan beli dominan.':'OBV turun — tekanan jual masih dominan.')+' '+(a.adT?'A/D Line naik — uang kumulatif masuk.':'A/D Line turun — distribusi berlangsung.');
+    s3='Harga '+fsP(last.c)+' berada <strong style="color:'+(p20>0?'#41f3a7':'#e21d48')+'">'+Math.abs(p20).toFixed(1)+'% '+(p20>0?'di atas':'di bawah')+'</strong> MA20 ('+fsP(ma20L)+') dan <strong style="color:'+(p50>0?'#41f3a7':'#e21d48')+'">'+Math.abs(p50).toFixed(1)+'% '+(p50>0?'di atas':'di bawah')+'</strong> MA50 ('+fsP(ma50L)+'). RSI-14: '+(a.rl>70?'<span style="color:#e21d48">overbought ('+a.rl.toFixed(1)+')</span>':a.rl<30?'<span style="color:#41f3a7">oversold ('+a.rl.toFixed(1)+')</span>':'<span>'+a.rl.toFixed(1)+'</span>')+'.';
     if(mode==='trade') s5=(a.sig==='AKUMULASI'?'Entry ideal: pullback ke MA20 '+fsP(ma20L||last.c*.97)+'. Stop loss di bawah MA50. R/R minimal 1:2. Target: '+fsP(last.h*1.03)+'.':a.sig==='DISTRIBUSI'?'Sudah holding: pertimbangkan reduce position. Belum masuk: <strong>hindari entry</strong> — tunggu reversal berupa big vol bullish + CMF positif 3 hari.':'<strong>Wait and see.</strong> Set alert di '+fsP(last.h*1.02)+' (buy) dan '+fsP(ma20L||last.c*.96)+' (stop).');
     else if(mode==='deep') s5=(a.sig==='AKUMULASI'?'Pola stealth accumulation terdeteksi — institusi mengisi posisi diam-diam. Investor retail yang masuk sekarang berpotensi ikut tren institusional sejak awal.':a.sig==='DISTRIBUSI'?'Distribusi bertahap bisa berlangsung mingguan. Retail sering terjebak beli saat institusi justru jual.':'Institusi belum menunjukkan posisi jelas. Bisa berarti base building sebelum rally.');
     else s5=(a.sig==='AKUMULASI'?'Saham ini layak dipantau. Konfirmasi dengan fundamental sebelum masuk. Pantau CMF dan big vol sebagai konfirmasi.':a.sig==='DISTRIBUSI'?'Ekstra hati-hati. Tunggu reversal volume yang jelas sebelum entry.':'Bersabar. Gunakan capital untuk saham dengan sinyal lebih jelas.');
@@ -703,7 +703,7 @@ function fsRunAI(){
     var html='<div style="display:flex;align-items:center;gap:9px;margin-bottom:13px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.05)">';
     html+=fsMkBdg(a.sig);
     html+='<span style="font-size:11px;color:var(--text2)">Skor: <span class="mono" style="color:'+fsScColor(a.sc)+'">'+a.sc+'/100</span></span>';
-    html+='<span style="font-size:11px;color:var(--text2)">CMF: <span class="mono" style="color:'+(a.cl>0?'#00e5a0':'#ff3d5a')+'">'+(a.cl*100).toFixed(1)+'%</span></span>';
+    html+='<span style="font-size:11px;color:var(--text2)">CMF: <span class="mono" style="color:'+(a.cl>0?'#41f3a7':'#e21d48')+'">'+(a.cl*100).toFixed(1)+'%</span></span>';
     html+='</div>';
     var sections=[
       {t:'01 — Ringkasan Sinyal',ic:'ti-radar',b:s1},

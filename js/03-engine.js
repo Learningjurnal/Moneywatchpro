@@ -369,7 +369,7 @@ function fhSetBadge(status, text){
   fhUpdateLoadBanners(status);
   var dot = el('fh-dot'), lbl = el('fh-label'), badge = el('fh-badge');
   if(!dot||!lbl) return;
-  var colors = { live:'#00e5a0', error:'#ff3d5a', off:'#4a5e82', loading:'#ffc107', limit:'#ffc107' };
+  var colors = { live:'#41f3a7', error:'#e21d48', off:'#4a5e82', loading:'#ffc107', limit:'#ffc107' };
   dot.style.background = colors[status]||'#4a5e82';
   lbl.textContent = text;
   if(badge){
@@ -606,7 +606,7 @@ function openFinnhubSettings(){
       '2. Klik "Coba Lagi" untuk reconnect manual'+
     '</div>'+
     '<div style="display:flex;justify-content:space-between;align-items:center">'+
-      '<span style="font-size:11px;font-family:\'IBM Plex Mono\',monospace">Status: <span id="fh-modal-status" style="color:'+sc+'">'+st+'</span></span>'+
+      '<span style="font-size:11px;font-family:var(--font-mono)">Status: <span id="fh-modal-status" style="color:'+sc+'">'+st+'</span></span>'+
       '<div style="display:flex;gap:7px">'+
         '<button class="btn btn-ghost" onclick="fhDisconnect()">Pakai Simulasi</button>'+
         '<button class="btn btn-blue" onclick="fhConnect()">📡 Coba Lagi</button>'+
@@ -697,9 +697,9 @@ function buildTickerTape(){
 // CHARTS
 // ============================================================
 function kc(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
-var TC={color:'#8a90ad',font:{family:'IBM Plex Mono',size:9}};
+var TC={color:'#8a90ad',font:{family:'Menlo',size:9}};
 var GC='rgba(255,102,0,.07)';
-var TT={backgroundColor:'#0a0a0f',titleColor:'#b8bdd4',bodyColor:'#f5f5fa',borderColor:'rgba(255,102,0,.25)',borderWidth:1,titleFont:{family:'IBM Plex Mono'},bodyFont:{family:'IBM Plex Mono',size:11}};
+var TT={backgroundColor:'#0a0a0f',titleColor:'#b8bdd4',bodyColor:'#f5f5fa',borderColor:'rgba(255,102,0,.25)',borderWidth:1,titleFont:{family:'Menlo'},bodyFont:{family:'Menlo',size:11}};
 
 function genIHSG(n){
   // Simulate realistic intraday IHSG from Open 6210 → Close 6195
@@ -737,8 +737,8 @@ function buildModalPosisiChart(porto){
       labels:labels,
       datasets:[
         {label:'Nilai Pasar',data:retained,backgroundColor:'rgba(45,212,191,.6)',borderColor:'#2dd4bf',borderWidth:1,stack:'s'},
-        {label:'Rugi',      data:loss,    backgroundColor:'rgba(255,61,90,.7)',  borderColor:'#ff3d5a',borderWidth:1,stack:'s'},
-        {label:'Untung',    data:gain,    backgroundColor:'rgba(0,229,160,.7)',  borderColor:'#00e5a0',borderWidth:1,stack:'s'}
+        {label:'Rugi',      data:loss,    backgroundColor:'rgba(255,61,90,.7)',  borderColor:'#e21d48',borderWidth:1,stack:'s'},
+        {label:'Untung',    data:gain,    backgroundColor:'rgba(0,229,160,.7)',  borderColor:'#41f3a7',borderWidth:1,stack:'s'}
       ]
     },
     options:{
@@ -851,7 +851,7 @@ function buildIhsgChart(tf){
   var toX=function(i){return padL+(n<=1?0:(i/(n-1))*plotW);};
 
   var up=closes[closes.length-1]>=closes[0];
-  var lineCol=up?'#00e5a0':'#f23645';
+  var lineCol=up?'#41f3a7':'#f23645';
   var fillIdSuffix=up?'up':'dn';
   var gradId='ihsgFill-'+fillIdSuffix;
 
@@ -868,12 +868,12 @@ function buildIhsgChart(tf){
     var yv=mn+(rng*gi/yTicks);
     var gy=toY(yv);
     html+='<line x1="'+padL+'" y1="'+gy.toFixed(1)+'" x2="'+(VW-padR)+'" y2="'+gy.toFixed(1)+'" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>';
-    html+='<text x="'+(padL-4)+'" y="'+(gy+3).toFixed(1)+'" text-anchor="end" font-size="8" fill="#787b86" font-family="IBM Plex Mono,monospace">'+Math.round(yv).toLocaleString('id-ID')+'</text>';
+    html+='<text x="'+(padL-4)+'" y="'+(gy+3).toFixed(1)+'" text-anchor="end" font-size="8" fill="#787b86" font-family="Menlo,monospace">'+Math.round(yv).toLocaleString('id-ID')+'</text>';
   }
   // X axis labels (show ~6 evenly)
   var xStep=Math.max(1,Math.floor(n/6));
   for(var xi=0;xi<n;xi+=xStep){
-    if(labels[xi]) html+='<text x="'+toX(xi).toFixed(1)+'" y="'+(VH-4)+'" text-anchor="middle" font-size="8" fill="#787b86" font-family="IBM Plex Mono,monospace">'+labels[xi]+'</text>';
+    if(labels[xi]) html+='<text x="'+toX(xi).toFixed(1)+'" y="'+(VH-4)+'" text-anchor="middle" font-size="8" fill="#787b86" font-family="Menlo,monospace">'+labels[xi]+'</text>';
   }
   // Area path (isi gradasi turun ke dasar chart) + garis close di atasnya
   var linePts=closes.map(function(c,i){return toX(i).toFixed(1)+','+toY(c).toFixed(1);});
@@ -908,10 +908,10 @@ var _centerTextPlugin = {
     var y = (chart.chartArea.top+chart.chartArea.bottom)/2;
     ctx.save();
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = '700 20px "IBM Plex Mono",monospace';
+    ctx.font = '700 20px "Menlo",monospace';
     ctx.fillStyle = opt.color || '#f5f5fa';
     ctx.fillText(opt.top, x, y-9);
-    ctx.font = '600 9px "IBM Plex Mono",monospace';
+    ctx.font = '600 9px "Menlo",monospace';
     ctx.fillStyle = '#8a90ad';
     ctx.fillText(opt.bottom, x, y+10);
     ctx.restore();
@@ -977,7 +977,7 @@ function buildPnlChart(){
       p.lot-=tx.lot;p.cost=Math.max(0,p.cost-avg*tx.lot*100);
     }
   });
-  var last=data[data.length-1];var col=last>=0?'#00e5a0':'#ff3d5a';
+  var last=data[data.length-1];var col=last>=0?'#41f3a7':'#e21d48';
   var ctx=cv.getContext('2d');var g=ctx.createLinearGradient(0,0,0,190);
   g.addColorStop(0,last>=0?'rgba(0,229,160,.18)':'rgba(255,61,90,.18)');g.addColorStop(1,'rgba(0,0,0,0)');
   charts['pnl']=new Chart(ctx,{type:'line',data:{labels:labels,datasets:[{data:data,borderColor:col,borderWidth:2,backgroundColor:g,fill:true,tension:.4,pointRadius:3,pointBackgroundColor:col}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:Object.assign({},TT,{callbacks:{label:function(c){return 'P&L: Rp '+fmt(c.parsed.y)}}})},scales:{x:{grid:{color:GC},ticks:Object.assign({},TC,{maxTicksLimit:7})},y:{grid:{color:GC},ticks:Object.assign({},TC,{callback:function(v){return 'Rp '+fmtK(v)}}),position:'right'}}}});
