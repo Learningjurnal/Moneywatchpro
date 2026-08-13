@@ -142,9 +142,9 @@ function fsProcess(data){
 
 // ── nav / helpers ──
 function fsSt(name,btn){
-  var groups={all:['ov','vol','ind','vwap'],tbl:['tbl'],ai:['ai']};
+  var groups={all:['ov','vol','ind','vwap'],tbl:['tbl'],ai:['ai'],foreign:['foreign']};
   var show=groups[name]||[name];
-  ['ov','vol','ind','vwap','tbl','ai'].forEach(function(t){
+  ['ov','vol','ind','vwap','tbl','ai','foreign'].forEach(function(t){
     var e=document.getElementById('fs-st-'+t);
     if(e) e.style.display=show.indexOf(t)>=0?'block':'none';
   });
@@ -153,6 +153,7 @@ function fsSt(name,btn){
   document.querySelectorAll('#page-flowscan .tab').forEach(function(b){b.classList.remove('on');});
   if(btn) btn.classList.add('on');
   if(name==='all' && FS_G.data){ fsRenderVWAP(); fsRenderProb(FS_G.a); }
+  if(name==='foreign' && typeof fsRenderForeign==='function') fsRenderForeign();
 }
 
 function fsSetPeriod(d,btn){
