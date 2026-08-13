@@ -44,22 +44,12 @@ function idxCacheSet(dateStr, rows){
 // Hasil di-cache berdasarkan tanggal ASLI dari field `Date` di respons
 // (bukan tanggal yang diminta) — supaya weekend/libur yang kebetulan
 // dijawab API dengan data hari bursa terakhir tidak dianggap baris baru. ──
-// FIX: fetch() bawaan browser TIDAK punya timeout default — kalau salah satu
-// proxy CORS publik diam saja (koneksi terbuka tapi tidak pernah merespons,
-// beda dari error/HTTP gagal yang langsung ke-reject), seluruh rantai
-// .then()/.catch() menggantung SELAMANYA tanpa pernah memanggil cb() —
-// persis gejala "macet di 'Mengambil data...' tanpa pernah error" yang
-// dilaporkan. AbortController dengan batas waktu memaksa proxy yang diam
-// dianggap gagal setelah 12 detik supaya lanjut coba proxy berikutnya.
 function idxFetchStockSummary(requestedDateStr, cb, pi){
   pi = pi||0;
   if(!window.FH || pi >= FH.PROXIES.length){ cb(new Error('ALL_PROXIES_FAILED'), null); return; }
   var yUrl = 'https://www.idx.co.id/primary/TradingSummary/GetStockSummary?date='+requestedDateStr+'&start=0&length=9999';
-  var ctrl = (typeof AbortController!=='undefined') ? new AbortController() : null;
-  var timedOut = false;
-  var timer = ctrl ? setTimeout(function(){ timedOut=true; ctrl.abort(); }, 12000) : null;
-  fetch(FH.PROXIES[pi](yUrl), ctrl ? {signal:ctrl.signal} : undefined)
-    .then(function(r){ if(timer) clearTimeout(timer); if(!r.ok) throw new Error('HTTP_'+r.status); return r.json(); })
+  fetch(FH.PROXIES[pi](yUrl))
+    .then(function(r){ if(!r.ok) throw new Error('HTTP_'+r.status); return r.json(); })
     .then(function(d){
       if(!d || !Array.isArray(d.data) || !d.data.length) throw new Error('NO_DATA');
       var actualDate = (d.data[0].Date||'').slice(0,10).replace(/-/g,'');
@@ -72,7 +62,7 @@ function idxFetchStockSummary(requestedDateStr, cb, pi){
       idxCacheSet(actualDate, rows);
       cb(null, {dateStr:actualDate, rows:rows});
     })
-    .catch(function(){ if(timer) clearTimeout(timer); idxFetchStockSummary(requestedDateStr, cb, pi+1); });
+    .catch(function(){ idxFetchStockSummary(requestedDateStr, cb, pi+1); });
 }
 
 // ── Kumpulkan sampai `wantDays` hari bursa unik (mundur dari hari ini),
@@ -83,17 +73,9 @@ function idxFetchRecentDays(wantDays, cb){
   var collected = {}; // dateStr -> rows
   var attempt = 0;
   var anyFetchSucceeded = false;
-  var consecutiveLiveFailures = 0;
-  // FIX: kalau proxy/endpoint IDX-nya benar-benar down/diblokir, kegagalan
-  // itu SAMA untuk semua tanggal (proxy tidak peduli tanggal apa yang
-  // diminta) — jadi kalau 2x percobaan LIVE (bukan cache hit) berturut-turut
-  // gagal total di ketiga proxy, langsung menyerah alih-alih tetap mencoba
-  // sampai 19 tanggal (yang dengan timeout 12dtk×3 proxy per tanggal bisa
-  // berarti user menunggu berbelas menit sebelum akhirnya lihat pesan error).
-  var CIRCUIT_BREAKER = 2;
 
   function tryNext(cursorDate){
-    if(Object.keys(collected).length >= wantDays || attempt >= maxAttempts || consecutiveLiveFailures >= CIRCUIT_BREAKER){
+    if(Object.keys(collected).length >= wantDays || attempt >= maxAttempts){
       finish();
       return;
     }
@@ -101,17 +83,15 @@ function idxFetchRecentDays(wantDays, cb){
     var reqStr = idxDateStr(cursorDate);
     var cached = idxCacheGet(reqStr);
     if(cached){
-      collected[reqStr] = cached; anyFetchSucceeded = true; consecutiveLiveFailures = 0;
+      collected[reqStr] = cached; anyFetchSucceeded = true;
       cursorDate.setDate(cursorDate.getDate()-1);
       tryNext(cursorDate);
       return;
     }
     idxFetchStockSummary(reqStr, function(err, res){
       if(!err && res){
-        anyFetchSucceeded = true; consecutiveLiveFailures = 0;
+        anyFetchSucceeded = true;
         if(!collected[res.dateStr]) collected[res.dateStr] = res.rows;
-      } else {
-        consecutiveLiveFailures++;
       }
       cursorDate.setDate(cursorDate.getDate()-1);
       tryNext(cursorDate);
