@@ -237,7 +237,20 @@ function fsRunAnalysis(){
   fsRenderProb(a);
   var tblOpen=document.getElementById('fs-st-tbl'); tblOpen=tblOpen&&tblOpen.style.display!=='none';
   var aiOpen=document.getElementById('fs-st-ai'); aiOpen=aiOpen&&aiOpen.style.display!=='none';
-  if(!tblOpen && !aiOpen){
+  // FIX: cek ini ditulis sebelum tab Foreign Flow ada — tanpa dikecualikan di
+  // sini, setiap kali data dianalisa ulang (termasuk siklus refresh harga
+  // otomatis tiap ~60 detik dari fhStart()), tab Foreign Flow yang sedang
+  // terbuka akan dipaksa balik ke tampilan Analisa Lengkap tanpa mengubah
+  // status "aktif" tombol tab-nya — persis gejala "tab Foreign Flow
+  // ke-highlight tapi isinya Analisa Lengkap" yang dilaporkan.
+  var foreignOpen=document.getElementById('fs-st-foreign'); foreignOpen=foreignOpen&&foreignOpen.style.display!=='none';
+  // Kalau tab Foreign Flow sedang dibuka & ticker berganti, refresh datanya juga
+  // (fsRenderForeign() sendiri sudah cek cache, jadi tidak fetch ulang kalau
+  // ticker-nya sama — makanya TIDAK dipanggil tanpa syarat seperti fsRenderDailyTable()
+  // di atas, supaya siklus refresh harga otomatis ~60 detik tidak diam-diam
+  // memicu fetch IDX setiap kali walau user tidak sedang melihat tab ini).
+  if(foreignOpen && typeof fsRenderForeign==='function') fsRenderForeign();
+  if(!tblOpen && !aiOpen && !foreignOpen){
     ['ov','vol','ind','vwap'].forEach(function(t){var e=document.getElementById('fs-st-'+t);if(e)e.style.display='block';});
     var pb=document.getElementById('fs-prob'); if(pb)pb.style.display='block';
     fsRenderVWAP();
