@@ -724,24 +724,44 @@ function xnpv(rate, flows){
     return sum + f.amount / Math.pow(1+rate, days/365);
   }, 0);
 }
+// FIX: Newton-Raphson (versi sebelumnya) gagal konvergen untuk kasus umum
+// seperti riwayat data pendek (baru beberapa minggu) dengan rugi besar --
+// hasilnya dibuang oleh guard rate<-0.999 TANPA membedakan itu dari kasus
+// "arus kas semua satu arah" (secara matematis memang tidak ada solusi).
+// Kedua kasus itu sebelumnya menampilkan pesan yang SAMA & MENYESATKAN.
+// Sekarang pakai bisection (dijamin konvergen selama ada perubahan tanda
+// NPV di rentang pencarian, jauh lebih stabil dari Newton-Raphson untuk
+// pola arus kas yang tidak biasa) dan mengembalikan {rate, reason} supaya
+// pemanggil bisa kasih pesan yang akurat sesuai penyebab sebenarnya.
 function computeXIRR(flows){
-  // flows: [{date, amount}], minimal 2 titik dengan tanda beda (ada + dan -)
-  if(!flows || flows.length<2) return null;
+  if(!flows || flows.length<2) return {rate:null, reason:'insufficient'};
   var hasPos=flows.some(function(f){return f.amount>0;});
   var hasNeg=flows.some(function(f){return f.amount<0;});
-  if(!hasPos || !hasNeg) return null; // tidak ada solusi matematis kalau semua arus kas satu arah
-  var rate=0.15; // tebakan awal
-  for(var i=0;i<200;i++){
-    var f0=xnpv(rate,flows);
-    var f1=(xnpv(rate+1e-6,flows)-f0)/1e-6;
-    if(Math.abs(f1)<1e-12) break;
-    var next=rate-f0/f1;
-    if(!isFinite(next)) break;
-    if(Math.abs(next-rate)<1e-7){ rate=next; break; }
-    rate=next;
+  if(!hasPos || !hasNeg) return {rate:null, reason:'same_sign'};
+
+  var days=(new Date(flows[flows.length-1].date)-new Date(flows[0].date))/86400000;
+
+  // Cari rentang [lo,hi] di mana NPV(lo) dan NPV(hi) berbeda tanda (bracket).
+  // -0.9999 = rugi 99,99% disetahunkan (batas bawah masuk akal), coba sampai
+  // +1000%/th (rate=10) dulu, perluas ke +9900%/th (rate=100) kalau belum
+  // dapat bracket -- longgar supaya periode data pendek+rugi besar (yang
+  // kalau disetahunkan angkanya jadi ekstrem tapi tetap matematis valid)
+  // tidak langsung dibuang begitu saja.
+  var lo=-0.9999, hi=10;
+  var fLo=xnpv(lo,flows), fHi=xnpv(hi,flows);
+  if((fLo<0)===(fHi<0)){
+    hi=100; fHi=xnpv(hi,flows);
+    if((fLo<0)===(fHi<0)) return {rate:null, reason:'no_bracket', days:days};
   }
-  if(!isFinite(rate) || rate<-0.999 || rate>50) return null; // hasil tidak masuk akal, regresi gagal konvergen
-  return rate;
+  var mid=0;
+  for(var i=0;i<300;i++){
+    mid=(lo+hi)/2;
+    var fMid=xnpv(mid,flows);
+    if(Math.abs(fMid)<1e-6 || (hi-lo)<1e-10) break;
+    if((fLo<0)===(fMid<0)){ lo=mid; fLo=fMid; } else { hi=mid; }
+  }
+  if(!isFinite(mid)) return {rate:null, reason:'no_converge', days:days};
+  return {rate:mid, reason:'ok', days:days};
 }
 function perfRenderXirr(){
   var valEl=el('perf-xirr-val'), simpleEl=el('perf-simple-return-val'), depEl=el('perf-xirr-netdeposit'), cntEl=el('perf-xirr-flowcount'), noteEl=el('perf-xirr-note');
@@ -774,14 +794,39 @@ function perfRenderXirr(){
   simpleEl.textContent = simpleReturn!==null ? (simpleReturn>=0?'+':'')+simpleReturn.toFixed(1)+'%' : '—';
   simpleEl.className = 'mval '+(simpleReturn!==null && simpleReturn>=0?'up':simpleReturn!==null?'dn':'');
 
-  var xirr = computeXIRR(flows);
-  if(xirr===null){
-    valEl.textContent='—';
-    noteEl.innerHTML='XIRR belum bisa dihitung — butuh minimal 1 Setor dan nilai portofolio saat ini berbeda tanda, atau data arus kas belum cukup bervariasi tanggalnya.';
+  var xr = computeXIRR(flows);
+  if(xr.rate===null){
+    valEl.textContent='—'; valEl.className='mval';
+    var reasonMsg = {
+      insufficient:'Butuh minimal 2 arus kas (Setor/Tarik + nilai portofolio saat ini) untuk dihitung.',
+      same_sign:'Semua arus kas searah (misalnya cuma ada Setor, tidak pernah Tarik, dan nilai portofolio saat ini juga positif tanpa ada arus keluar) — secara matematis XIRR butuh minimal satu arus kas masuk dan satu keluar.',
+      no_bracket:'Tidak ditemukan tingkat return yang menyeimbangkan arus kas ini bahkan sampai +9900%/th — kemungkinan pola tanggal/nominalnya tidak wajar. Cek riwayat Setor/Tarik RDN.',
+      no_converge:'Perhitungan tidak konvergen ke angka yang stabil — coba lagi setelah menambah riwayat Setor/Tarik.'
+    }[xr.reason] || 'XIRR belum bisa dihitung.';
+    noteEl.innerHTML = reasonMsg;
     return;
   }
-  valEl.textContent=(xirr>=0?'+':'')+(xirr*100).toFixed(1)+'%';
-  valEl.className='mval '+(xirr>=0?'up':'dn');
-  var days=(new Date(flows[flows.length-1].date)-new Date(flows[0].date))/86400000;
-  noteEl.innerHTML='Dihitung dari '+muts.length+' transaksi Setor/Tarik RDN selama '+Math.round(days)+' hari ('+flows[0].date+' → '+today()+'), plus nilai saham+RDN saat ini (Rp '+fmtK(terminalValue)+') sebagai arus kas terakhir. XIRR disetahunkan (annualized) — beda dari return sederhana yang tidak memperhitungkan kapan tiap setoran terjadi.';
+  valEl.textContent=(xr.rate>=0?'+':'')+(xr.rate*100).toFixed(1)+'%';
+  valEl.className='mval '+(xr.rate>=0?'up':'dn');
+  var note='Dihitung dari '+muts.length+' transaksi Setor/Tarik RDN selama '+Math.round(xr.days)+' hari ('+flows[0].date+' → '+today()+'), plus nilai saham+RDN saat ini (Rp '+fmtK(terminalValue)+') sebagai arus kas terakhir. XIRR disetahunkan (annualized) — beda dari return sederhana yang tidak memperhitungkan kapan tiap setoran terjadi.';
+  if(xr.days<30){
+    note += ' <span class="amb">⚠ Periode data baru '+Math.round(xr.days)+' hari — angka yang disetahunkan dari periode sependek ini bisa terlihat ekstrem (naik/turun tajam) padahal cuma pergerakan wajar dalam beberapa minggu. Perlakukan sebagai indikasi awal, bukan gambaran tahunan yang mantap.</span>';
+  }
+  noteEl.innerHTML = note;
+}
+
+// ── Dipakai renderRisiko() (04-render.js) supaya "Manajemen Risiko" &
+// Stress Test bisa pakai Beta RIIL (regresi harga sungguhan) begitu sudah
+// selesai dihitung di kartu Alpha & Beta halaman ini, bukan tetap terpaku
+// ke Beta statis database walau data riil sudah tersedia. Return null kalau
+// belum pernah dihitung (renderRisiko() lalu fallback ke Beta statis). ──
+function perfGetRealPortfolioBeta(){
+  if(!PERF_BETA_STATE.loaded || !PERF_BETA_STATE.data || !PERF_BETA_STATE.data.results) return null;
+  var ok = PERF_BETA_STATE.data.results.filter(function(r){return r.ok;});
+  if(!ok.length) return null;
+  var okMV = ok.reduce(function(a,r){return a+r.mv;},0);
+  var totalMV = PERF_BETA_STATE.data.results.reduce(function(a,r){return a+r.mv;},0)||1;
+  if(okMV<=0) return null;
+  var beta = ok.reduce(function(a,r){return a+r.beta*(r.mv/okMV);},0);
+  return {beta:beta, coverage: okMV/totalMV*100, n:ok.length, total:PERF_BETA_STATE.data.results.length};
 }

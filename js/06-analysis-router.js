@@ -929,6 +929,7 @@ function renderPage(name){
   switch(name){
     case 'dashboard':renderDashboard();break;
     case 'performance':renderPerformance();break;
+    case 'datahealth':renderDataHealth();break;
     case 'rdn':renderRdn();break;
     case 'transaksi':renderTransaksi();break;
     case 'portofolio':renderPortofolio();break;

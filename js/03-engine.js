@@ -368,6 +368,12 @@ function fhSetBadge(status, text){
   FH.status = status;
   fhUpdateLoadBanners(status);
   var dot = el('fh-dot'), lbl = el('fh-label'), badge = el('fh-badge');
+  // FIX: sebelumnya tidak ada indikator KAPAN harga terakhir benar-benar
+  // berhasil diambil — badge cuma bilang "LIVE"/"Simulasi" tanpa jejak waktu,
+  // jadi user tidak tahu apakah angka yang dilihat baru saja disegarkan atau
+  // sebenarnya sudah basi karena siklus refresh diam-diam gagal berulang kali.
+  if(status==='live') FH.lastSyncAt = Date.now();
+  if(typeof fhUpdateLastSyncLabel==='function') fhUpdateLastSyncLabel();
   if(!dot||!lbl) return;
   var colors = { live:'#41f3a7', error:'#e21d48', off:'#4a5e82', loading:'#ffc107', limit:'#ffc107' };
   dot.style.background = colors[status]||'#4a5e82';
@@ -377,6 +383,24 @@ function fhSetBadge(status, text){
                               status==='error'  ? 'rgba(255,61,90,.3)' :
                               status==='limit'  ? 'rgba(255,193,7,.3)' : 'var(--border)';
   }
+}
+// ── Label relatif "diupdate X lalu" — dipanggil tiap detik dari updateClock()
+// supaya selalu segar tanpa perlu interval terpisah. ──
+function fhUpdateLastSyncLabel(){
+  var el2 = el('fh-lastsync');
+  if(!el2) return;
+  if(!FH.lastSyncAt){ el2.textContent=''; return; }
+  var secAgo = Math.floor((Date.now()-FH.lastSyncAt)/1000);
+  var txt;
+  if(secAgo<5) txt='baru saja';
+  else if(secAgo<60) txt=secAgo+'dtk lalu';
+  else if(secAgo<3600) txt=Math.floor(secAgo/60)+'mnt lalu';
+  else txt=Math.floor(secAgo/3600)+'jam lalu';
+  el2.textContent = txt;
+  // Kalau sudah lama sekali (>10 menit) tanpa sinkron berhasil, kasih warna
+  // peringatan supaya kelihatan bukan cuma teks netral — data mungkin basi.
+  el2.style.color = secAgo>600 ? 'var(--amber)' : 'var(--text3)';
+  el2.title = 'Harga terakhir berhasil disinkronkan: '+new Date(FH.lastSyncAt).toLocaleString('id-ID');
 }
 
 // ── Banner loading ringan di Dashboard & Portofolio Saham — status pengambilan harga live ──
@@ -646,7 +670,10 @@ function updateTopbar(){
   el('tb-rdn').textContent='Rp '+fmtK(rdn);
 }
 
-function updateClock(){el('clock').textContent=new Date().toLocaleTimeString('id-ID')}
+function updateClock(){
+  el('clock').textContent=new Date().toLocaleTimeString('id-ID');
+  if(typeof fhUpdateLastSyncLabel==='function') fhUpdateLastSyncLabel();
+}
 
 // ── Bloomberg Ticker Tape ──
 function buildTickerTape(){

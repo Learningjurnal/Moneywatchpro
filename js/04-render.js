@@ -934,8 +934,19 @@ function renderRisiko(){
   var totalMV=porto.reduce(function(a,p){return a+p.mv},0)||1;
   var totalCost=porto.reduce(function(a,p){return a+p.cost},0)||1;
 
-  // Beta portofolio (weighted)
+  // Beta portofolio (weighted) — ESTIMASI, dari nilai beta statis per saham di database
   var portoBeta=porto.reduce(function(a,p){return a+(p.info.beta||1)*(p.mv/totalMV)},0);
+  var betaIsReal=false, betaCoverage=null;
+  // FIX: kalau Beta RIIL (regresi harga sungguhan vs IHSG, dihitung di kartu
+  // "Alpha & Beta Riil" halaman Performance) sudah tersedia, pakai itu untuk
+  // SELURUH perhitungan di bawah (VaR/Sharpe/Risk Score/Stress Test) alih-alih
+  // tetap terpaku ke nilai statis padahal data yang lebih akurat sudah ada.
+  // Beta statis tetap dipakai sebagai fallback kalau data riil belum/tidak
+  // bisa dihitung (mis. riwayat harga belum cukup panjang).
+  if(typeof perfGetRealPortfolioBeta==='function'){
+    var realBeta=perfGetRealPortfolioBeta();
+    if(realBeta){ portoBeta=realBeta.beta; betaIsReal=true; betaCoverage=realBeta; }
+  }
   // Volatilitas estimasi (simplified, annualized)
   var avgVol=porto.reduce(function(a,p){return a+(p.info.beta||1)*0.25*(p.mv/totalMV)},0);
   var portVolAnn=(avgVol*100).toFixed(1);
@@ -980,6 +991,12 @@ function renderRisiko(){
   el('risk-vol').className='mval '+(parseFloat(portVolAnn)<=15?'up':parseFloat(portVolAnn)<=25?'amb':'dn');
   el('risk-beta').textContent=portoBeta.toFixed(2);
   el('risk-beta').className='mval '+(portoBeta<=1?'up':portoBeta<=1.3?'amb':'dn');
+  var betaSubEl=el('risk-beta-sub');
+  if(betaSubEl){
+    betaSubEl.innerHTML = betaIsReal
+      ? '<span class="up">riil</span> · '+betaCoverage.n+'/'+betaCoverage.total+' saham (data harga sungguhan)'
+      : 'estimasi · <a href="#" onclick="goPage(\'performance\');return false" style="color:var(--accent)">lihat Beta riil →</a>';
+  }
   el('risk-dd').textContent=worstRet.toFixed(1)+'%';
   el('risk-win').textContent=winRate+'%';
   el('risk-win').className='mval '+(parseFloat(winRate)>=55?'up':parseFloat(winRate)>=40?'amb':'dn');
@@ -1004,6 +1021,11 @@ function renderRisiko(){
     {name:'Stagnasi (−5%)',shock:-0.05,color:'var(--text2)'},
     {name:'Bull Market (+20%)',shock:+0.20,color:'var(--green)'},
   ];
+  var stressBadge=el('stress-beta-src');
+  if(stressBadge){
+    stressBadge.textContent = betaIsReal ? 'Beta riil ('+betaCoverage.n+' saham)' : 'Beta estimasi';
+    stressBadge.className = 'badge '+(betaIsReal?'b-up':'b-gray'); // style="font-size:9px" tetap dari atribut inline di HTML, tidak disentuh di sini
+  }
   el('stress-test').innerHTML=scenarios.map(function(sc){
     var impact=totalMV*(sc.shock*portoBeta);
     var newVal=totalMV+impact;

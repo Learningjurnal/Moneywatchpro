@@ -6,14 +6,14 @@
 <title>Money Watch Pro — Portofolio, Wealth & Analisa Quant</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23131324'/><path d='M7 21 L13 13 L18 17 L25 8' stroke='%2334d399' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/><circle cx='25' cy='8' r='2' fill='%2334d399'/></svg>">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/00-config.js?v=20260813i"></script>
+<script src="js/00-config.js?v=20260813j"></script>
 <!-- Font sesuai invezgo.com: Figtree untuk judul/angka besar, Inter untuk isi — dibaca langsung dari computed style situsnya --><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Figtree:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.0/dist/ort.min.js"></script>
-<link rel="stylesheet" href="css/main.css?v=20260813i">
-<link rel="stylesheet" href="css/wealth.css?v=20260813i">
+<link rel="stylesheet" href="css/main.css?v=20260813j">
+<link rel="stylesheet" href="css/wealth.css?v=20260813j">
 </head>
 <body>
 <body>
@@ -145,6 +145,7 @@
       style="display:flex;align-items:center;gap:4px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:'Inter',sans-serif;transition:all .15s;letter-spacing:0">
       <span id="fh-dot" style="width:5px;height:5px;border-radius:50%;background:var(--text3);flex-shrink:0"></span>
       <span id="fh-label">Simulasi</span>
+      <span id="fh-lastsync" style="color:var(--text3);border-left:1px solid var(--border2);padding-left:6px;margin-left:2px"></span>
     </div>
     <div class="clock" id="clock">--:--:--</div>
     <!-- Session info -->
@@ -244,6 +245,7 @@
       <button onclick="goPage('pajak',this)"><i class="ti ti-receipt-tax"></i><span class="side-label">Pajak &amp; PPh</span></button>
       <button onclick="openFinnhubSettings()"><i class="ti ti-plug"></i><span class="side-label">Koneksi Data</span></button>
       <button onclick="goPage('admin',this)"><i class="ti ti-list-details"></i><span class="side-label">Kelola Daftar Saham</span></button>
+      <button onclick="goPage('datahealth',this)"><i class="ti ti-stethoscope"></i><span class="side-label">Cek Kesehatan Data</span></button>
     </div>
   </div>
   </div>
@@ -808,7 +810,7 @@
       <div class="metric">
         <div class="mlabel">Beta Portofolio</div>
         <div class="mval" id="risk-beta">0.00</div>
-        <div class="msub neu">vs IHSG</div>
+        <div class="msub neu" id="risk-beta-sub">vs IHSG</div>
       </div>
       <div class="metric">
         <div class="mlabel">Max Drawdown</div>
@@ -833,7 +835,7 @@
     </div>
     <div class="g2c">
       <div class="card">
-        <div class="cheader"><span class="ctitle">Skenario Stress Test</span></div>
+        <div class="cheader"><span class="ctitle">Skenario Stress Test</span><span class="badge b-gray" id="stress-beta-src" style="font-size:9px">Beta estimasi</span></div>
         <div id="stress-test"></div>
       </div>
       <div class="card">
@@ -2565,6 +2567,7 @@
 
 <!-- ===== ADMIN — KELOLA DAFTAR SAHAM ===== -->
 <div id="page-admin" class="page"></div>
+<div id="page-datahealth" class="page"></div>
 
 </div><!-- /pages -->
 </div><!-- /main-row --><!-- ===== BACKUP MODAL ===== -->
@@ -2606,22 +2609,23 @@
   </div>
 </div>
 
-<script src="js/01-data.js?v=20260813i"></script>
-<script src="js/02-storage.js?v=20260813i"></script>
-<script src="js/03-engine.js?v=20260813i"></script>
-<script src="js/04-render.js?v=20260813i"></script>
-<script src="js/05-assets.js?v=20260813i"></script>
-<script src="js/06-analysis-router.js?v=20260813i"></script>
-<script src="js/07-flowscan.js?v=20260813i"></script>
-<script src="js/08-auth.js?v=20260813i"></script>
-<script src="js/09-divinvest.js?v=20260813i"></script>
-<script src="js/10-hargawajar.js?v=20260813i"></script>
-<script src="js/11-quant.js?v=20260813i"></script>
-<script src="js/12-clean.js?v=20260813i"></script>
-<script src="js/13-realdata.js?v=20260813i"></script>
-<script src="js/14-admin.js?v=20260813i"></script>
-<script src="js/15-txbulk.js?v=20260813i"></script>
-<script src="js/20-wealth.js?v=20260813i"></script>
-<script src="js/21-performance.js?v=20260813i"></script>
+<script src="js/01-data.js?v=20260813j"></script>
+<script src="js/02-storage.js?v=20260813j"></script>
+<script src="js/03-engine.js?v=20260813j"></script>
+<script src="js/04-render.js?v=20260813j"></script>
+<script src="js/05-assets.js?v=20260813j"></script>
+<script src="js/06-analysis-router.js?v=20260813j"></script>
+<script src="js/07-flowscan.js?v=20260813j"></script>
+<script src="js/08-auth.js?v=20260813j"></script>
+<script src="js/09-divinvest.js?v=20260813j"></script>
+<script src="js/10-hargawajar.js?v=20260813j"></script>
+<script src="js/11-quant.js?v=20260813j"></script>
+<script src="js/12-clean.js?v=20260813j"></script>
+<script src="js/13-realdata.js?v=20260813j"></script>
+<script src="js/14-admin.js?v=20260813j"></script>
+<script src="js/15-txbulk.js?v=20260813j"></script>
+<script src="js/20-wealth.js?v=20260813j"></script>
+<script src="js/21-performance.js?v=20260813j"></script>
+<script src="js/22-datahealth.js?v=20260813j"></script>
 </body>
 </html>
