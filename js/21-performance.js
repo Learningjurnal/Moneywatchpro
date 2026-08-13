@@ -16,6 +16,9 @@ function renderPerformance(){
   perfRenderBenchmark();
   perfRenderTradeSummary();
   perfRenderRealized();
+  perfRenderDisposition();
+  perfRenderActivity();
+  perfRenderOtherAssets();
   if(typeof renderRisiko==='function') renderRisiko();
 }
 
@@ -304,4 +307,269 @@ function perfRenderRealized(){
   var divTotal = (dividends||[]).reduce(function(a,d){return a+(d.net||0);},0);
   el('perf-dividend-total').textContent = 'Rp '+fmtK(divTotal);
   el('perf-dividend-sub').textContent = (dividends||[]).length+' pembayaran';
+}
+
+// ── Disposition Effect — rata-rata lama tahan saham UNTUNG vs RUGI.
+// "Tanggal buka posisi" = tanggal BUY pertama sejak lot ticker itu terakhir
+// nol (bukan per-lot FIFO, tapi cukup untuk mengukur pola tahan-lepas —
+// metodologi P&L per trade tetap avg-cost yang sama dengan seluruh app). ──
+function perfComputeDisposition(){
+  var pos={}, trades=[];
+  (transactions||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);}).forEach(function(tx){
+    if(!pos[tx.ticker]) pos[tx.ticker]={lot:0,cost:0,openDate:null};
+    var p=pos[tx.ticker];
+    if(tx.type==='BUY'){
+      if(p.lot<=0) p.openDate=tx.date;
+      p.lot+=tx.lot; p.cost+=tx.gross;
+    } else if(tx.type==='SELL' && p.lot>0){
+      var avg=p.cost/(p.lot*100), sold=tx.lot*100, pnl=tx.gross-avg*sold;
+      var holdDays = p.openDate ? Math.round((new Date(tx.date)-new Date(p.openDate))/86400000) : null;
+      trades.push({ticker:tx.ticker, pnl:pnl, holdDays:holdDays});
+      p.lot-=tx.lot; p.cost=Math.max(0,p.cost-avg*sold);
+      if(p.lot<=0){ p.lot=0; p.cost=0; p.openDate=null; }
+    }
+  });
+  var winners = trades.filter(function(t){return t.pnl>0 && t.holdDays!=null;});
+  var losers  = trades.filter(function(t){return t.pnl<0 && t.holdDays!=null;});
+  var avg = function(arr){ return arr.length ? arr.reduce(function(a,t){return a+t.holdDays;},0)/arr.length : null; };
+  return {winners:winners.length, losers:losers.length, avgHoldWin:avg(winners), avgHoldLoss:avg(losers)};
+}
+function perfRenderDisposition(){
+  var d = perfComputeDisposition();
+  el('perf-hold-win').textContent = d.avgHoldWin!=null ? Math.round(d.avgHoldWin) : '—';
+  el('perf-hold-loss').textContent = d.avgHoldLoss!=null ? Math.round(d.avgHoldLoss) : '—';
+  var box = el('perf-disposition-insight');
+  if(d.avgHoldWin==null || d.avgHoldLoss==null){
+    box.innerHTML = '<span style="color:var(--text3)">Butuh minimal 1 transaksi SELL untung dan 1 rugi untuk membandingkan pola tahan-lepas.</span>';
+    return;
+  }
+  var ratio = d.avgHoldLoss / (d.avgHoldWin||1);
+  if(ratio>=1.3){
+    box.innerHTML = '⚠️ Anda menahan saham <b class="dn">rugi ' + ratio.toFixed(1) + 'x lebih lama</b> daripada saham untung ('+Math.round(d.avgHoldLoss)+' vs '+Math.round(d.avgHoldWin)+' hari) — pola klasik <i>disposition effect</i> (enggan realisasi rugi, buru-buru kunci untung). Pertimbangkan aturan cut-loss yang lebih disiplin.';
+  } else if(ratio<=0.77){
+    box.innerHTML = '✅ Anda justru menahan saham <b class="up">untung lebih lama</b> daripada rugi ('+Math.round(d.avgHoldWin)+' vs '+Math.round(d.avgHoldLoss)+' hari) — pola yang lebih sehat, membiarkan pemenang berkembang (let winners run).';
+  } else {
+    box.innerHTML = 'Pola tahan-lepas relatif seimbang antara saham untung ('+Math.round(d.avgHoldWin)+' hari) dan rugi ('+Math.round(d.avgHoldLoss)+' hari) — tidak ada indikasi disposition effect yang signifikan.';
+  }
+}
+
+// ── Frekuensi Trading vs Realized P&L per bulan ──
+function perfComputeMonthlyActivity(){
+  var byMonth={};
+  (transactions||[]).forEach(function(tx){
+    var m=tx.date.slice(0,7);
+    if(!byMonth[m]) byMonth[m]={trades:0,pnl:0};
+    byMonth[m].trades++;
+  });
+  var pos={};
+  (transactions||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);}).forEach(function(tx){
+    if(!pos[tx.ticker]) pos[tx.ticker]={lot:0,cost:0};
+    var p=pos[tx.ticker];
+    if(tx.type==='BUY'){ p.lot+=tx.lot; p.cost+=tx.gross; }
+    else if(tx.type==='SELL' && p.lot>0){
+      var avg=p.cost/(p.lot*100), sold=tx.lot*100, pnl=tx.gross-avg*sold;
+      var m=tx.date.slice(0,7);
+      if(!byMonth[m]) byMonth[m]={trades:0,pnl:0};
+      byMonth[m].pnl+=pnl;
+      p.lot-=tx.lot; p.cost=Math.max(0,p.cost-avg*sold);
+    }
+  });
+  var months=Object.keys(byMonth).sort();
+  return months.map(function(m){ return {month:m, trades:byMonth[m].trades, pnl:byMonth[m].pnl}; });
+}
+function perfRenderActivity(){
+  var data = perfComputeMonthlyActivity();
+  kc('perfActivity');
+  var cv = el('perfActivityChart');
+  var box = el('perf-activity-insight');
+  if(!data.length){
+    if(box) box.innerHTML = '<span style="color:var(--text3)">Belum ada transaksi.</span>';
+    return;
+  }
+  if(cv){
+    charts['perfActivity'] = new Chart(cv,{
+      type:'bar', // base type wajib ada di Chart.js v4 utk mixed chart, per-dataset type di bawah yang menimpanya
+      data:{labels:data.map(function(d){return d.month;}),
+        datasets:[
+          {type:'bar', label:'Jumlah Order', data:data.map(function(d){return d.trades;}), backgroundColor:'rgba(47,106,243,.55)', borderRadius:3, yAxisID:'y'},
+          {type:'line', label:'Realized P&L', data:data.map(function(d){return d.pnl;}), borderColor:'#41f3a7', backgroundColor:'transparent', tension:.3, pointRadius:2, borderWidth:2, yAxisID:'y1'}
+        ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:true,labels:{color:'#8a90ad',font:{size:9},boxWidth:10}},
+          tooltip:Object.assign({},TT,{callbacks:{label:function(c){ return c.dataset.label==='Realized P&L' ? 'P&L: '+(c.parsed.y>=0?'+':'')+'Rp '+fmtK(c.parsed.y) : 'Order: '+c.parsed.y; }}})},
+        scales:{
+          x:{ticks:{color:'#8a90ad',font:{size:9},maxTicksLimit:8},grid:{display:false}},
+          y:{position:'left',ticks:{color:'#555d6e',font:{size:9}},grid:{color:'rgba(255,255,255,.04)'},title:{display:false}},
+          y1:{position:'right',ticks:{color:'#555d6e',font:{size:9},callback:function(v){return fmtK(v);}},grid:{display:false}}
+        }}
+    });
+  }
+  if(box){
+    if(data.length<3){
+      box.innerHTML = '<span style="color:var(--text3)">Butuh riwayat minimal 3 bulan untuk melihat pola korelasi frekuensi vs hasil.</span>';
+    } else {
+      var trades=data.map(function(d){return d.trades;}), pnls=data.map(function(d){return d.pnl;});
+      var r = (typeof qtPearson==='function') ? qtPearson(trades,pnls) : null;
+      if(r==null || isNaN(r)){
+        box.innerHTML = '<span style="color:var(--text3)">Korelasi tidak dapat dihitung (variasi data terlalu kecil).</span>';
+      } else if(r<=-0.3){
+        box.innerHTML = '⚠️ Korelasi <b class="dn">negatif</b> (r='+r.toFixed(2)+') antara jumlah order per bulan dan hasil realized P&L — bulan dengan lebih banyak transaksi cenderung hasilnya lebih buruk, indikasi kemungkinan <i>overtrading</i>.';
+      } else if(r>=0.3){
+        box.innerHTML = 'Korelasi <b class="up">positif</b> (r='+r.toFixed(2)+') antara frekuensi trading dan hasil — belum ada indikasi overtrading dari data ini.';
+      } else {
+        box.innerHTML = 'Tidak ada korelasi kuat (r='+r.toFixed(2)+') antara frekuensi trading dan hasil bulanan — jumlah transaksi tidak terlihat memengaruhi performa secara sistematis.';
+      }
+    }
+  }
+}
+
+// ── Kinerja Aset Lain — Crypto/ETF/Reksa Dana. Halaman Performance yang
+// lain hanya menghitung ini untuk saham (getRealizedPnl()); di sini
+// realized P&L dihitung dengan metodologi avg-cost yang SAMA untuk
+// ketiga kelas aset, supaya konsisten dengan cara saham dihitung. ──
+function perfRealizedGeneric(txArr, buyType, sellType, tickerField, priceValField){
+  var pos={}, real=0;
+  (txArr||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);}).forEach(function(tx){
+    var key=tx[tickerField];
+    if(!pos[key]) pos[key]={qty:0,cost:0};
+    var p=pos[key];
+    var val = priceValField(tx);
+    if(tx.type===buyType){ p.qty+=val.qty; p.cost+=val.amount; }
+    else if(tx.type===sellType && p.qty>0){
+      var avg=p.cost/p.qty, sold=Math.min(val.qty,p.qty);
+      real += val.amount - avg*sold;
+      p.qty-=sold; p.cost=Math.max(0,p.cost-avg*sold);
+    }
+  });
+  return real;
+}
+function perfRenderOtherAssets(){
+  var box = el('perf-other-assets');
+  if(!box) return;
+  var cards=[];
+
+  // Crypto
+  var cp = (typeof getCryptoPortfolio==='function') ? getCryptoPortfolio() : [];
+  var cMV=cp.reduce(function(a,p){return a+p.mv;},0), cCost=cp.reduce(function(a,p){return a+p.cost;},0);
+  var cUnreal=cMV-cCost;
+  var cReal = perfRealizedGeneric(cryptoTx, 'BUY','SELL','coin', function(tx){return {qty:tx.qty, amount:tx.total};});
+  cards.push(perfAssetCard('🪙 Crypto', cMV, cCost, cUnreal, cReal, cp.length));
+
+  // ETF
+  var ep = (typeof getEtfPortfolio==='function') ? getEtfPortfolio() : [];
+  var eMV=ep.reduce(function(a,p){return a+p.mvIdr;},0), eCost=ep.reduce(function(a,p){return a+p.costIdr;},0);
+  var eUnreal=eMV-eCost;
+  var eReal = perfRealizedGeneric(etfTx, 'BUY','SELL','ticker', function(tx){return {qty:tx.shares, amount:tx.totalIdr};});
+  cards.push(perfAssetCard('📊 ETF AS', eMV, eCost, eUnreal, eReal, ep.length));
+
+  // Reksa Dana
+  var rp = (typeof getRdPortfolio==='function') ? getRdPortfolio() : [];
+  var rMV=rp.reduce(function(a,p){return a+p.mv;},0), rCost=rp.reduce(function(a,p){return a+p.cost;},0);
+  var rUnreal=rMV-rCost;
+  var rReal = perfRealizedGeneric((rdTx||[]).filter(function(t){return t._userInput===true;}), 'BELI','JUAL','code', function(tx){return {qty:tx.units, amount:tx.amount};});
+  cards.push(perfAssetCard('🏦 Reksa Dana', rMV, rCost, rUnreal, rReal, rp.length));
+
+  box.innerHTML = cards.join('');
+}
+function perfAssetCard(label, mv, cost, unreal, real, posCount){
+  var retPct = cost>0 ? (unreal/cost*100) : 0;
+  return '<div class="metric" style="margin:0">'
+    +'<div class="mlabel">'+label+'</div>'
+    +'<div class="mval" style="font-size:17px">Rp '+fmtK(mv)+'</div>'
+    +'<div class="msub neu" style="margin-bottom:8px">'+posCount+' posisi aktif · modal Rp '+fmtK(cost)+'</div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:4px"><span style="color:var(--text3)">Unrealized</span><span class="'+(unreal>=0?'up':'dn')+' mono">'+(unreal>=0?'+':'')+'Rp '+fmtK(unreal)+' ('+(retPct>=0?'+':'')+retPct.toFixed(1)+'%)</span></div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:10.5px"><span style="color:var(--text3)">Realized</span><span class="'+(real>=0?'up':'dn')+' mono">'+(real>=0?'+':'')+'Rp '+fmtK(real)+'</span></div>'
+    +'</div>';
+}
+
+// ── Cost Drag — total biaya transaksi (komisi+PPN+PPh+Levy) sebagai %
+// nilai transaksi, per bulan. Dipakai di halaman Pajak & PPh. Field
+// tx.tax sudah gabungan PPN+Levy+PPh (lihat calcTxComponents()) jadi
+// tx.komisi+tx.tax = total biaya per transaksi, satu sumber yang sama
+// dipakai tabel & kartu ringkasan Pajak yang sudah ada. ──
+function renderCostDrag(){
+  var avgEl=el('pj-drag-avg'), worstEl=el('pj-drag-worst'), bestEl=el('pj-drag-best'), cv=el('pjDragChart');
+  if(!avgEl) return;
+  var byMonth={};
+  (transactions||[]).forEach(function(tx){
+    var m=tx.date.slice(0,7);
+    if(!byMonth[m]) byMonth[m]={gross:0,biaya:0};
+    byMonth[m].gross+=tx.gross;
+    byMonth[m].biaya+=(tx.komisi+tx.tax);
+  });
+  var months=Object.keys(byMonth).sort();
+  kc('pjDrag');
+  if(!months.length){
+    avgEl.textContent='0,00%'; worstEl.textContent='—'; bestEl.textContent='—';
+    return;
+  }
+  var totalGross=months.reduce(function(a,m){return a+byMonth[m].gross;},0);
+  var totalBiaya=months.reduce(function(a,m){return a+byMonth[m].biaya;},0);
+  avgEl.textContent=(totalGross>0?(totalBiaya/totalGross*100):0).toFixed(2).replace('.',',')+'%';
+
+  var pcts=months.map(function(m){ var d=byMonth[m]; return {month:m, pct: d.gross>0?(d.biaya/d.gross*100):0}; });
+  var worst=pcts.slice().sort(function(a,b){return b.pct-a.pct;})[0];
+  var best=pcts.slice().sort(function(a,b){return a.pct-b.pct;})[0];
+  worstEl.textContent=worst.month+' ('+worst.pct.toFixed(2).replace('.',',')+'%)';
+  bestEl.textContent=best.month+' ('+best.pct.toFixed(2).replace('.',',')+'%)';
+
+  if(cv){
+    charts['pjDrag']=new Chart(cv,{type:'bar',
+      data:{labels:months, datasets:[{data:pcts.map(function(p){return p.pct;}),
+        backgroundColor:pcts.map(function(p){return p.pct>2?'rgba(226,29,72,.65)':p.pct>1?'rgba(251,191,36,.65)':'rgba(65,243,167,.65)';}),
+        borderRadius:3}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+        tooltip:Object.assign({},TT,{callbacks:{label:function(c){return c.parsed.y.toFixed(2)+'% dari nilai transaksi bulan itu';}}})},
+        scales:{x:{ticks:{color:'#8a90ad',font:{size:9},maxTicksLimit:8},grid:{display:false}},
+                 y:{ticks:{color:'#555d6e',font:{size:9},callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+  }
+}
+
+// ── Yield on Cost & pertumbuhan dividen per saham (halaman Dividen).
+// YoC dihitung di level POSISI (dividen Rp tahun ini ÷ modal Rp saat ini
+// dari getPortfolio()) supaya tidak perlu rekonsiliasi jumlah lembar yang
+// berubah antar pembayaran dividen — cuma untuk saham yang MASIH DIPEGANG
+// (posisi yang sudah ditutup tidak lagi punya modal untuk dibandingkan). ──
+function renderDividendYoC(){
+  var box = el('div-yoc-tbody');
+  if(!box) return;
+  var porto = (typeof getPortfolio==='function') ? getPortfolio() : [];
+  if(!porto.length){
+    box.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:16px">Belum ada posisi saham aktif</td></tr>';
+    return;
+  }
+  var thisYear = new Date().getFullYear();
+  var lastYear = thisYear-1;
+  var divByTickerYear = {}; // ticker -> {year -> total net}
+  (dividends||[]).forEach(function(d){
+    if(!d.date) return;
+    var y = parseInt(d.date.slice(0,4),10);
+    if(!divByTickerYear[d.ticker]) divByTickerYear[d.ticker]={};
+    divByTickerYear[d.ticker][y] = (divByTickerYear[d.ticker][y]||0) + d.net;
+  });
+  var rows = porto.map(function(p){
+    var byYr = divByTickerYear[p.ticker]||{};
+    var divThis = byYr[thisYear]||0, divLast = byYr[lastYear]||0;
+    var yoc = p.cost>0 ? (divThis/p.cost*100) : 0;
+    var growth = divLast>0 ? ((divThis-divLast)/divLast*100) : (divThis>0 ? null : null); // null = tidak ada basis pembanding
+    return {ticker:p.ticker, avg:p.avg, divThis:divThis, divLast:divLast, yoc:yoc, growth:growth};
+  }).filter(function(r){ return r.divThis>0 || r.divLast>0; })
+    .sort(function(a,b){ return b.yoc-a.yoc; });
+
+  if(!rows.length){
+    box.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:16px">Belum ada dividen tercatat untuk saham yang masih dipegang</td></tr>';
+    return;
+  }
+  box.innerHTML = rows.map(function(r){
+    var growthHtml = r.growth===null ? '<span style="color:var(--text3)">—</span>' :
+      '<span class="'+(r.growth>=0?'up':'dn')+'">'+(r.growth>=0?'+':'')+r.growth.toFixed(1)+'%</span>';
+    return '<tr>'
+      +'<td><span class="tp">'+r.ticker+'</span></td>'
+      +'<td class="mono" style="font-size:11px">Rp '+fmt(Math.round(r.avg))+'</td>'
+      +'<td class="mono up" style="font-size:11px">Rp '+fmtK(r.divThis)+'</td>'
+      +'<td class="mono '+(r.yoc>=5?'up':r.yoc>=2?'amb':'neu')+'" style="font-size:11px;font-weight:700">'+r.yoc.toFixed(2)+'%</td>'
+      +'<td class="mono" style="font-size:11px;color:var(--text2)">Rp '+fmtK(r.divLast)+'</td>'
+      +'<td class="mono" style="font-size:11px">'+growthHtml+'</td>'
+      +'</tr>';
+  }).join('');
 }

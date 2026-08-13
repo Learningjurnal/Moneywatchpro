@@ -629,6 +629,7 @@ var _divSelected = new Set();
 function renderDividen(){
   var yearFilter = el('div-year-filter')&&el('div-year-filter').value||'all';
   var growthRate = parseFloat(el('div-growth-sel')&&el('div-growth-sel').value||0.08);
+  if(typeof renderDividendYoC==='function') renderDividendYoC();
 
   // Hanya dari user transactions (XLSX sudah dikosongkan)
   var filtered = yearFilter==='all' ? dividends.slice() :
@@ -1047,6 +1048,8 @@ function renderPajak(){
         '<span class="badge" style="font-size:9px;background:rgba(255,61,90,.1);color:var(--red)">Jual '+(sInfo.sellFee*100).toFixed(2)+'%</span>'+
       '</div></div>';
   }).join('')||'<div style="color:var(--text3);text-align:center;padding:16px">Belum ada transaksi</div>';
+
+  if(typeof renderCostDrag==='function') renderCostDrag();
 
   // Table ALL transactions (buy + sell)
   el('pj-tbody').innerHTML=transactions.slice().sort(function(a,b){return b.date.localeCompare(a.date)}).map(function(tx){

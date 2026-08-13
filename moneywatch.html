@@ -6,14 +6,14 @@
 <title>Money Watch Pro — Portofolio, Wealth & Analisa Quant</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23131324'/><path d='M7 21 L13 13 L18 17 L25 8' stroke='%2334d399' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/><circle cx='25' cy='8' r='2' fill='%2334d399'/></svg>">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/00-config.js?v=20260813g"></script>
+<script src="js/00-config.js?v=20260813h"></script>
 <!-- Font sesuai invezgo.com: Figtree untuk judul/angka besar, Inter untuk isi — dibaca langsung dari computed style situsnya --><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Figtree:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.0/dist/ort.min.js"></script>
-<link rel="stylesheet" href="css/main.css?v=20260813g">
-<link rel="stylesheet" href="css/wealth.css?v=20260813g">
+<link rel="stylesheet" href="css/main.css?v=20260813h">
+<link rel="stylesheet" href="css/wealth.css?v=20260813h">
 </head>
 <body>
 <body>
@@ -707,6 +707,37 @@
     </div>
   </div>
 
+  <!-- ROW 5: Disposition Effect + Frekuensi Trading -->
+  <div class="g2c" style="margin-bottom:18px">
+    <div class="card" style="margin:0">
+      <div class="cheader"><span class="ctitle">Disposition Effect</span><span class="badge b-gray" title="Bias psikologis umum: menahan saham rugi lebih lama karena enggan realisasi rugi, sambil buru-buru jual saham untung">ⓘ apa ini?</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div style="text-align:center;padding:10px;background:var(--bg3);border-radius:8px">
+          <div class="mlabel">Rata-rata Tahan — Untung</div>
+          <div class="mval up" id="perf-hold-win" style="font-size:20px">—</div>
+          <div class="msub neu">hari</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:var(--bg3);border-radius:8px">
+          <div class="mlabel">Rata-rata Tahan — Rugi</div>
+          <div class="mval dn" id="perf-hold-loss" style="font-size:20px">—</div>
+          <div class="msub neu">hari</div>
+        </div>
+      </div>
+      <div id="perf-disposition-insight" style="font-size:11px;color:var(--text2);line-height:1.6"></div>
+    </div>
+    <div class="card" style="margin:0">
+      <div class="cheader"><span class="ctitle">Frekuensi Trading vs Realized P&amp;L</span></div>
+      <div class="cw" style="height:170px"><canvas id="perfActivityChart"></canvas></div>
+      <div id="perf-activity-insight" style="font-size:11px;color:var(--text2);line-height:1.6;margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- ROW 6: Kinerja Aset Lain (Crypto/ETF/Reksa Dana) -->
+  <div style="margin-bottom:18px">
+    <div class="cheader" style="border:none;padding:0;margin-bottom:14px"><span class="ctitle" style="font-size:14px;color:var(--text)">🪙 Kinerja Aset Lain</span></div>
+    <div class="g3" id="perf-other-assets"></div>
+  </div>
+
   <!-- ===== MANAJEMEN RISIKO (dipindahkan dari Dashboard) ===== -->
   <div id="dash-risiko-section" style="margin-top:8px;padding-top:18px;border-top:1px solid var(--border)">
     <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px">⚠️ Analisa Risiko Portofolio</div>
@@ -1018,6 +1049,19 @@
       <div class="cw" style="height:185px"><canvas id="divChart"></canvas></div>
     </div>
   </div>
+  <!-- Yield on Cost & pertumbuhan dividen per saham -->
+  <div class="card" style="margin-bottom:18px">
+    <div class="cheader">
+      <span class="ctitle">Yield on Cost &amp; Pertumbuhan Dividen per Saham</span>
+      <span class="badge b-gray" title="Yield on Cost = dividen tahun berjalan dibagi harga BELI dulu (bukan harga sekarang) — makin lama Anda pegang saham berdividen naik, makin tinggi angka ini dibanding yield biasa">ⓘ apa ini?</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr><th>Saham</th><th>Avg. Harga Beli</th><th>Dividen Thn Ini</th><th>Yield on Cost</th><th>Dividen Thn Lalu</th><th>Pertumbuhan YoY</th></tr></thead>
+        <tbody id="div-yoc-tbody"><tr><td colspan="6" style="text-align:center;color:var(--text3);padding:16px">Belum ada data</td></tr></tbody>
+      </table>
+    </div>
+  </div>
   <!-- Proyeksi 5 tahun -->
   <div class="card" style="margin-bottom:18px">
     <div class="cheader">
@@ -1262,6 +1306,21 @@
     <div class="metric"><div class="mlabel">Komisi Broker</div><div class="mval" id="pj-kom">Rp 0</div><div class="msub neu" id="pj-kom-sub"></div></div>
     <div class="metric"><div class="mlabel">Total Beban</div><div class="mval" id="pj-tot">Rp 0</div><div class="msub neu">semua biaya</div></div>
   </div>
+
+  <!-- Cost Drag — biaya transaksi sebagai % nilai transaksi, trennya dari waktu ke waktu -->
+  <div class="card" style="margin-bottom:18px">
+    <div class="cheader">
+      <span class="ctitle">Cost Drag — Biaya Transaksi sebagai % Nilai Transaksi</span>
+      <span class="badge b-gray" title="Total komisi+PPN+PPh+Levy dibagi total nilai transaksi bulan itu — makin tinggi persentasenya, makin besar biaya 'menggerus' modal Anda sebelum untung/rugi harga ikut dihitung">ⓘ apa ini?</span>
+    </div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:12px;align-items:baseline">
+      <div><div class="mlabel">Rata-rata Cost Drag</div><div class="mval" id="pj-drag-avg" style="font-size:20px">0,00%</div></div>
+      <div><div class="mlabel">Bulan Termahal</div><div class="mval amb" id="pj-drag-worst" style="font-size:16px">—</div></div>
+      <div><div class="mlabel">Bulan Termurah</div><div class="mval up" id="pj-drag-best" style="font-size:16px">—</div></div>
+    </div>
+    <div class="cw" style="height:170px"><canvas id="pjDragChart"></canvas></div>
+  </div>
+
   <div class="g2c">
     <div class="card">
       <div class="cheader"><span class="ctitle">Rincian Per Sekuritas</span></div>
@@ -2507,22 +2566,22 @@
   </div>
 </div>
 
-<script src="js/01-data.js?v=20260813g"></script>
-<script src="js/02-storage.js?v=20260813g"></script>
-<script src="js/03-engine.js?v=20260813g"></script>
-<script src="js/04-render.js?v=20260813g"></script>
-<script src="js/05-assets.js?v=20260813g"></script>
-<script src="js/06-analysis-router.js?v=20260813g"></script>
-<script src="js/07-flowscan.js?v=20260813g"></script>
-<script src="js/08-auth.js?v=20260813g"></script>
-<script src="js/09-divinvest.js?v=20260813g"></script>
-<script src="js/10-hargawajar.js?v=20260813g"></script>
-<script src="js/11-quant.js?v=20260813g"></script>
-<script src="js/12-clean.js?v=20260813g"></script>
-<script src="js/13-realdata.js?v=20260813g"></script>
-<script src="js/14-admin.js?v=20260813g"></script>
-<script src="js/15-txbulk.js?v=20260813g"></script>
-<script src="js/20-wealth.js?v=20260813g"></script>
-<script src="js/21-performance.js?v=20260813g"></script>
+<script src="js/01-data.js?v=20260813h"></script>
+<script src="js/02-storage.js?v=20260813h"></script>
+<script src="js/03-engine.js?v=20260813h"></script>
+<script src="js/04-render.js?v=20260813h"></script>
+<script src="js/05-assets.js?v=20260813h"></script>
+<script src="js/06-analysis-router.js?v=20260813h"></script>
+<script src="js/07-flowscan.js?v=20260813h"></script>
+<script src="js/08-auth.js?v=20260813h"></script>
+<script src="js/09-divinvest.js?v=20260813h"></script>
+<script src="js/10-hargawajar.js?v=20260813h"></script>
+<script src="js/11-quant.js?v=20260813h"></script>
+<script src="js/12-clean.js?v=20260813h"></script>
+<script src="js/13-realdata.js?v=20260813h"></script>
+<script src="js/14-admin.js?v=20260813h"></script>
+<script src="js/15-txbulk.js?v=20260813h"></script>
+<script src="js/20-wealth.js?v=20260813h"></script>
+<script src="js/21-performance.js?v=20260813h"></script>
 </body>
 </html>
