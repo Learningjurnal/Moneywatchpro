@@ -193,6 +193,11 @@ function wRenderNet(){
       '<div class="msub neu" style="margin-top:6px">FIRE '+firePct.toFixed(1)+'%</div></div>'+
     '</div>'+
   '</div>'+
+  '<div class="card">'+
+    '<div class="cheader"><span class="ctitle">RIWAYAT NET WORTH</span><span class="badge b-gray" id="w-nw-hist-count">0 hari</span></div>'+
+    '<div class="cw" style="height:170px"><canvas id="wNetWorthHistChart"></canvas></div>'+
+    '<div id="w-nw-hist-note" style="font-size:10.5px;color:var(--text3);margin-top:8px"></div>'+
+  '</div>'+
   '<div class="g2c">'+
     '<div class="card"><div class="cheader"><span class="ctitle">ALOKASI ASET</span><button class="btn btn-ghost btn-xs" onclick="goPage(\'portofolio\')">Detail →</button></div>'+
       '<div style="display:flex;align-items:center;gap:18px">'+
@@ -222,6 +227,8 @@ function wRenderNet(){
     '</div>'+
   '</div>';
 
+  wRenderNetWorthHistory(a.net);
+
   // Donut alokasi
   wKillChart('alloc');
   var items = [
@@ -245,6 +252,50 @@ function wRenderNet(){
       data:{labels:items.map(function(x){return x.l}), datasets:[{data:items.map(function(x){return x.v}), backgroundColor:items.map(function(x){return x.c}), borderColor:'rgba(19,19,31,.9)', borderWidth:2}]},
       options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.label+': '+wRp(c.raw)}}}}}
     });
+  }
+}
+
+// ── Riwayat Net Worth — snapshot harian, pola identik dengan
+// equityHistoryLoad()/equitySnapshotToday() di 03-engine.js (satu titik
+// per hari, dicatat tiap kali halaman Net Worth dibuka) TAPI localStorage
+// key terpisah karena ini net worth PENUH (termasuk bank/hutang/piutang/
+// aset non-portofolio), bukan cuma AUM investasi. ──
+var WNW_LS_KEY = 'mw_wealth_networth_hist_v1';
+function wNetWorthHistoryLoad(){
+  try{ return JSON.parse(localStorage.getItem(WNW_LS_KEY)||'[]'); }catch(e){ return []; }
+}
+function wNetWorthHistorySave(arr){ try{ localStorage.setItem(WNW_LS_KEY, JSON.stringify(arr)); }catch(e){} }
+function wNetWorthSnapshotToday(net){
+  var today = new Date().toISOString().slice(0,10);
+  var hist = wNetWorthHistoryLoad();
+  var last = hist[hist.length-1];
+  if(last && last.date===today) last.net=net;
+  else hist.push({date:today, net:net});
+  if(hist.length>730) hist=hist.slice(-730);
+  wNetWorthHistorySave(hist);
+  return hist;
+}
+function wRenderNetWorthHistory(currentNet){
+  var hist = wNetWorthSnapshotToday(currentNet);
+  var cntEl = el('w-nw-hist-count'), noteEl = el('w-nw-hist-note'), cv = el('wNetWorthHistChart');
+  if(cntEl) cntEl.textContent = hist.length+' hari';
+  wKillChart('nwHist');
+  if(hist.length<2){
+    if(noteEl) noteEl.innerHTML = 'Riwayat net worth terekam otomatis setiap kali Anda membuka halaman ini — kembali beberapa hari lagi untuk mulai melihat tren.';
+    return;
+  }
+  var first=hist[0].net, chg=currentNet-first, chgPct=first!==0?(chg/Math.abs(first)*100):0;
+  if(noteEl) noteEl.innerHTML = 'Sejak '+hist[0].date+': <span class="'+(chg>=0?'up':'dn')+'">'+(chg>=0?'▲ +':'▼ ')+wRp(Math.abs(chg))+' ('+(chgPct>=0?'+':'')+chgPct.toFixed(1)+'%)</span>';
+  if(cv && typeof Chart!=='undefined'){
+    var grad = cv.getContext('2d').createLinearGradient(0,0,0,170);
+    grad.addColorStop(0,'rgba(47,106,243,.35)'); grad.addColorStop(1,'rgba(47,106,243,0)');
+    wCharts['nwHist'] = new Chart(cv,{type:'line',
+      data:{labels:hist.map(function(h){return h.date;}),
+        datasets:[{data:hist.map(function(h){return h.net;}),borderColor:'#2f6af3',backgroundColor:grad,fill:true,tension:.3,pointRadius:0,borderWidth:2}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:function(c){return wRp(c.parsed.y);}}}},
+        scales:{x:{ticks:{color:'#8a90ad',font:{size:9},maxTicksLimit:7},grid:{display:false}},
+                 y:{ticks:{color:'#555d6e',font:{size:9},callback:function(v){return wRp(v);}},grid:{color:'rgba(255,255,255,.04)'}}}}});
   }
 }
 

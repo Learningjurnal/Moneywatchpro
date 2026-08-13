@@ -837,11 +837,12 @@ function submitEditDiv(id){
 function renderSektoral(){
   var porto=getPortfolio();
   var totalMV=porto.reduce(function(a,p){return a+p.mv},0)||1;
+  var totalCost=porto.reduce(function(a,p){return a+p.cost},0)||1;
   var byS={};
   porto.forEach(function(p){
     var s=p.info.sector;
-    if(!byS[s])byS[s]={mv:0,stocks:[]};
-    byS[s].mv+=p.mv;byS[s].stocks.push(p);
+    if(!byS[s])byS[s]={mv:0,cost:0,stocks:[]};
+    byS[s].mv+=p.mv;byS[s].cost+=p.cost;byS[s].stocks.push(p);
   });
   var sectors=Object.keys(byS).sort(function(a,b){return byS[b].mv-byS[a].mv});
   var topSec=sectors[0]||'-';
@@ -859,6 +860,35 @@ function renderSektoral(){
   el('sec-conc').className='mval '+(parseFloat(concPct)<=40?'up':parseFloat(concPct)<=60?'amb':'dn');
   el('sec-conc-sub').textContent=(topSec!=='-'?topSec:'')+ ' sektor teratas';
 
+  // ── Return per sektor — sebelumnya halaman ini cuma menghitung ALOKASI
+  // (berapa % portofolio di tiap sektor), bukan sektor mana yang benar-benar
+  // menguntungkan/merugikan. sv.ret = unrealized return sektor itu sendiri;
+  // sv.contrib = poin persentase sumbangan sektor itu ke TOTAL return
+  // portofolio (unreal sektor ÷ total modal portofolio) — beda dari ret
+  // karena memperhitungkan bobot, bukan cuma performa sektor itu sendiri. ──
+  sectors.forEach(function(s){
+    var sv=byS[s];
+    sv.ret = sv.cost>0 ? ((sv.mv-sv.cost)/sv.cost*100) : 0;
+    sv.contrib = ((sv.mv-sv.cost)/totalCost*100);
+  });
+  var bySRet = sectors.slice().sort(function(a,b){return byS[b].ret-byS[a].ret;});
+  var bestSec = bySRet[0], worstSec = bySRet[bySRet.length-1];
+  var byContrib = sectors.slice().sort(function(a,b){return Math.abs(byS[b].contrib)-Math.abs(byS[a].contrib);});
+  var topContribSec = byContrib[0];
+
+  if(sectors.length){
+    el('sec-best').textContent=bestSec;
+    el('sec-best-pct').innerHTML='<span class="up">'+(byS[bestSec].ret>=0?'+':'')+byS[bestSec].ret.toFixed(1)+'%</span> unrealized';
+    el('sec-worst').textContent=worstSec;
+    el('sec-worst-pct').innerHTML='<span class="dn">'+(byS[worstSec].ret>=0?'+':'')+byS[worstSec].ret.toFixed(1)+'%</span> unrealized';
+    el('sec-contrib').textContent=topContribSec;
+    el('sec-contrib-pct').innerHTML='<span class="'+(byS[topContribSec].contrib>=0?'up':'dn')+'">'+(byS[topContribSec].contrib>=0?'+':'')+byS[topContribSec].contrib.toFixed(1)+' poin%</span> dari total return';
+  } else {
+    el('sec-best').textContent='-'; el('sec-best-pct').textContent='';
+    el('sec-worst').textContent='-'; el('sec-worst-pct').textContent='';
+    el('sec-contrib').textContent='-'; el('sec-contrib-pct').textContent='';
+  }
+
   el('sector-detail').innerHTML=sectors.map(function(s){
     var sv=byS[s];var alloc=(sv.mv/totalMV*100);
     var sInfo=IDX_SECTORS[s]||{color:sectorColor(s),icon:sectorIcon(s),desc:''};
@@ -868,11 +898,12 @@ function renderSektoral(){
           +'<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;font-size:13px;flex-shrink:0;filter:grayscale(1);opacity:.8">'+sInfo.icon+'</span>'
           +'<span class="sec-dot" style="background:'+sInfo.color+'"></span>'
           +'<span style="font-size:12px;font-weight:600">'+s+'</span>'
+          +'<span class="badge '+(sv.ret>=0?'b-up':'b-dn')+'" style="font-size:9px">'+(sv.ret>=0?'+':'')+sv.ret.toFixed(1)+'%</span>'
         +'</div>'
         +'<span style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:'+sInfo.color+'">'+alloc.toFixed(1)+'%</span>'
       +'</div>'
       +'<div class="prog" style="height:6px;border-radius:99px;overflow:hidden"><div class="progf" style="width:'+alloc+'%;background:'+sInfo.color+';border-radius:99px"></div></div>'
-      +'<div style="font-size:10px;color:var(--text3);margin-top:3px">'+sv.stocks.length+' saham · Rp '+fmtK(sv.mv)+'</div>'
+      +'<div style="font-size:10px;color:var(--text3);margin-top:3px">'+sv.stocks.length+' saham · Rp '+fmtK(sv.mv)+' · modal Rp '+fmtK(sv.cost)+'</div>'
     +'</div>';
   }).join('')||'<div style="color:var(--text3);text-align:center;padding:20px">Belum ada portofolio</div>';
 

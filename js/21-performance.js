@@ -12,6 +12,7 @@ var PERF_STATE = { eqPeriod:'YTD', allocMode:'saham' };
 function renderPerformance(){
   if(typeof equitySnapshotToday==='function') equitySnapshotToday(); // jaga-jaga kalau user langsung buka halaman ini tanpa lewat Dashboard dulu
   perfRenderEquity(PERF_STATE.eqPeriod);
+  perfRenderXirr();
   perfRenderAllocation(PERF_STATE.allocMode);
   perfRenderBenchmark();
   perfRenderTradeSummary();
@@ -19,6 +20,7 @@ function renderPerformance(){
   perfRenderDisposition();
   perfRenderActivity();
   perfRenderOtherAssets();
+  perfRenderRealBeta();
   if(typeof renderRisiko==='function') renderRisiko();
 }
 
@@ -572,4 +574,214 @@ function renderDividendYoC(){
       +'<td class="mono" style="font-size:11px">'+growthHtml+'</td>'
       +'</tr>';
   }).join('');
+}
+
+// ── Fetch riwayat harga harian RIIL (Yahoo, via rdEnsure/rdGetAny yang
+// sudah dipakai FlowScan/Ranking/dst di 13-realdata.js — satu sumber
+// data, bukan fetch terpisah) untuk SEMUA ticker yang sedang dipegang.
+// Dipakai bersama oleh Alpha/Beta riil (di sini) dan Correlation
+// portofolio riil (11-quant.js) supaya tidak ada 2 cara fetch berbeda. ──
+function perfFetchHoldingsHistory(cb){
+  var porto = (typeof getPortfolio==='function') ? getPortfolio() : [];
+  var tickers = porto.map(function(p){return p.ticker;});
+  if(!tickers.length){ cb({}, [], porto); return; }
+  var result={}, failed=[], remaining=tickers.length;
+  function done(){ if(--remaining<=0) cb(result, failed, porto); }
+  tickers.forEach(function(tk){
+    if(typeof rdEnsure!=='function'){ failed.push(tk); done(); return; }
+    rdEnsure(tk, function(err){
+      if(!err){
+        var rows = (typeof rdGetAny==='function') ? rdGetAny(tk) : null;
+        if(rows && rows.length>=30) result[tk]=rows; else failed.push(tk);
+      } else failed.push(tk);
+      done();
+    });
+  });
+}
+// Peta tanggal->return harian dari array OHLCV terurut menaik
+function perfDailyReturns(rows){
+  var rets={};
+  for(var i=1;i<rows.length;i++){
+    if(rows[i-1].close>0) rets[rows[i].date]=(rows[i].close-rows[i-1].close)/rows[i-1].close;
+  }
+  return rets;
+}
+// Regresi linear sederhana return saham vs return pasar (IHSG) — slope =
+// Beta, R^2 = kualitas fit. Butuh minimal 20 titik tanggal yang sama-sama
+// ada di kedua deret supaya tidak menyesatkan dari sampel terlalu kecil.
+function perfRegressBeta(stockRets, marketRets){
+  var dates=Object.keys(stockRets).filter(function(d){return marketRets.hasOwnProperty(d);});
+  if(dates.length<20) return null;
+  var xs=dates.map(function(d){return marketRets[d];}), ys=dates.map(function(d){return stockRets[d];});
+  var n=xs.length, mx=0,my=0;
+  for(var i=0;i<n;i++){mx+=xs[i];my+=ys[i];} mx/=n; my/=n;
+  var cov=0, varx=0, vary=0;
+  for(var j=0;j<n;j++){ var dx=xs[j]-mx, dy=ys[j]-my; cov+=dx*dy; varx+=dx*dx; vary+=dy*dy; }
+  if(varx===0) return null;
+  var beta=cov/varx;
+  var r=(varx&&vary)?cov/Math.sqrt(varx*vary):0;
+  return {beta:beta, r2:r*r, n:n, dates:dates.sort()};
+}
+function perfComputeRealBeta(cb){
+  perfFetchHoldingsHistory(function(histMap, failed, porto){
+    if(!porto.length){ cb(null, {results:[], failed:failed, noPorto:true}); return; }
+    rdFetchIhsgDaily(function(err, ihsgRows){
+      if(err || !ihsgRows){ cb(new Error('IHSG_UNAVAILABLE'), null); return; }
+      var ihsgRets = perfDailyReturns(ihsgRows);
+      var ihsgClose = {}; ihsgRows.forEach(function(r){ ihsgClose[r.date]=r.close; });
+      var rf = 0.065; // BI rate approx — konsisten dengan computeRiskMetrics()/computeHedgeFundMetrics()
+      var results=[];
+      porto.forEach(function(p){
+        var rows = histMap[p.ticker];
+        if(!rows){ results.push({ticker:p.ticker, mv:p.mv, ok:false}); return; }
+        var stockRets = perfDailyReturns(rows);
+        var reg = perfRegressBeta(stockRets, ihsgRets);
+        if(!reg){ results.push({ticker:p.ticker, mv:p.mv, ok:false}); return; }
+        var stockClose={}; rows.forEach(function(r){ stockClose[r.date]=r.close; });
+        var d0=reg.dates[0], d1=reg.dates[reg.dates.length-1];
+        var stockRetPeriod = stockClose[d0]>0 ? (stockClose[d1]-stockClose[d0])/stockClose[d0]*100 : 0;
+        var ihsgRetPeriod = ihsgClose[d0]>0 ? (ihsgClose[d1]-ihsgClose[d0])/ihsgClose[d0]*100 : 0;
+        var rfPeriod = rf*100*(reg.n/252);
+        var alpha = stockRetPeriod - (rfPeriod + reg.beta*(ihsgRetPeriod-rfPeriod));
+        results.push({ticker:p.ticker, mv:p.mv, ok:true, beta:reg.beta, r2:reg.r2, n:reg.n,
+          alpha:alpha, stockRet:stockRetPeriod, ihsgRet:ihsgRetPeriod, from:d0, to:d1});
+      });
+      cb(null, {results:results, failed:failed});
+    });
+  });
+}
+var PERF_BETA_STATE = { loaded:false, loading:false };
+function perfRenderRealBeta(){
+  var box = el('perf-beta-body');
+  if(!box) return;
+  if(PERF_BETA_STATE.loading) return;
+  if(PERF_BETA_STATE.loaded && PERF_BETA_STATE.data){ perfPaintRealBeta(PERF_BETA_STATE.data); return; }
+  PERF_BETA_STATE.loading = true;
+  box.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text3);font-size:11px">⏳ Mengambil &amp; menghitung riwayat harga riil (bisa beberapa detik per saham)…</div>';
+  perfComputeRealBeta(function(err, data){
+    PERF_BETA_STATE.loading = false;
+    if(err || !data){
+      box.innerHTML = '<div class="alert alert-warn">⚠ Gagal mengambil data historis IHSG untuk regresi — coba lagi beberapa saat. Beta di kartu "Manajemen Risiko" di bawah (estimasi statis) tetap berjalan normal.</div>';
+      return;
+    }
+    PERF_BETA_STATE.loaded = true;
+    PERF_BETA_STATE.data = data;
+    perfPaintRealBeta(data);
+  });
+}
+function perfPaintRealBeta(data){
+  var box = el('perf-beta-body');
+  if(data.noPorto || !data.results.length){
+    box.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3);font-size:11px">Belum ada posisi saham.</div>';
+    return;
+  }
+  var ok = data.results.filter(function(r){return r.ok;});
+  var totalMV = data.results.reduce(function(a,r){return a+r.mv;},0)||1;
+  var okMV = ok.reduce(function(a,r){return a+r.mv;},0);
+  if(!ok.length){
+    box.innerHTML = '<div class="alert alert-warn">⚠ Belum ada riwayat harga riil yang cukup panjang (min. 20 hari overlap dengan IHSG) untuk saham manapun di portofolio Anda. Coba lagi setelah beberapa siklus refresh harga otomatis berjalan.</div>';
+    return;
+  }
+  var portBeta = ok.reduce(function(a,r){return a+r.beta*(r.mv/okMV);},0);
+  var portAlpha = ok.reduce(function(a,r){return a+r.alpha*(r.mv/okMV);},0);
+  var coverage = (okMV/totalMV*100);
+
+  var html = '<div class="row3" style="margin-bottom:14px">'
+    +'<div class="metric" style="margin:0"><div class="mlabel">Beta Portofolio (Riil)</div><div class="mval '+(portBeta<=1?'up':portBeta<=1.3?'amb':'dn')+'" style="font-size:20px">'+portBeta.toFixed(2)+'</div><div class="msub neu">'+(portBeta>1?'lebih volatil dari IHSG':'lebih defensif dari IHSG')+'</div></div>'
+    +'<div class="metric" style="margin:0"><div class="mlabel">Alpha Portofolio (periode data)</div><div class="mval '+(portAlpha>=0?'up':'dn')+'" style="font-size:20px">'+(portAlpha>=0?'+':'')+portAlpha.toFixed(1)+'%</div><div class="msub neu">vs prediksi CAPM</div></div>'
+    +'<div class="metric" style="margin:0"><div class="mlabel">Cakupan Data</div><div class="mval" style="font-size:20px">'+coverage.toFixed(0)+'%</div><div class="msub neu">'+ok.length+' dari '+data.results.length+' saham punya data cukup</div></div>'
+    +'</div>';
+
+  html += '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Saham</th><th>Beta</th><th>R²</th><th>Alpha (periode)</th><th>Return Saham</th><th>Return IHSG</th><th>Periode</th></tr></thead><tbody>'
+    +data.results.slice().sort(function(a,b){return b.mv-a.mv;}).map(function(r){
+      if(!r.ok) return '<tr><td><span class="tp">'+r.ticker+'</span></td><td colspan="6" style="color:var(--text3);font-size:11px">Data harga riil belum cukup panjang</td></tr>';
+      return '<tr><td><span class="tp">'+r.ticker+'</span></td>'
+        +'<td class="mono" style="font-size:11px">'+r.beta.toFixed(2)+'</td>'
+        +'<td class="mono" style="font-size:11px;color:var(--text2)">'+r.r2.toFixed(2)+'</td>'
+        +'<td class="mono '+(r.alpha>=0?'up':'dn')+'" style="font-size:11px">'+(r.alpha>=0?'+':'')+r.alpha.toFixed(1)+'%</td>'
+        +'<td class="mono '+(r.stockRet>=0?'up':'dn')+'" style="font-size:11px">'+(r.stockRet>=0?'+':'')+r.stockRet.toFixed(1)+'%</td>'
+        +'<td class="mono" style="font-size:11px;color:var(--text2)">'+(r.ihsgRet>=0?'+':'')+r.ihsgRet.toFixed(1)+'%</td>'
+        +'<td style="font-size:10px;color:var(--text3)">'+r.from+' → '+r.to+' ('+r.n+' hari)</td></tr>';
+    }).join('')
+    +'</tbody></table></div>'
+    +'<div style="font-size:10px;color:var(--text3);margin-top:10px">Beta = kemiringan regresi return harian saham vs IHSG (data riil Yahoo Finance, sampai 2 tahun terakhir). Alpha = selisih return aktual saham terhadap prediksi CAPM (Rf + Beta×(Return IHSG−Rf)) pada periode data yang sama — angka POSITIF berarti saham mengungguli ekspektasi risiko-nya, BUKAN jaminan ke depan. R² mendekati 1 = pergerakan saham memang banyak dijelaskan oleh IHSG; R² rendah = beta kurang bisa diandalkan (saham lebih dipengaruhi faktor spesifik emiten).</div>';
+
+  box.innerHTML = html;
+}
+
+// ── XIRR (money-weighted return) — cakupan: saham + kas RDN saja, karena
+// hanya rdnMutations yang punya riwayat SETOR/TARIK lengkap dengan
+// tanggal. Metodologi: arus kas keluar (negatif) tiap SETOR, arus kas
+// masuk (positif) tiap TARIK, ditambah nilai portofolio saham+RDN SAAT
+// INI sebagai satu arus kas masuk terakhir (seolah dilikuidasi hari ini).
+// BUY/SELL/DIVIDEN/biaya TIDAK dihitung sebagai arus kas eksternal —
+// itu semua sudah tercermin di saldo RDN & nilai pasar saat ini, jadi
+// menghitungnya lagi di sini akan double-count. ──
+function xnpv(rate, flows){
+  var d0 = new Date(flows[0].date);
+  return flows.reduce(function(sum, f){
+    var days = (new Date(f.date) - d0) / 86400000;
+    return sum + f.amount / Math.pow(1+rate, days/365);
+  }, 0);
+}
+function computeXIRR(flows){
+  // flows: [{date, amount}], minimal 2 titik dengan tanda beda (ada + dan -)
+  if(!flows || flows.length<2) return null;
+  var hasPos=flows.some(function(f){return f.amount>0;});
+  var hasNeg=flows.some(function(f){return f.amount<0;});
+  if(!hasPos || !hasNeg) return null; // tidak ada solusi matematis kalau semua arus kas satu arah
+  var rate=0.15; // tebakan awal
+  for(var i=0;i<200;i++){
+    var f0=xnpv(rate,flows);
+    var f1=(xnpv(rate+1e-6,flows)-f0)/1e-6;
+    if(Math.abs(f1)<1e-12) break;
+    var next=rate-f0/f1;
+    if(!isFinite(next)) break;
+    if(Math.abs(next-rate)<1e-7){ rate=next; break; }
+    rate=next;
+  }
+  if(!isFinite(rate) || rate<-0.999 || rate>50) return null; // hasil tidak masuk akal, regresi gagal konvergen
+  return rate;
+}
+function perfRenderXirr(){
+  var valEl=el('perf-xirr-val'), simpleEl=el('perf-simple-return-val'), depEl=el('perf-xirr-netdeposit'), cntEl=el('perf-xirr-flowcount'), noteEl=el('perf-xirr-note');
+  if(!valEl) return;
+  var muts = (rdnMutations||[]).filter(function(m){ return m.type==='SETOR' || m.type==='TARIK'; });
+  if(!muts.length){
+    valEl.textContent='—'; simpleEl.textContent='—'; depEl.textContent='Rp 0'; cntEl.textContent='0 arus kas';
+    noteEl.innerHTML='Belum ada riwayat Setor/Tarik RDN untuk dihitung.';
+    return;
+  }
+  var flows = muts.map(function(m){ return {date:m.date, amount: m.type==='SETOR' ? -Math.abs(m.amount) : Math.abs(m.amount)}; });
+  var porto=(typeof getPortfolio==='function')?getPortfolio():[];
+  var stockMV=porto.reduce(function(a,p){return a+p.mv;},0);
+  var rdn=(typeof calcRdnBalance==='function')?calcRdnBalance():0;
+  var terminalValue = stockMV+rdn;
+  flows.push({date: today(), amount: terminalValue});
+  flows.sort(function(a,b){ return a.date.localeCompare(b.date); });
+
+  // FIX: addRdn()/submitRdn() sudah menyimpan SETOR sebagai +amount dan TARIK
+  // sebagai -amount (lihat js/05-assets.js submitRdn(): isIn?amount:-amount) —
+  // jadi menjumlah m.amount APA ADANYA sudah otomatis benar (setor menambah,
+  // tarik mengurangi). Sebelumnya kode ini malah membalik tanda TARIK lagi
+  // (-m.amount saat m.amount sudah negatif = jadi positif), yang justru
+  // MENAMBAHKAN nilai penarikan ke netDeposit alih-alih menguranginya.
+  var netDeposit = muts.reduce(function(a,m){ return a + m.amount; },0);
+  depEl.textContent='Rp '+fmtK(netDeposit);
+  cntEl.textContent=muts.length+' arus kas (setor/tarik)';
+
+  var simpleReturn = netDeposit!==0 ? ((terminalValue-netDeposit)/Math.abs(netDeposit)*100) : null;
+  simpleEl.textContent = simpleReturn!==null ? (simpleReturn>=0?'+':'')+simpleReturn.toFixed(1)+'%' : '—';
+  simpleEl.className = 'mval '+(simpleReturn!==null && simpleReturn>=0?'up':simpleReturn!==null?'dn':'');
+
+  var xirr = computeXIRR(flows);
+  if(xirr===null){
+    valEl.textContent='—';
+    noteEl.innerHTML='XIRR belum bisa dihitung — butuh minimal 1 Setor dan nilai portofolio saat ini berbeda tanda, atau data arus kas belum cukup bervariasi tanggalnya.';
+    return;
+  }
+  valEl.textContent=(xirr>=0?'+':'')+(xirr*100).toFixed(1)+'%';
+  valEl.className='mval '+(xirr>=0?'up':'dn');
+  var days=(new Date(flows[flows.length-1].date)-new Date(flows[0].date))/86400000;
+  noteEl.innerHTML='Dihitung dari '+muts.length+' transaksi Setor/Tarik RDN selama '+Math.round(days)+' hari ('+flows[0].date+' → '+today()+'), plus nilai saham+RDN saat ini (Rp '+fmtK(terminalValue)+') sebagai arus kas terakhir. XIRR disetahunkan (annualized) — beda dari return sederhana yang tidak memperhitungkan kapan tiap setoran terjadi.';
 }

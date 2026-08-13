@@ -6,14 +6,14 @@
 <title>Money Watch Pro — Portofolio, Wealth & Analisa Quant</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23131324'/><path d='M7 21 L13 13 L18 17 L25 8' stroke='%2334d399' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/><circle cx='25' cy='8' r='2' fill='%2334d399'/></svg>">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/00-config.js?v=20260813h"></script>
+<script src="js/00-config.js?v=20260813i"></script>
 <!-- Font sesuai invezgo.com: Figtree untuk judul/angka besar, Inter untuk isi — dibaca langsung dari computed style situsnya --><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Figtree:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.0/dist/ort.min.js"></script>
-<link rel="stylesheet" href="css/main.css?v=20260813h">
-<link rel="stylesheet" href="css/wealth.css?v=20260813h">
+<link rel="stylesheet" href="css/main.css?v=20260813i">
+<link rel="stylesheet" href="css/wealth.css?v=20260813i">
 </head>
 <body>
 <body>
@@ -624,6 +624,32 @@
     </div>
   </div>
 
+  <!-- ROW 1b: Return Sebenarnya (XIRR) vs Return Sederhana -->
+  <div class="card" style="margin-bottom:18px">
+    <div class="cheader">
+      <span class="ctitle">Return Sebenarnya — Portofolio Saham (XIRR) vs Return Sederhana</span>
+      <span class="badge b-gray" title="Cakupan: saham + kas RDN saja (arus kas Setor/Tarik tercatat lengkap di sana). Crypto/ETF/Reksa Dana belum punya riwayat setor-tarik terpisah jadi belum bisa dihitung XIRR-nya. Return sederhana (untung÷modal) menyamaratakan semua setoran seolah masuk di waktu yang sama — XIRR memperhitungkan KAPAN tiap setoran/penarikan terjadi, standar industri untuk portofolio dengan arus kas tidak beraturan">ⓘ apa bedanya?</span>
+    </div>
+    <div class="row3">
+      <div class="metric" style="margin:0">
+        <div class="mlabel">XIRR (Money-Weighted)</div>
+        <div class="mval" id="perf-xirr-val" style="font-size:20px">—</div>
+        <div class="msub neu">return tahunan, memperhitungkan waktu setoran</div>
+      </div>
+      <div class="metric" style="margin:0">
+        <div class="mlabel">Return Sederhana</div>
+        <div class="mval" id="perf-simple-return-val" style="font-size:20px">—</div>
+        <div class="msub neu">(nilai kini − modal) ÷ modal</div>
+      </div>
+      <div class="metric" style="margin:0">
+        <div class="mlabel">Total Setoran Bersih</div>
+        <div class="mval" id="perf-xirr-netdeposit" style="font-size:20px">Rp 0</div>
+        <div class="msub neu" id="perf-xirr-flowcount">0 arus kas</div>
+      </div>
+    </div>
+    <div id="perf-xirr-note" style="font-size:10.5px;color:var(--text3);margin-top:10px"></div>
+  </div>
+
   <!-- ROW 2: Kinerja Kumulatif vs IHSG -->
   <div class="card" style="margin-bottom:18px">
     <div class="cheader">
@@ -736,6 +762,15 @@
   <div style="margin-bottom:18px">
     <div class="cheader" style="border:none;padding:0;margin-bottom:14px"><span class="ctitle" style="font-size:14px;color:var(--text)">🪙 Kinerja Aset Lain</span></div>
     <div class="g3" id="perf-other-assets"></div>
+  </div>
+
+  <!-- ROW 7: Alpha & Beta Riil (dari regresi harga sungguhan, bukan nilai statis) -->
+  <div class="card" style="margin-bottom:18px">
+    <div class="cheader">
+      <span class="ctitle">Alpha &amp; Beta Riil (Regresi vs IHSG)</span>
+      <span class="badge b-gray" title="Beta di kartu 'Manajemen Risiko' di bawah pakai nilai beta statis per saham dari database. Beta di sini dihitung langsung dari regresi harga harian riil terhadap IHSG (data Yahoo Finance) — lebih akurat tapi butuh waktu ambil data & riwayat harga cukup panjang">ⓘ beda dari Beta di bawah?</span>
+    </div>
+    <div id="perf-beta-body"><div style="text-align:center;padding:24px;color:var(--text3);font-size:11px">⏳ Menghitung dari data harga riil…</div></div>
   </div>
 
   <!-- ===== MANAJEMEN RISIKO (dipindahkan dari Dashboard) ===== -->
@@ -1267,6 +1302,11 @@
     <div class="metric"><div class="mlabel">Jumlah Sektor</div><div class="mval" id="sec-cnt">0</div><div class="msub neu">dari 11 sektor IDX</div></div>
     <div class="metric"><div class="mlabel">Diversifikasi Score</div><div class="mval" id="sec-div-score">0/10</div><div class="msub neu" id="sec-div-label"></div></div>
     <div class="metric"><div class="mlabel">Konsentrasi Risiko</div><div class="mval" id="sec-conc">0%</div><div class="msub neu" id="sec-conc-sub">sektor teratas</div></div>
+  </div>
+  <div class="row3" style="margin-bottom:18px">
+    <div class="metric" style="margin:0"><div class="mlabel">Sektor Berkinerja Terbaik</div><div class="mval up" id="sec-best" style="font-size:15px">-</div><div class="msub neu" id="sec-best-pct"></div></div>
+    <div class="metric" style="margin:0"><div class="mlabel">Sektor Berkinerja Terburuk</div><div class="mval dn" id="sec-worst" style="font-size:15px">-</div><div class="msub neu" id="sec-worst-pct"></div></div>
+    <div class="metric" style="margin:0"><div class="mlabel">Kontribusi Sektor Terbesar ke Return</div><div class="mval" id="sec-contrib" style="font-size:15px">-</div><div class="msub neu" id="sec-contrib-pct"></div></div>
   </div>
   <div class="g2b">
     <div class="card">
@@ -2437,7 +2477,7 @@
 <!-- ===== CORRELATION MATRIX (QuantTrader) ===== -->
 <div id="page-correlation" class="page">
   <div class="ptitle">📉 Correlation Matrix</div>
-  <div class="psub">Matriks korelasi return antar saham Top 10 LQ45</div>
+  <div class="psub">Matriks korelasi return antar saham di PORTOFOLIO ANDA (data harga riil) — jawab langsung apakah portofolio benar-benar terdiversifikasi</div>
   <div class="card" style="margin:12px 0 10px">
     <div class="cheader"><span class="ctitle">⚙️ Pengaturan</span><button class="btn btn-bb btn-xs" onclick="corrRender()">🔄 Refresh</button></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -2459,7 +2499,7 @@
     </div>
   </div>
   <div class="card" style="margin-bottom:16px">
-    <div class="cheader"><span class="ctitle">Correlation Matrix — Top 10 LQ45</span></div>
+    <div class="cheader"><span class="ctitle">Correlation Matrix — Saham di Portofolio Anda</span></div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:11px;color:var(--text3)">
       <span style="color:var(--red)">-1.0</span>
       <div style="flex:1;height:8px;border-radius:4px;background:linear-gradient(to right,#ff2244,#1a1a2a,#00d4aa)"></div>
@@ -2566,22 +2606,22 @@
   </div>
 </div>
 
-<script src="js/01-data.js?v=20260813h"></script>
-<script src="js/02-storage.js?v=20260813h"></script>
-<script src="js/03-engine.js?v=20260813h"></script>
-<script src="js/04-render.js?v=20260813h"></script>
-<script src="js/05-assets.js?v=20260813h"></script>
-<script src="js/06-analysis-router.js?v=20260813h"></script>
-<script src="js/07-flowscan.js?v=20260813h"></script>
-<script src="js/08-auth.js?v=20260813h"></script>
-<script src="js/09-divinvest.js?v=20260813h"></script>
-<script src="js/10-hargawajar.js?v=20260813h"></script>
-<script src="js/11-quant.js?v=20260813h"></script>
-<script src="js/12-clean.js?v=20260813h"></script>
-<script src="js/13-realdata.js?v=20260813h"></script>
-<script src="js/14-admin.js?v=20260813h"></script>
-<script src="js/15-txbulk.js?v=20260813h"></script>
-<script src="js/20-wealth.js?v=20260813h"></script>
-<script src="js/21-performance.js?v=20260813h"></script>
+<script src="js/01-data.js?v=20260813i"></script>
+<script src="js/02-storage.js?v=20260813i"></script>
+<script src="js/03-engine.js?v=20260813i"></script>
+<script src="js/04-render.js?v=20260813i"></script>
+<script src="js/05-assets.js?v=20260813i"></script>
+<script src="js/06-analysis-router.js?v=20260813i"></script>
+<script src="js/07-flowscan.js?v=20260813i"></script>
+<script src="js/08-auth.js?v=20260813i"></script>
+<script src="js/09-divinvest.js?v=20260813i"></script>
+<script src="js/10-hargawajar.js?v=20260813i"></script>
+<script src="js/11-quant.js?v=20260813i"></script>
+<script src="js/12-clean.js?v=20260813i"></script>
+<script src="js/13-realdata.js?v=20260813i"></script>
+<script src="js/14-admin.js?v=20260813i"></script>
+<script src="js/15-txbulk.js?v=20260813i"></script>
+<script src="js/20-wealth.js?v=20260813i"></script>
+<script src="js/21-performance.js?v=20260813i"></script>
 </body>
 </html>

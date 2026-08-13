@@ -692,22 +692,55 @@ function fhmRender(){
 }
 
 // ── Correlation Matrix ──
+// FIX (Correlation Matrix — data riil portofolio): sebelumnya halaman ini
+// hardcode 10 ticker populer (BBCA/BBRI/dst, BUKAN saham yang benar-benar
+// Anda pegang) dan datanya qtGenSim() alias SIMULASI/acak, bukan harga
+// riil — jadi jawaban "portofolio saya benar terdiversifikasi atau
+// cuma kelihatannya?" tidak pernah bisa dijawab jujur oleh halaman ini.
+// Sekarang: ticker = saham yang benar-benar ada di portofolio Anda,
+// datanya riwayat harga harian RIIL (Yahoo Finance via perfFetchHoldingsHistory()
+// di 21-performance.js — infrastruktur sama dgn FlowScan/Ranking/dst,
+// bukan mesin fetch terpisah).
+var CORR_STATE = { loading:false };
 function corrRender(){
-  if(!QT.scData.length) scBuildSim();
-  var TICKERS=['BBCA','BBRI','BMRI','BBNI','TLKM','ASII','ANTM','ADRO','UNVR','AMRT'];
-  var returns={};
-  TICKERS.forEach(function(t){
-    var d=qtGenSim(t,200); var close=d.map(function(x){return x.close;});
-    returns[t]=close.slice(1).map(function(c,i){return (c-close[i])/close[i];});
-  });
-  var matrix=TICKERS.map(function(a){return TICKERS.map(function(b){return qtPearson(returns[a],returns[b]);});});
-  var mEl=el('corr-matrix');
-  if(mEl){
-    var h='<div style="overflow-x:auto"><div style="display:grid;grid-template-columns:60px '+TICKERS.map(function(){return '1fr';}).join(' ')+';gap:2px">';
-    h+='<div></div>'+TICKERS.map(function(t){return '<div style="font-size:10px;font-weight:700;color:var(--text2);text-align:center;padding:2px">'+t+'</div>';}).join('');
-    TICKERS.forEach(function(a,i){
+  var mEl=el('corr-matrix'), pEl=el('corr-pairs');
+  if(!mEl) return;
+  var porto = (typeof getPortfolio==='function') ? getPortfolio() : [];
+  if(porto.length<2){
+    mEl.innerHTML = '<div style="text-align:center;color:var(--text3);padding:20px;font-size:11px">Butuh minimal 2 saham di portofolio untuk menghitung korelasi. Halaman ini memakai saham yang benar-benar Anda pegang, bukan daftar tetap.</div>';
+    if(pEl) pEl.innerHTML='';
+    return;
+  }
+  if(CORR_STATE.loading) return;
+  if(typeof perfFetchHoldingsHistory!=='function'){
+    mEl.innerHTML = '<div class="alert alert-warn">⚠ Modul data riil belum termuat.</div>';
+    return;
+  }
+  CORR_STATE.loading=true;
+  mEl.innerHTML = '<div style="text-align:center;color:var(--text3);padding:20px;font-size:11px">⏳ Mengambil riwayat harga riil untuk '+porto.length+' saham di portofolio Anda…</div>';
+  if(pEl) pEl.innerHTML='';
+  var windowDays = parseInt((el('corr-window')&&el('corr-window').value)||180,10);
+  perfFetchHoldingsHistory(function(histMap, failed){
+    CORR_STATE.loading=false;
+    var tickers = Object.keys(histMap);
+    if(tickers.length<2){
+      mEl.innerHTML = '<div class="alert alert-warn">⚠ Data harga riil belum cukup untuk minimal 2 saham ('+tickers.length+' berhasil, '+failed.length+' gagal) — coba lagi setelah beberapa siklus refresh harga otomatis, atau klik 🔄 Refresh.</div>';
+      return;
+    }
+    var returns={};
+    tickers.forEach(function(tk){
+      var rows = histMap[tk].slice(-(windowDays+1)); // +1 karena return butuh 1 titik pembanding ekstra
+      var rets=[];
+      for(var i=1;i<rows.length;i++){ if(rows[i-1].close>0) rets.push((rows[i].close-rows[i-1].close)/rows[i-1].close); }
+      returns[tk]=rets;
+    });
+    var matrix=tickers.map(function(a){return tickers.map(function(b){return qtPearson(returns[a],returns[b]);});});
+
+    var h='<div style="overflow-x:auto"><div style="display:grid;grid-template-columns:60px '+tickers.map(function(){return '1fr';}).join(' ')+';gap:2px">';
+    h+='<div></div>'+tickers.map(function(t){return '<div style="font-size:10px;font-weight:700;color:var(--text2);text-align:center;padding:2px">'+t+'</div>';}).join('');
+    tickers.forEach(function(a,i){
       h+='<div style="font-size:10px;font-weight:700;color:var(--text2);display:flex;align-items:center;padding-right:4px">'+a+'</div>';
-      TICKERS.forEach(function(b,j){
+      tickers.forEach(function(b,j){
         var v=matrix[i][j]; var bg,col;
         if(i===j){bg='rgba(255,255,255,.08)';col='var(--text3)';}
         else if(v>0){var int2=Math.min(1,v/.8);bg='rgba(0,212,170,'+(0.15+int2*.65)+')';col='var(--green)';}
@@ -716,21 +749,25 @@ function corrRender(){
       });
     });
     h+='</div></div>';
+    if(failed.length) h += '<div style="font-size:10px;color:var(--text3);margin-top:8px">⚠ '+failed.length+' saham belum punya data riil cukup dan tidak ikut dihitung: '+failed.join(', ')+'</div>';
     mEl.innerHTML=h;
-  }
 
-  // Pairs insight
-  var pairs2=[]; TICKERS.forEach(function(a,i){TICKERS.forEach(function(b,j){if(j>i)pairs2.push({a:a,b:b,v:matrix[i][j]});});}); pairs2.sort(function(x,y){return y.v-x.v;});
-  var pEl=el('corr-pairs');
-  if(pEl){
-    var top=pairs2.slice(0,5), bot=pairs2.slice(-5).reverse();
-    pEl.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
-      +'<div><div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:8px">Korelasi Tertinggi — kandidat pairs trading</div>'
-      +top.map(function(p){return '<div style="display:flex;justify-content:space-between;padding:6px 9px;background:var(--bg3);border-radius:2px;margin-bottom:4px;border:1px solid var(--border)"><span style="font-family:Menlo,monospace;color:var(--text);font-size:12px">'+p.a+' / '+p.b+'</span><span style="color:var(--green);font-weight:700;font-family:Menlo,monospace">+'+p.v.toFixed(3)+'</span></div>';}).join('')+'</div>'
-      +'<div><div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:8px">Korelasi Terendah — kandidat diversifikasi</div>'
-      +bot.map(function(p){return '<div style="display:flex;justify-content:space-between;padding:6px 9px;background:var(--bg3);border-radius:2px;margin-bottom:4px;border:1px solid var(--border)"><span style="font-family:Menlo,monospace;color:var(--text);font-size:12px">'+p.a+' / '+p.b+'</span><span style="color:'+(p.v>=0?'var(--amber)':'var(--red)')+';font-weight:700;font-family:Menlo,monospace">'+(p.v>=0?'+':'')+p.v.toFixed(3)+'</span></div>';}).join('')+'</div>'
-      +'</div>';
-  }
+    var pairs2=[]; tickers.forEach(function(a,i){tickers.forEach(function(b,j){if(j>i)pairs2.push({a:a,b:b,v:matrix[i][j]});});});
+    pairs2.sort(function(x,y){return y.v-x.v;});
+    if(pEl){
+      if(!pairs2.length){
+        pEl.innerHTML='<div style="color:var(--text3);text-align:center;padding:16px;font-size:11px">Butuh minimal 2 pasangan saham untuk perbandingan.</div>';
+      } else {
+        var top=pairs2.slice(0,5), bot=pairs2.slice(-5).reverse();
+        pEl.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+          +'<div><div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:8px">Korelasi Tertinggi — kandidat pairs trading</div>'
+          +top.map(function(p){return '<div style="display:flex;justify-content:space-between;padding:6px 9px;background:var(--bg3);border-radius:2px;margin-bottom:4px;border:1px solid var(--border)"><span style="font-family:Menlo,monospace;color:var(--text);font-size:12px">'+p.a+' / '+p.b+'</span><span style="color:var(--green);font-weight:700;font-family:Menlo,monospace">'+(p.v>=0?'+':'')+p.v.toFixed(3)+'</span></div>';}).join('')+'</div>'
+          +'<div><div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:8px">Korelasi Terendah — kandidat diversifikasi</div>'
+          +bot.map(function(p){return '<div style="display:flex;justify-content:space-between;padding:6px 9px;background:var(--bg3);border-radius:2px;margin-bottom:4px;border:1px solid var(--border)"><span style="font-family:Menlo,monospace;color:var(--text);font-size:12px">'+p.a+' / '+p.b+'</span><span style="color:'+(p.v>=0?'var(--amber)':'var(--red)')+';font-weight:700;font-family:Menlo,monospace">'+(p.v>=0?'+':'')+p.v.toFixed(3)+'</span></div>';}).join('')+'</div>'
+          +'</div>';
+      }
+    }
+  });
 }
 
 // ── Monthly Returns ──
