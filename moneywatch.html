@@ -6,14 +6,14 @@
 <title>Money Watch Pro — Portofolio, Wealth & Analisa Quant</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23131324'/><path d='M7 21 L13 13 L18 17 L25 8' stroke='%2334d399' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/><circle cx='25' cy='8' r='2' fill='%2334d399'/></svg>">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/00-config.js?v=20260813a"></script>
+<script src="js/00-config.js?v=20260813b"></script>
 <!-- Font sesuai invezgo.com: Figtree untuk judul/angka besar, Inter untuk isi — dibaca langsung dari computed style situsnya --><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Figtree:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.0/dist/ort.min.js"></script>
-<link rel="stylesheet" href="css/main.css?v=20260813a">
-<link rel="stylesheet" href="css/wealth.css?v=20260813a">
+<link rel="stylesheet" href="css/main.css?v=20260813b">
+<link rel="stylesheet" href="css/wealth.css?v=20260813b">
 </head>
 <body>
 <body>
@@ -185,6 +185,7 @@
   <div class="side-group" data-group="portofolio">
     <button class="side-sec-toggle" onclick="sideToggleGroup(this)"><i class="ti ti-briefcase"></i><span class="side-label">Portofolio</span><span class="side-chevron">▾</span></button>
     <div class="side-group-items">
+      <button onclick="goPage('performance',this)"><i class="ti ti-chart-histogram"></i><span class="side-label">Performance</span></button>
       <button onclick="goPage('portofolio',this)"><i class="ti ti-chart-line"></i><span class="side-label">Saham IDX</span></button>
       <button onclick="goPage('crypto',this)"><i class="ti ti-currency-bitcoin"></i><span class="side-label">Crypto</span></button>
       <button onclick="goPage('reksadana',this)"><i class="ti ti-building-bank"></i><span class="side-label">Reksa Dana</span></button>
@@ -323,7 +324,7 @@
   <!-- ROW 1c: Risiko + Strategi/Alokasi -->
   <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:18px">
     <div class="card" style="margin:0">
-      <div class="cheader"><span class="ctitle">⚠️ Analisis Risiko Portofolio</span><button class="btn btn-ghost btn-xs" onclick="goDashSection('dash-risiko-section')">Lihat detail ↓</button></div>
+      <div class="cheader"><span class="ctitle">⚠️ Analisis Risiko Portofolio</span><button class="btn btn-ghost btn-xs" onclick="goPage('performance')">Lihat detail ↓</button></div>
       <div id="d-risk-strip" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:16px"></div>
     </div>
     <div class="card" style="margin:0">
@@ -550,18 +551,164 @@
     </div>
   </div>
 
-  <!-- ===== RIWAYAT EKUITAS HARIAN ===== -->
-  <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--border)">
-    <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px">📈 Riwayat Ekuitas Harian</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:2px;margin-bottom:18px">Performa total modal (AUM) dari waktu ke waktu — tercatat otomatis setiap kali Anda membuka aplikasi</div>
+  <!-- ===== AI GUIDE (dipindahkan ke bawah Watchlist) ===== -->
+  <div id="dash-ai-section" style="margin-top:24px;padding-top:18px;border-top:1px solid var(--border);margin-bottom:18px">
+    <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px">🤖 AI Guide — Saran Portofolio</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:2px;margin-bottom:18px">Rekomendasi hold / trim / cut-loss per saham dan saran rebalancing — berbasis aturan otomatis, opsional analisa live via Claude</div>
     <div class="card" style="margin-top:11px">
-      <div id="eq-hist-summary"></div>
-      <div class="cw" style="height:220px;margin-top:8px"><canvas id="equityHistoryChart"></canvas></div>
+      <div class="cheader"><span class="ctitle">Aksi per Saham</span></div>
+      <div id="ai-holding-reco"></div>
+    </div>
+    <div class="card" style="margin-top:11px">
+      <div class="cheader">
+        <span class="ctitle">Analisa &amp; Saran Naratif</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-xs" id="ai-key-btn" onclick="aiSetKey()" title="Key tersimpan lokal di browser ini">🔑 API Key</button>
+          <button class="btn btn-ghost btn-xs" id="ai-worker-btn" onclick="aiSetWorkerUrl()" title="Opsional — key tidak pernah tersimpan di browser, lihat workers/ai-proxy/README.md">🌐 Worker URL</button>
+          <button class="btn btn-blue btn-xs" onclick="aiRunClaude()">✨ Konsultasi Live (Claude)</button>
+        </div>
+      </div>
+      <div id="ai-box"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PORTFOLIO PERFORMANCE ===== -->
+<div id="page-performance" class="page">
+  <div class="ptitle">📊 Portfolio Performance</div>
+  <div class="psub">Analisa lengkap kinerja portofolio — ekuitas, alokasi, benchmark vs IHSG, ringkasan trading, dan manajemen risiko</div>
+
+  <!-- ROW 1: Total Equity | Riwayat Ekuitas | Alokasi Portofolio -->
+  <div class="g3">
+    <div class="card" style="margin:0">
+      <div class="cheader">
+        <span class="ctitle">Total Equity</span>
+        <div id="perf-eq-period" style="display:flex;gap:3px;background:var(--bg);border-radius:7px;padding:3px">
+          <button class="pbtn" onclick="perfSetEqPeriod('1W',this)">1W</button>
+          <button class="pbtn" onclick="perfSetEqPeriod('1M',this)">1M</button>
+          <button class="pbtn" onclick="perfSetEqPeriod('3M',this)">3M</button>
+          <button class="pbtn on" onclick="perfSetEqPeriod('YTD',this)">YTD</button>
+          <button class="pbtn" onclick="perfSetEqPeriod('1Y',this)">1Y</button>
+          <button class="pbtn" onclick="perfSetEqPeriod('ALL',this)">All</button>
+        </div>
+      </div>
+      <div class="mval lg" id="perf-equity-value" style="font-size:26px">Rp 0</div>
+      <div class="msub" id="perf-equity-sub" style="margin-bottom:8px"></div>
+      <div class="cw" style="height:190px"><canvas id="perfEquityChart"></canvas></div>
+    </div>
+    <div class="card" style="margin:0;display:flex;flex-direction:column">
+      <div class="cheader"><span class="ctitle">Riwayat Ekuitas</span><span class="badge b-gray" id="perf-eq-table-count">0 hari</span></div>
+      <div style="overflow-y:auto;max-height:270px;flex:1">
+        <table class="tbl">
+          <thead><tr><th>Tanggal</th><th>Ekuitas</th><th>P&amp;L</th></tr></thead>
+          <tbody id="perf-eq-tbody"><tr><td colspan="3" style="text-align:center;color:var(--text3);padding:16px">Belum ada riwayat</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card" style="margin:0">
+      <div class="cheader">
+        <span class="ctitle">Alokasi Portofolio</span>
+        <div style="display:flex;gap:3px;background:var(--bg);border-radius:7px;padding:3px">
+          <button class="pbtn on" onclick="perfSetAllocMode('saham',this)">Saham</button>
+          <button class="pbtn" onclick="perfSetAllocMode('sektor',this)">Sektor</button>
+        </div>
+      </div>
+      <div style="position:relative;height:150px;display:flex;align-items:center;justify-content:center">
+        <canvas id="perfAllocDonut"></canvas>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">
+          <div style="font-family:var(--font-mono);font-size:14px;font-weight:700" id="perf-alloc-center-val">Rp 0</div>
+          <div style="font-size:9px;color:var(--text3)" id="perf-alloc-center-sub">0 posisi</div>
+        </div>
+      </div>
+      <div id="perf-alloc-legend" style="margin-top:10px;max-height:130px;overflow-y:auto"></div>
     </div>
   </div>
 
-  <!-- ===== MANAJEMEN RISIKO (dipindahkan ke bawah Watchlist) ===== -->
-  <div id="dash-risiko-section" style="margin-top:24px;padding-top:18px;border-top:1px solid var(--border)">
+  <!-- ROW 2: Kinerja Kumulatif vs IHSG -->
+  <div class="card" style="margin-bottom:18px">
+    <div class="cheader">
+      <span class="ctitle">Kinerja Kumulatif vs IHSG</span>
+      <span class="badge b-gray" title="Dihitung dari riwayat ekuitas harian aplikasi vs data historis IHSG riil (Yahoo Finance) — makin sering Anda buka aplikasi, makin rapat & akurat kurva ini">ⓘ metodologi</span>
+    </div>
+    <div style="display:flex;gap:16px;margin-bottom:10px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:2px;background:var(--accent);display:inline-block"></span><span style="font-size:11px;color:var(--text2)">Portofolio</span><span class="mono" id="perf-bench-porto-val" style="font-size:12px;font-weight:700;margin-left:4px">0.00%</span></div>
+      <div style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:2px;background:var(--purple);display:inline-block"></span><span style="font-size:11px;color:var(--text2)">IHSG</span><span class="mono" id="perf-bench-ihsg-val" style="font-size:12px;font-weight:700;margin-left:4px">0.00%</span></div>
+    </div>
+    <div class="cw" style="height:220px"><canvas id="perfBenchChart"></canvas></div>
+    <div id="perf-bench-note" style="font-size:10.5px;color:var(--text3);margin-top:8px"></div>
+  </div>
+
+  <!-- ROW 3: Ringkasan Trading -->
+  <div style="margin-bottom:18px">
+    <div class="cheader" style="border:none;padding:0;margin-bottom:14px"><span class="ctitle" style="font-size:14px;color:var(--text)">🎯 Ringkasan Trading</span></div>
+    <div class="g3">
+      <div class="card" style="margin:0;display:flex;align-items:center;gap:14px">
+        <div style="position:relative;width:110px;height:70px;flex-shrink:0">
+          <svg width="110" height="70" viewBox="0 0 110 70">
+            <path d="M8 62 A47 47 0 0 1 102 62" fill="none" stroke="var(--bg4)" stroke-width="9" stroke-linecap="round"/>
+            <path id="perf-winrate-arc" d="M8 62 A47 47 0 0 1 102 62" fill="none" stroke="var(--green)" stroke-width="9" stroke-linecap="round" stroke-dasharray="147.65" stroke-dashoffset="147.65"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:2px">
+            <div style="font-family:var(--font-mono);font-size:17px;font-weight:700" id="perf-winrate-val">0%</div>
+            <div style="font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em" id="perf-winrate-trades">0 Trades</div>
+          </div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div class="mlabel" style="margin-bottom:6px">Win Rate</div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:var(--text3)">Wins</span><span class="up" id="perf-wins">0</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--text3)">Losses</span><span class="dn" id="perf-losses">0</span></div>
+        </div>
+      </div>
+      <div class="metric" style="margin:0">
+        <div class="mlabel">Profit Factor</div>
+        <div class="mval" id="perf-profit-factor">—</div>
+        <div class="msub neu">total untung ÷ total rugi</div>
+      </div>
+      <div class="metric" style="margin:0">
+        <div class="mlabel">Total Nilai Transaksi</div>
+        <div class="mval" id="perf-total-txval" style="font-size:16px">Rp 0</div>
+        <div class="msub neu" id="perf-total-orders">0 order</div>
+      </div>
+    </div>
+    <div class="g3" style="margin-top:16px">
+      <div class="card" style="margin:0">
+        <div class="cheader"><span class="ctitle">Profit</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:8px"><span style="color:var(--text3)">Max Profit</span><span class="up mono" id="perf-max-profit">Rp 0</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--text3)">Avg. Profit</span><span class="up mono" id="perf-avg-profit">Rp 0</span></div>
+      </div>
+      <div class="card" style="margin:0">
+        <div class="cheader"><span class="ctitle">Loss</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:8px"><span style="color:var(--text3)">Max Loss</span><span class="dn mono" id="perf-max-loss">Rp 0</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--text3)">Avg. Loss</span><span class="dn mono" id="perf-avg-loss">Rp 0</span></div>
+      </div>
+      <div class="card" style="margin:0">
+        <div class="cheader"><span class="ctitle">Top Gainer (Rp)</span></div>
+        <div id="perf-top-gainer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 4: Realized Gain & Dividen -->
+  <div class="g3" style="margin-bottom:18px">
+    <div class="card" style="margin:0">
+      <div class="cheader"><span class="ctitle">Total Realized Gain</span></div>
+      <div class="mval lg" id="perf-realized-total" style="font-size:22px">Rp 0</div>
+      <div class="msub neu" id="perf-realized-sub">semua waktu</div>
+    </div>
+    <div class="card" style="margin:0">
+      <div class="cheader"><span class="ctitle">Rincian Realized</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px"><span style="color:var(--text3)">Realized Gain</span><span class="up mono" id="perf-realized-gain">Rp 0</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--text3)">Realized Loss</span><span class="dn mono" id="perf-realized-loss">Rp 0</span></div>
+    </div>
+    <div class="card" style="margin:0">
+      <div class="cheader"><span class="ctitle">Total Dividen Diterima</span></div>
+      <div class="mval lg up" id="perf-dividend-total" style="font-size:22px">Rp 0</div>
+      <div class="msub neu" id="perf-dividend-sub">semua waktu</div>
+    </div>
+  </div>
+
+  <!-- ===== MANAJEMEN RISIKO (dipindahkan dari Dashboard) ===== -->
+  <div id="dash-risiko-section" style="margin-top:8px;padding-top:18px;border-top:1px solid var(--border)">
     <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px">⚠️ Analisa Risiko Portofolio</div>
     <div style="font-size:11px;color:var(--text3);margin-top:2px;margin-bottom:18px">Volatilitas, Value at Risk (VaR), korelasi, dan metrik risiko lainnya</div>
     <div class="row4">
@@ -630,26 +777,6 @@
     </div>
   </div>
 
-  <!-- ===== AI GUIDE (dipindahkan ke bawah Watchlist) ===== -->
-  <div id="dash-ai-section" style="margin-top:24px;padding-top:18px;border-top:1px solid var(--border);margin-bottom:18px">
-    <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px">🤖 AI Guide — Saran Portofolio</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:2px;margin-bottom:18px">Rekomendasi hold / trim / cut-loss per saham dan saran rebalancing — berbasis aturan otomatis, opsional analisa live via Claude</div>
-    <div class="card" style="margin-top:11px">
-      <div class="cheader"><span class="ctitle">Aksi per Saham</span></div>
-      <div id="ai-holding-reco"></div>
-    </div>
-    <div class="card" style="margin-top:11px">
-      <div class="cheader">
-        <span class="ctitle">Analisa &amp; Saran Naratif</span>
-        <div style="display:flex;gap:6px">
-          <button class="btn btn-ghost btn-xs" id="ai-key-btn" onclick="aiSetKey()" title="Key tersimpan lokal di browser ini">🔑 API Key</button>
-          <button class="btn btn-ghost btn-xs" id="ai-worker-btn" onclick="aiSetWorkerUrl()" title="Opsional — key tidak pernah tersimpan di browser, lihat workers/ai-proxy/README.md">🌐 Worker URL</button>
-          <button class="btn btn-blue btn-xs" onclick="aiRunClaude()">✨ Konsultasi Live (Claude)</button>
-        </div>
-      </div>
-      <div id="ai-box"></div>
-    </div>
-  </div>
 </div>
 
 <!-- ===== RDN & KAS ===== -->
@@ -2380,21 +2507,22 @@
   </div>
 </div>
 
-<script src="js/01-data.js?v=20260813a"></script>
-<script src="js/02-storage.js?v=20260813a"></script>
-<script src="js/03-engine.js?v=20260813a"></script>
-<script src="js/04-render.js?v=20260813a"></script>
-<script src="js/05-assets.js?v=20260813a"></script>
-<script src="js/06-analysis-router.js?v=20260813a"></script>
-<script src="js/07-flowscan.js?v=20260813a"></script>
-<script src="js/08-auth.js?v=20260813a"></script>
-<script src="js/09-divinvest.js?v=20260813a"></script>
-<script src="js/10-hargawajar.js?v=20260813a"></script>
-<script src="js/11-quant.js?v=20260813a"></script>
-<script src="js/12-clean.js?v=20260813a"></script>
-<script src="js/13-realdata.js?v=20260813a"></script>
-<script src="js/14-admin.js?v=20260813a"></script>
-<script src="js/15-txbulk.js?v=20260813a"></script>
-<script src="js/20-wealth.js?v=20260813a"></script>
+<script src="js/01-data.js?v=20260813b"></script>
+<script src="js/02-storage.js?v=20260813b"></script>
+<script src="js/03-engine.js?v=20260813b"></script>
+<script src="js/04-render.js?v=20260813b"></script>
+<script src="js/05-assets.js?v=20260813b"></script>
+<script src="js/06-analysis-router.js?v=20260813b"></script>
+<script src="js/07-flowscan.js?v=20260813b"></script>
+<script src="js/08-auth.js?v=20260813b"></script>
+<script src="js/09-divinvest.js?v=20260813b"></script>
+<script src="js/10-hargawajar.js?v=20260813b"></script>
+<script src="js/11-quant.js?v=20260813b"></script>
+<script src="js/12-clean.js?v=20260813b"></script>
+<script src="js/13-realdata.js?v=20260813b"></script>
+<script src="js/14-admin.js?v=20260813b"></script>
+<script src="js/15-txbulk.js?v=20260813b"></script>
+<script src="js/20-wealth.js?v=20260813b"></script>
+<script src="js/21-performance.js?v=20260813b"></script>
 </body>
 </html>

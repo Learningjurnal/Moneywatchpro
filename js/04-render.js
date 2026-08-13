@@ -312,10 +312,12 @@ function renderDashboard(){
   renderStrategyPanel();
   renderDashRisk();
 
-  // ── Bagian yang dipindahkan ke Dashboard: Watchlist, Riwayat Ekuitas, Manajemen Risiko, AI Guide ──
+  // ── Bagian yang dipindahkan ke Dashboard: Watchlist, AI Guide ──
+  // Riwayat Ekuitas & Manajemen Risiko kini di halaman Performance (renderPerformance())
+  // — tapi pencatatan snapshot harian tetap jalan di sini supaya tetap terekam
+  // setiap kali Dashboard dibuka, bukan hanya saat user mampir ke Performance.
   if(typeof fsRenderWlPage==='function') fsRenderWlPage();
-  renderEquityHistory();
-  renderRisiko();
+  if(typeof equitySnapshotToday==='function') equitySnapshotToday();
   if(typeof aiRenderPerHoldingReco==='function') aiRenderPerHoldingReco();
   if(typeof aiUpdateKeyBtn==='function') aiUpdateKeyBtn();
   if(el('ai-box') && !el('ai-box').dataset.live) aiRunHeuristic();
@@ -889,34 +891,11 @@ function renderSektoral(){
   buildSectorChart(porto);
 }
 
-function renderEquityHistory(){
-  var hist=(typeof equitySnapshotToday==='function')?equitySnapshotToday():[];
-  var sum=el('eq-hist-summary');
-  var cv=el('equityHistoryChart');
-  if(hist.length<2){
-    if(sum) sum.innerHTML='<div style="color:var(--text3);font-size:11px;text-align:center;padding:20px">Riwayat ekuitas terkumpul otomatis setiap hari Anda membuka aplikasi. Kembali besok untuk mulai melihat grafik performa modal.</div>';
-    kc('eqhist');
-    return;
-  }
-  var first=hist[0].equity, latest=hist[hist.length-1].equity;
-  var chg=latest-first, chgPct=first>0?(chg/first*100):0;
-  if(sum){
-    sum.innerHTML='<div style="display:flex;gap:22px;flex-wrap:wrap;align-items:baseline">'
-      +'<div><div class="mlabel">Ekuitas Terkini</div><div class="mval" style="font-size:20px">Rp '+fmtK(latest)+'</div></div>'
-      +'<div><div class="mlabel">Perubahan Sejak Tercatat</div><div class="mval '+(chg>=0?'up':'dn')+'" style="font-size:16px">'+(chg>=0?'+':'')+'Rp '+fmtK(chg)+' ('+(chgPct>=0?'+':'')+chgPct.toFixed(1)+'%)</div></div>'
-      +'<div><div class="mlabel">Periode Tercatat</div><div class="mval" style="font-size:13px">'+hist[0].date+' → '+hist[hist.length-1].date+' · '+hist.length+' hari</div></div>'
-      +'</div>';
-  }
-  if(!cv) return;
-  kc('eqhist');
-  var grad=cv.getContext('2d').createLinearGradient(0,0,0,220);
-  grad.addColorStop(0,'rgba(0,200,255,.35)'); grad.addColorStop(1,'rgba(0,200,255,0)');
-  charts['eqhist']=new Chart(cv,{type:'line',data:{labels:hist.map(function(h){return h.date;}),
-    datasets:[{data:hist.map(function(h){return h.equity;}),borderColor:'#00c8ff',backgroundColor:grad,fill:true,tension:.3,pointRadius:0,borderWidth:2}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:Object.assign({},TT,{callbacks:{label:function(c){return 'Rp '+fmtK(c.parsed.y);}}})},
-      scales:{x:{ticks:{color:'#8a90ad',font:{size:9},maxTicksLimit:8},grid:{display:false}},
-               y:{ticks:{color:'#555d6e',font:{size:9},callback:function(v){return fmtK(v);}},grid:{color:'rgba(255,255,255,.04)'}}}}});
-}
+// renderEquityHistory() lama DIHAPUS — digantikan perfRenderEquity() di
+// js/21-performance.js (halaman Performance baru), yang menampilkan data
+// equityHistory yang sama dengan tambahan filter periode + tabel riwayat.
+// Pencatatan snapshot harian (equitySnapshotToday()) tetap dipanggil dari
+// renderDashboard() supaya tidak bergantung user membuka halaman Performance.
 
 function renderRisiko(){
   var porto=getPortfolio();

@@ -386,7 +386,7 @@ html,body{font-size:14px}
   .side-nav button{font-size:14px!important;padding:10px 11px!important}
 
   /* Tumpuk semua grid multi-kolom reusable jadi 1 kolom */
-  .row3,.row4,.row5,.g2,.g2b,.g2c,.fgrid,.w-frow{grid-template-columns:1fr!important}
+  .row3,.row4,.row5,.g2,.g2b,.g2c,.g3,.fgrid,.w-frow{grid-template-columns:1fr!important}
 
   /* Grid Dashboard yang dibuat lewat inline style (perlu class penanda + !important utk override) */
   .dash-hero-row,.dash-asset-row,.dash-chart-row,.dash-table-row,.dash-bottom-row{grid-template-columns:1fr!important}
